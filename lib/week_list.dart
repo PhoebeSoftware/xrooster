@@ -16,10 +16,17 @@ class WeekListState extends State<WeekList> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 80,
-      child: ListView.builder(
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: 7,
+        itemCount: 5,
+        separatorBuilder: (context, index) {
+          return const SizedBox(width: 8.0);
+        },
         itemBuilder: (context, index) {
+          final now = DateTime.now();
+          final monday = now.subtract(Duration(days: now.weekday - DateTime.monday));
+          final day = monday.add(Duration(days: index));
+
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
             child: Container(
@@ -39,13 +46,11 @@ class WeekListState extends State<WeekList> {
                   minimumSize: Size(60, 60),
                 ),
                 child: Text(
-                  '${DateTime.now().day + index}',
+                  '${day.day}',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
                 ),
                 onPressed: () {
-                  widget.rooster.currentState?.changeDate(
-                    DateFormat('yyyy-MM-dd').format(DateTime.now().add(Duration(days: index))),
-                  );
+                  widget.rooster.currentState?.changeDate(DateFormat('yyyy-MM-dd').format(day));
                 },
               ),
             ),
