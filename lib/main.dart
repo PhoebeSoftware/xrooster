@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/rooster.dart';
@@ -20,7 +21,10 @@ Future<void> main() async {
   await prefs.clear();
 
   var api = MyxApi(prefs: prefs);
-  var appointments = await api.getAppointmentsForAttendee("2025-10-09", 28497);
+  var appointments = await api.getAppointmentsForAttendee(
+    DateFormat("yyyy-MM-dd").format(DateTime.now()),
+    28497,
+  );
 
   runApp(XApp(key: null, api: api, items: appointments));
   // runApp(inAppWebViewApp());
@@ -42,8 +46,11 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+
     return MaterialApp(
       title: XApp.title,
+      theme: ThemeData.dark(),
       home: Scaffold(
         bottomNavigationBar: NavigationBar(
           destinations: [
@@ -51,11 +58,19 @@ class XAppState extends State<XApp> {
             NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
-        appBar: AppBar(backgroundColor: Colors.transparent, title: Text(XApp.title)),
+        appBar: AppBar(
+          backgroundColor: theme.colorScheme.primary,
+          title: Text(XApp.title),
+        ),
         body: Column(
           children: [
             WeekList(rooster: widget.rooster),
-            Rooster(key: widget.rooster, title: 'Rooster', api: widget.api, items: widget.items),
+            Rooster(
+              key: widget.rooster,
+              title: 'Rooster',
+              api: widget.api,
+              items: widget.items,
+            ),
           ],
         ),
       ),
