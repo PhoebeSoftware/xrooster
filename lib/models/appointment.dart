@@ -8,13 +8,8 @@ class Appointment {
   final String name;
   final String summary;
 
-  Appointment({
-    required this.id,
-    required this.name,
-    required this.summary,
-  });
+  Appointment({required this.id, required this.name, required this.summary});
 
-  factory Appointment.fromJson(Map<String, dynamic> json) =>
-      _$AppointmentFromJson(json);
+  factory Appointment.fromJson(Map<String, dynamic> json) => _$AppointmentFromJson(json);
   Map<String, dynamic> toJson() => _$AppointmentToJson(this);
 }

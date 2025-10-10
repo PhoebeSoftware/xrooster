@@ -1,31 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/rooster.dart';
 import 'package:xrooster/week_list.dart';
 import 'package:xrooster/api/myx.dart';
-import 'package:xrooster/models/appointment.dart';
 
 Future<void> main() async {
-  runApp(const XApp());
-
-  var api = MyxApi();
-  var appointments = await api.getAppointmentsForAttendee(
-    "2025-10-09",
-    "2025-10-09",
-    28497,
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // blend with background
+      statusBarIconBrightness: Brightness.light, // white icons
+    ),
   );
 
-  appointments.forEach((appointment) {
-    debugPrint(appointment.id.toString());
-    debugPrint(appointment.name);
-    debugPrint(appointment.summary);
-  });
+  var api = MyxApi();
+  var appointments = await api.getAppointmentsForAttendee("2025-10-09", "2025-10-09", 28497);
+
+  runApp(XApp(key: null, items: appointments));
 }
 
 class XApp extends StatefulWidget {
-  const XApp({super.key});
+  const XApp({super.key, required this.items});
 
   static String title = 'XRooster';
-  static List<String> items = [];
+  final List<Appointment> items;
 
   @override
   State<XApp> createState() => XAppState();
@@ -37,14 +36,11 @@ class XAppState extends State<XApp> {
     return MaterialApp(
       title: XApp.title,
       home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(XApp.title),
-        ),
+        appBar: AppBar(backgroundColor: Colors.transparent, title: Text(XApp.title)),
         body: Column(
           children: [
             WeekList(),
-            Rooster(title: 'Rooster', items: XApp.items),
+            Rooster(title: 'Rooster', items: widget.items),
           ],
         ),
       ),
