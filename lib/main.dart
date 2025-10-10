@@ -16,6 +16,8 @@ Future<void> main() async {
   );
 
   var prefs = await SharedPreferences.getInstance();
+  await prefs.clear();
+
   var api = MyxApi(prefs: prefs);
   var appointments = await api.getAppointmentsForAttendee("2025-10-09", 28497);
 

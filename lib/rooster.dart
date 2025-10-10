@@ -23,7 +23,7 @@ class RoosterState extends State<Rooster> {
           return ListTile(
             title: Text(widget.items[index].name),
             subtitle: Text(widget.items[index].summary),
-            trailing: Text(widget.items[index].id.toString()),
+            trailing: Text(widget.items[index].start.hour.toString()),
           );
         },
       ),

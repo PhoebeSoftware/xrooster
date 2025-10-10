@@ -24,7 +24,7 @@ class MyxApi {
     var cachedJson = prefs.getString(date);
     if (cachedJson != null) {
       debugPrint('cached');
-      return cachedJson.split(',').map((e) => Appointment.fromJson(jsonDecode(e))).toList();
+      return cachedJson.split(';').map((e) => Appointment.fromJson(jsonDecode(e))).toList();
     }
 
     final response = await _dio.get('Appointment/Date/$date/$date/Attendee?id=$attendeeId');
@@ -34,7 +34,7 @@ class MyxApi {
     }
 
     final Map<String, dynamic> appointments = response.data['result']['appointments'];
-    prefs.setString(date, appointments.values.map((e) => jsonEncode(e)).join(','));
+    prefs.setString(date, appointments.values.map((e) => jsonEncode(e)).join(';'));
 
     return appointments.values
         .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
