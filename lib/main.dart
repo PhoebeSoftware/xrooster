@@ -44,11 +44,19 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-
     return MaterialApp(
       title: XApp.title,
-      theme: ThemeData.dark(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
       home: Scaffold(
         bottomNavigationBar: NavigationBar(
           destinations: [
@@ -57,7 +65,7 @@ class XAppState extends State<XApp> {
           ],
         ),
         appBar: AppBar(
-          backgroundColor: theme.colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           title: Text(XApp.title),
         ),
         body: Column(
