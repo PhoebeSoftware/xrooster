@@ -70,7 +70,7 @@ class XAppState extends State<XApp> {
       home: Scaffold(
         bottomNavigationBar: NavigationBar(
           destinations: [
-            NavigationDestination(icon: Icon(Icons.home), label: 'Rooster'),
+            NavigationDestination(icon: Icon(Icons.calendar_today), label: 'Rooster'),
             NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
