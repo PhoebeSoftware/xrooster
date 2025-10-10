@@ -13,9 +13,6 @@ class Rooster extends StatefulWidget {
 class AppState extends State<Rooster> {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-
     return Expanded(
       child: ListView.builder(
         itemCount: widget.items.length,

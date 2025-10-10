@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:xrooster/rooster.dart';
 import 'package:xrooster/week_list.dart';
+import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/models/appointment.dart';
 
-void main() {
+Future<void> main() async {
   runApp(const XApp());
+
+  var api = MyxApi();
+  var appointments = await api.getAppointmentsForAttendee(
+    "2025-10-09",
+    "2025-10-09",
+    28497,
+  );
+
+  appointments.forEach((appointment) {
+    debugPrint(appointment.id.toString());
+    debugPrint(appointment.name);
+    debugPrint(appointment.summary);
+  });
 }
 
 class XApp extends StatefulWidget {
@@ -17,12 +32,6 @@ class XApp extends StatefulWidget {
 }
 
 class XAppState extends State<XApp> {
-  void _createAppointment() {
-    setState(() {
-      XApp.items.add("afpraak ${XApp.items.length + 1}");
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -37,11 +46,6 @@ class XAppState extends State<XApp> {
             WeekList(),
             Rooster(title: 'Rooster', items: XApp.items),
           ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _createAppointment,
-          tooltip: 'Afspraak maken',
-          child: const Icon(Icons.add),
         ),
       ),
     );
