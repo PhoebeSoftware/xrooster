@@ -20,10 +20,12 @@ class RoosterState extends State<Rooster> {
       child: ListView.builder(
         itemCount: widget.items.length,
         itemBuilder: (context, index) {
+          final item = widget.items[index];
+
           return ListTile(
-            title: Text(widget.items[index].name),
-            subtitle: Text(widget.items[index].summary),
-            trailing: Text(widget.items[index].start.hour.toString()),
+            title: Text(item.name),
+            subtitle: Text(item.summary),
+            trailing: Text("${item.start.hour}:${item.start.minute.toString().padLeft(2, '0')}"),
           );
         },
       ),
