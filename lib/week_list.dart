@@ -27,55 +27,61 @@ class WeekListState extends State<WeekList> {
 
     final currentDay = DateFormat('yyyy-MM-dd').format(now);
 
-    return SizedBox(
-      height: 70,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: 5,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        separatorBuilder: (context, index) => const SizedBox(width: 16.0),
-        itemBuilder: (context, index) {
-          final monday = now.subtract(Duration(days: now.weekday - DateTime.monday));
-          final day = monday.add(Duration(days: index));
+    return Material(
+      color: theme.colorScheme.surface,
+      child: SizedBox(
+        height: 70,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: 5,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          separatorBuilder: (context, index) => const SizedBox(width: 16.0),
+          itemBuilder: (context, index) {
+            final monday = now.subtract(Duration(days: now.weekday - DateTime.monday));
+            final day = monday.add(Duration(days: index));
 
-          final dayString = DateFormat('yyyy-MM-dd').format(day);
-          final isToday = dayString == currentDay;
+            final dayString = DateFormat('yyyy-MM-dd').format(day);
+            final isToday = dayString == currentDay;
 
-          return OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: isToday ? theme.colorScheme.primary : theme.cardColor,
-              foregroundColor: isToday
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurface,
-              side: BorderSide(
-                color: theme.colorScheme.primary,
-                width: 3,
-                style: dayString == selectedDayString
-                    ? BorderStyle.solid
-                    : BorderStyle.none,
+            return Align(
+              alignment: Alignment.center,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: isToday ? theme.colorScheme.primary : theme.cardColor,
+                  foregroundColor: isToday
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurface,
+                  side: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 3,
+                    style: dayString == selectedDayString
+                        ? BorderStyle.solid
+                        : BorderStyle.none,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  minimumSize: const Size(70, 70),
+                  padding: EdgeInsets.zero,
+                ),
+                child: Text(
+                  '${day.day}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 21.0,
+                    color: isToday
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+                onPressed: () {
+                  setState(() {
+                    selectedDayString = dayString;
+                  });
+                  widget.rooster.currentState?.changeDate(dayString, 28497);
+                },
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-              minimumSize: const Size(70, 70),
-              padding: EdgeInsets.zero,
-            ),
-            child: Text(
-              '${day.day}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 21.0,
-                color: isToday
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurface,
-              ),
-            ),
-            onPressed: () {
-              setState(() {
-                selectedDayString = dayString;
-              });
-              widget.rooster.currentState?.changeDate(dayString, 28497);
-            },
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

@@ -59,16 +59,13 @@ class XAppState extends State<XApp> {
         ),
         useMaterial3: true,
       ),
+      themeMode: ThemeMode.system,
       home: Scaffold(
         bottomNavigationBar: NavigationBar(
           destinations: [
             NavigationDestination(icon: Icon(Icons.home), label: 'Rooster'),
             NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           ],
-        ),
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          title: Text(XApp.title),
         ),
         body: Column(
           children: [
