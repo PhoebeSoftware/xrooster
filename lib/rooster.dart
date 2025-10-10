@@ -17,9 +17,12 @@ class Rooster extends StatefulWidget {
 class RoosterState extends State<Rooster> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Expanded(
-      child: ListView.builder(
+      child: ListView.separated(
         itemCount: widget.items.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 4.0),
         itemBuilder: (context, index) {
           final item = widget.items[index];
 
@@ -27,6 +30,9 @@ class RoosterState extends State<Rooster> {
             title: Text(item.name),
             subtitle: Text(item.summary),
             trailing: Text(DateFormat("HH:mm").format(item.start)),
+            contentPadding: EdgeInsetsGeometry.symmetric(horizontal: 15.0),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+            tileColor: theme.hoverColor,
           );
         },
       ),
