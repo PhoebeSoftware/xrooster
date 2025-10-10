@@ -17,14 +17,17 @@ Future<void> main() async {
   var api = MyxApi();
   var appointments = await api.getAppointmentsForAttendee("2025-10-09", "2025-10-09", 28497);
 
-  runApp(XApp(key: null, items: appointments));
+  runApp(XApp(key: null, api: api, items: appointments));
 }
 
 class XApp extends StatefulWidget {
-  const XApp({super.key, required this.items});
+  XApp({super.key, required this.api, required this.items});
 
   static String title = 'XRooster';
+
+  final MyxApi api;
   final List<Appointment> items;
+  final rooster = GlobalKey<RoosterState>();
 
   @override
   State<XApp> createState() => XAppState();
@@ -36,11 +39,17 @@ class XAppState extends State<XApp> {
     return MaterialApp(
       title: XApp.title,
       home: Scaffold(
+        bottomNavigationBar: NavigationBar(
+          destinations: [
+            NavigationDestination(icon: Icon(Icons.home), label: 'Rooster'),
+            NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          ],
+        ),
         appBar: AppBar(backgroundColor: Colors.transparent, title: Text(XApp.title)),
         body: Column(
           children: [
-            WeekList(),
-            Rooster(title: 'Rooster', items: widget.items),
+            WeekList(rooster: widget.rooster),
+            Rooster(key: widget.rooster, title: 'Rooster', api: widget.api, items: widget.items),
           ],
         ),
       ),

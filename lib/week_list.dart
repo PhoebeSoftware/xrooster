@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:xrooster/rooster.dart';
+import 'package:intl/intl.dart';
 
 class WeekList extends StatefulWidget {
-  const WeekList({super.key});
+  const WeekList({super.key, required this.rooster});
+
+  final GlobalKey<RoosterState> rooster;
 
   @override
   State<WeekList> createState() => WeekListState();
@@ -27,9 +31,22 @@ class WeekListState extends State<WeekList> {
                 color: Colors.grey[300],
               ),
               alignment: Alignment.center,
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  minimumSize: Size(60, 60),
+                ),
+                child: Text(
+                  '${DateTime.now().day + index}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
+                ),
+                onPressed: () {
+                  widget.rooster.currentState?.changeDate(
+                    DateFormat('yyyy-MM-dd').format(DateTime.now().add(Duration(days: index))),
+                  );
+                },
               ),
             ),
           );
