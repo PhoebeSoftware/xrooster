@@ -7,6 +7,10 @@ import 'package:xrooster/models/appointment.dart';
 
 var token = "";
 
+void setToken(String newToken) {
+  token = newToken;
+}
+
 class MyxApi {
   late final Dio _dio;
 
@@ -15,6 +19,7 @@ class MyxApi {
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
   MyxApi({required this.prefs, String? tokenOverride}) {
+    // debugPrint('token: $token');
     final usedToken = tokenOverride ?? token;
     _dio = Dio(
       BaseOptions(

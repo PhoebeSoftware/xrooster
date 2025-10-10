@@ -25,7 +25,7 @@ Future<void> main() async {
   runApp(inAppWebViewApp(onToken: (token) async {
     // token received; initialize API and load appointments, then replace
     // the running app with XApp.
-    debugPrint('[main] received token: $token');
+    // debugPrint('[main] received token: $token');
 
   var api = MyxApi(prefs: prefs, tokenOverride: token);
     var appointments = await api.getAppointmentsForAttendee(

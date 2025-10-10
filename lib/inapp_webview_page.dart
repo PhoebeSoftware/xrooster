@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:xrooster/api/myx.dart';
 
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
@@ -25,11 +26,6 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   InAppWebViewController? webViewController;
 
-  void _logUrl(String event, Object? url) {
-    final urlStr = url?.toString() ?? 'null';
-    // Use debugPrint to avoid truncation in release logs
-    debugPrint('[InAppWebView][$event] ${DateTime.now().toIso8601String()} -> $urlStr');
-  }
 
   @override
   void initState() {
@@ -74,9 +70,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                     final token = urlStr
                         .replaceFirst('https://talland.myx.nl/?token=', '')
                         .replaceAll('&ngsw-bypass=true', '');
-                    _logUrl('onLoadStop', token);
                     // notify caller and allow them to replace the app
                     try {
+                      setToken(token);
                       widget.onToken(token);
                     } catch (e) {
                       debugPrint('[InAppWebView][onToken] callback error: $e');
