@@ -29,9 +29,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
   void initState() {
     super.initState();
     // Enable web contents debugging on Android debug builds
-    if (!kIsWeb &&
-        kDebugMode &&
-        defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb && kDebugMode && defaultTargetPlatform == TargetPlatform.android) {
       InAppWebViewController.setWebContentsDebuggingEnabled(kDebugMode);
     }
   }
@@ -50,32 +48,34 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
         return true;
       },
       child: Scaffold(
-          appBar: AppBar(
-            title: const Text("InAppWebView test"),
-          ),
-          body: Column(children: <Widget>[
+        appBar: AppBar(title: const Text("InAppWebView test")),
+        body: Column(
+          children: <Widget>[
             Expanded(
-                child: InAppWebView(
+              child: InAppWebView(
                 key: webViewKey,
-                initialUrlRequest:
-                  URLRequest(url: WebUri("https://talland.myx.nl")),
+                initialUrlRequest: URLRequest(url: WebUri("https://talland.myx.nl")),
                 initialSettings: InAppWebViewSettings(
-                  allowsBackForwardNavigationGestures: true),
+                  allowsBackForwardNavigationGestures: true,
+                ),
                 onWebViewCreated: (controller) {
                   webViewController = controller;
                 },
                 onLoadStop: (controller, url) async {
-                  if (url?.toString().startsWith('https://talland.myx.nl/?token=') ?? false) {
-                  final urlStr = url.toString();
-                  final token = urlStr
-                    .replaceFirst('https://talland.myx.nl/?token=', '')
-                    .replaceAll('&ngsw-bypass=true', '');
-                  _logUrl('onLoadStop', token); // PEAKKKKKKK
+                  if (url?.toString().startsWith('https://talland.myx.nl/?token=') ??
+                      false) {
+                    final urlStr = url.toString();
+                    final token = urlStr
+                        .replaceFirst('https://talland.myx.nl/?token=', '')
+                        .replaceAll('&ngsw-bypass=true', '');
+                    _logUrl('onLoadStop', token); // PEAKKKKKKK
                   }
                 },
               ),
             ),
-          ])),
+          ],
+        ),
+      ),
     );
   }
 }
