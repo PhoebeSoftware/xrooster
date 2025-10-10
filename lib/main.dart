@@ -26,8 +26,8 @@ Future<void> main() async {
     28497,
   );
 
-  // runApp(XApp(keyc: null, api: api, items: appointments));
-  runApp(inAppWebViewApp());
+  runApp(XApp(key: null, api: api, items: appointments));
+  // runApp(inAppWebViewApp());
 }
 
 class XApp extends StatefulWidget {
