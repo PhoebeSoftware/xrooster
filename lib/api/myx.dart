@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -20,24 +21,59 @@ class MyxApi {
 
   MyxApi({required this.prefs});
 
-  Future<List<Appointment>> getAppointmentsForAttendee(String date, int attendeeId) async {
-    var cachedJson = prefs.getString(date);
+  Future<List<Appointment>> getAppointmentsForAttendee(
+    String date,
+    int attendeeId,
+  ) async {
+    final cacheKey = 'appointments:$date:$attendeeId';
+    var cachedJson = prefs.getString(cacheKey);
     if (cachedJson != null) {
-      debugPrint('cached');
-      return cachedJson.split(';').map((e) => Appointment.fromJson(jsonDecode(e))).toList();
+      try {
+        return cachedJson
+            .split(';')
+            .map((e) => Appointment.fromJson(jsonDecode(e)))
+            .toList();
+      } catch (e) {
+        debugPrint('Error parsing cached appointments: $e');
+        return List.empty();
+      }
     }
 
-    final response = await _dio.get('Appointment/Date/$date/$date/Attendee?id=$attendeeId');
-    if (response.statusCode != 200) {
-      debugPrint("failed to get appointments");
+    try {
+      final response = await _dio.get(
+        'Appointment/Date/$date/$date/Attendee?id=$attendeeId',
+      );
+      if (response.statusCode != 200) {
+        debugPrint("Failed to get appointments: ${response.statusCode}");
+        return List.empty();
+      }
+
+      final appointmentsMap =
+          response.data['result']['appointments'] as Map<String, dynamic>;
+
+      final sorted = appointmentsMap.values.toList()
+        ..sort((a, b) {
+          DateTime parse(String? stringTime) =>
+              stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
+          return parse(a['start'] as String?).compareTo(parse(b['start'] as String?));
+        });
+
+      final appointments = sorted
+          .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
+          .toList();
+
+      await prefs.setString(
+        cacheKey,
+        appointments
+            .map((appointment) => jsonEncode(appointment.toJson()))
+            .toList()
+            .join(';'),
+      );
+
+      return appointments;
+    } catch (e) {
+      debugPrint("Error fetching appointments: $e");
       return List.empty();
     }
-
-    final Map<String, dynamic> appointments = response.data['result']['appointments'];
-    prefs.setString(date, appointments.values.map((e) => jsonEncode(e)).join(';'));
-
-    return appointments.values
-        .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
-        .toList();
   }
 }

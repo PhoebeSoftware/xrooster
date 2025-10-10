@@ -12,48 +12,68 @@ class WeekList extends StatefulWidget {
 }
 
 class WeekListState extends State<WeekList> {
+  late String selectedDayString;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedDayString = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final now = DateTime.now();
+
+    final currentDay = DateFormat('yyyy-MM-dd').format(now);
+
     return SizedBox(
-      height: 80,
+      height: 70,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: 5,
-        separatorBuilder: (context, index) {
-          return const SizedBox(width: 8.0);
-        },
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        separatorBuilder: (context, index) => const SizedBox(width: 16.0),
         itemBuilder: (context, index) {
-          final now = DateTime.now();
           final monday = now.subtract(Duration(days: now.weekday - DateTime.monday));
           final day = monday.add(Duration(days: index));
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(8.0),
-                color: Colors.grey[300],
+          final dayString = DateFormat('yyyy-MM-dd').format(day);
+          final isToday = dayString == currentDay;
+
+          return OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: isToday ? theme.colorScheme.primary : theme.cardColor,
+              foregroundColor: isToday
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurface,
+              side: BorderSide(
+                color: theme.colorScheme.primary,
+                width: 3,
+                style: dayString == selectedDayString
+                    ? BorderStyle.solid
+                    : BorderStyle.none,
               ),
-              alignment: Alignment.center,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                  minimumSize: Size(60, 60),
-                ),
-                child: Text(
-                  '${day.day}',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
-                ),
-                onPressed: () {
-                  widget.rooster.currentState?.changeDate(DateFormat('yyyy-MM-dd').format(day));
-                },
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+              minimumSize: const Size(70, 70),
+              padding: EdgeInsets.zero,
+            ),
+            child: Text(
+              '${day.day}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 21.0,
+                color: isToday
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurface,
               ),
             ),
+            onPressed: () {
+              setState(() {
+                selectedDayString = dayString;
+              });
+              widget.rooster.currentState?.changeDate(dayString, 28497);
+            },
           );
         },
       ),

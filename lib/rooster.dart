@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/appointment.dart';
 
@@ -25,15 +26,15 @@ class RoosterState extends State<Rooster> {
           return ListTile(
             title: Text(item.name),
             subtitle: Text(item.summary),
-            trailing: Text("${item.start.hour}:${item.start.minute.toString().padLeft(2, '0')}"),
+            trailing: Text(DateFormat("HH:mm").format(item.start)),
           );
         },
       ),
     );
   }
 
-  void changeDate(String date) async {
-    var appointments = await widget.api.getAppointmentsForAttendee(date, 28497);
+  void changeDate(String date, int attendeeId) async {
+    var appointments = await widget.api.getAppointmentsForAttendee(date, attendeeId);
 
     setState(() {
       widget.items = appointments;
