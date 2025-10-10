@@ -29,7 +29,9 @@ class RoosterState extends State<Rooster> {
           return ListTile(
             title: Text(item.name),
             subtitle: Text(item.summary),
-            trailing: Text(DateFormat("HH:mm").format(item.start)),
+            trailing: Text(
+              "${DateFormat("HH:mm").format(item.start)}\n${DateFormat("HH:mm").format(item.end)}",
+            ),
             contentPadding: EdgeInsetsGeometry.symmetric(horizontal: 15.0),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
             tileColor: theme.hoverColor,
