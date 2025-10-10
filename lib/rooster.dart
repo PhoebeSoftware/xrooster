@@ -31,7 +31,7 @@ class RoosterState extends State<Rooster> {
   }
 
   void changeDate(String date) async {
-    var appointments = await widget.api.getAppointmentsForAttendee(date, date, 28497);
+    var appointments = await widget.api.getAppointmentsForAttendee(date, 28497);
 
     setState(() {
       widget.items = appointments;
