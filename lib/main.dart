@@ -6,6 +6,7 @@ import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/rooster.dart';
 import 'package:xrooster/week_list.dart';
 import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/inapp_webview_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,7 @@ Future<void> main() async {
   );
 
   runApp(XApp(key: null, api: api, items: appointments));
+  // runApp(inAppWebViewApp());
 }
 
 class XApp extends StatefulWidget {
