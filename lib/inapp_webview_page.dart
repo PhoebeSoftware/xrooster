@@ -1,14 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
-Widget inAppWebViewApp() {
-  return const MaterialApp(home: InAppWebViewPage());
+// onToken will be called with the token when the page navigates to
+// https://talland.myx.nl/?token=...
+Widget inAppWebViewApp({required FutureOr<void> Function(String token) onToken}) {
+  return MaterialApp(home: InAppWebViewPage(onToken: onToken));
 }
 
 class InAppWebViewPage extends StatefulWidget {
-  const InAppWebViewPage({Key? key}) : super(key: key);
+  const InAppWebViewPage({Key? key, required this.onToken}) : super(key: key);
+
+  final FutureOr<void> Function(String token) onToken;
 
   @override
   State<InAppWebViewPage> createState() => _InAppWebViewPageState();
@@ -68,7 +74,13 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                     final token = urlStr
                         .replaceFirst('https://talland.myx.nl/?token=', '')
                         .replaceAll('&ngsw-bypass=true', '');
-                    _logUrl('onLoadStop', token); // PEAKKKKKKK
+                    _logUrl('onLoadStop', token);
+                    // notify caller and allow them to replace the app
+                    try {
+                      widget.onToken(token);
+                    } catch (e) {
+                      debugPrint('[InAppWebView][onToken] callback error: $e');
+                    }
                   }
                 },
               ),

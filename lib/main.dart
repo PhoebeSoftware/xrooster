@@ -20,14 +20,21 @@ Future<void> main() async {
   var prefs = await SharedPreferences.getInstance();
   await prefs.clear();
 
-  var api = MyxApi(prefs: prefs);
-  var appointments = await api.getAppointmentsForAttendee(
-    DateFormat("yyyy-MM-dd").format(DateTime.now()),
-    28497,
-  );
+  // Start by showing the InAppWebView to perform authentication and
+  // retrieve a token. Once we get the token, build the real app.
+  runApp(inAppWebViewApp(onToken: (token) async {
+    // token received; initialize API and load appointments, then replace
+    // the running app with XApp.
+    debugPrint('[main] received token: $token');
 
-  runApp(XApp(key: null, api: api, items: appointments));
-  // runApp(inAppWebViewApp());
+  var api = MyxApi(prefs: prefs, tokenOverride: token);
+    var appointments = await api.getAppointmentsForAttendee(
+      DateFormat("yyyy-MM-dd").format(DateTime.now()),
+      28497,
+    );
+
+    runApp(XApp(key: null, api: api, items: appointments));
+  }));
 }
 
 class XApp extends StatefulWidget {
