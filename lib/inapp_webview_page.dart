@@ -19,6 +19,12 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   InAppWebViewController? webViewController;
 
+  void _logUrl(String event, Object? url) {
+    final urlStr = url?.toString() ?? 'null';
+    // Use debugPrint to avoid truncation in release logs
+    debugPrint('[InAppWebView][$event] ${DateTime.now().toIso8601String()} -> $urlStr');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -49,14 +55,23 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           ),
           body: Column(children: <Widget>[
             Expanded(
-              child: InAppWebView(
+                child: InAppWebView(
                 key: webViewKey,
                 initialUrlRequest:
-                    URLRequest(url: WebUri("https://talland.myx.nl")),
+                  URLRequest(url: WebUri("https://talland.myx.nl")),
                 initialSettings: InAppWebViewSettings(
-                    allowsBackForwardNavigationGestures: true),
+                  allowsBackForwardNavigationGestures: true),
                 onWebViewCreated: (controller) {
                   webViewController = controller;
+                },
+                onLoadStop: (controller, url) async {
+                  if (url?.toString().startsWith('https://talland.myx.nl/?token=') ?? false) {
+                  final urlStr = url.toString();
+                  final token = urlStr
+                    .replaceFirst('https://talland.myx.nl/?token=', '')
+                    .replaceAll('&ngsw-bypass=true', '');
+                  _logUrl('onLoadStop', token); // PEAKKKKKKK
+                  }
                 },
               ),
             ),
