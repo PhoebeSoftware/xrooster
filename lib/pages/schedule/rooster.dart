@@ -12,26 +12,27 @@ class RoosterItem {
 }
 
 class Rooster extends StatefulWidget {
-  Rooster({super.key, required this.title, required this.api});
+  const Rooster({super.key, required this.title, required this.api});
 
   final String title;
   final MyxApi api;
-  List<RoosterItem> items = [];
 
   @override
   State<Rooster> createState() => RoosterState();
 }
 
 class RoosterState extends State<Rooster> {
+  List<RoosterItem> items = [];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return ListView.separated(
-      itemCount: widget.items.length,
+      itemCount: items.length,
       separatorBuilder: (context, index) => const SizedBox(height: 4.0),
       itemBuilder: (context, index) {
-        final item = widget.items[index];
+        final item = items[index];
 
         return ListTile(
           title: Text(
@@ -66,6 +67,6 @@ class RoosterState extends State<Rooster> {
     // error fix
     if (!mounted) return;
 
-    setState(() => widget.items = roosterItems);
+    setState(() => items = roosterItems);
   }
 }
