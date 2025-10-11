@@ -32,6 +32,7 @@ class WeekListState extends State<WeekList> {
       child: SizedBox(
         height: 70,
         child: ListView.separated(
+          physics: const NeverScrollableScrollPhysics(),
           scrollDirection: Axis.horizontal,
           itemCount: 5,
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
