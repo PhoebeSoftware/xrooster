@@ -25,6 +25,8 @@ class AttendeeState extends State<AttendeePage> {
       widget.api.getAllAttendees("group"),
       widget.api.getAllAttendees("teacher"),
     ]).then((results) {
+      // error fix
+      if (!mounted) return;
       setState(() {
         _allItems = [...results[0], ...results[1]];
         _filteredItems = _allItems;
