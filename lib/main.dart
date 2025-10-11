@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/pages/classes/attendees.dart';
 import 'package:xrooster/api/myx.dart';
-import 'package:xrooster/inapp_webview_page.dart';
+import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 
@@ -63,12 +63,6 @@ class XAppState extends State<XApp> {
   @override
   void initState() {
     super.initState();
-
-    // widget.api.getAllGroupAttendees().then((attendees) {
-    //   for (final c in attendees) {
-    //     debugPrint(c.code);
-    //   }
-    // });
 
     widget.rooster.currentState?.changeDate(
       DateFormat("yyyy-MM-dd").format(DateTime.now()),

@@ -5,49 +5,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/pages/login/linux.dart';
 
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
 // https://talland.myx.nl/?token=...
 Widget inAppWebViewApp({required FutureOr<void> Function(String token) onToken}) {
-  if (Platform.isLinux) {
-    return linuxFallback(onToken: onToken);
-  }
-
-  return MaterialApp(home: InAppWebViewPage(onToken: onToken));
-}
-
-Widget linuxFallback({required FutureOr<void> Function(String token) onToken}) {
   return MaterialApp(
-    home: Scaffold(
-      appBar: AppBar(title: const Text('XRooster Login')),
-      body: Center(
-        child: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'InAppWebView is not supported on Linux.\nPlease enter your bearer token manually:',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Bearer token",
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.all(16),
-                ),
-                onSubmitted: (String token) {
-                  onToken(token);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+    theme: ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      useMaterial3: true,
     ),
+    darkTheme: ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.blue,
+        brightness: Brightness.dark,
+      ),
+      useMaterial3: true,
+    ),
+    themeMode: ThemeMode.system,
+    home: Platform.isLinux
+        ? linuxFallback(onToken: onToken)
+        : InAppWebViewPage(onToken: onToken),
   );
 }
 
