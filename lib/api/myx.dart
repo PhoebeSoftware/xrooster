@@ -44,11 +44,11 @@ class MyxApi {
     };
   }
 
-  Future<List<GroupAttendee>> getAllGroupAttendees() async {
+  Future<List<GroupAttendee>> getAllAttendees(String type) async {
     try {
-      final response = await _dio.get('Attendee/Type/group');
+      final response = await _dio.get('Attendee/Type/$type');
       if (response.statusCode != 200) {
-        debugPrint("Failed to get group attendees: ${response.statusCode}");
+        debugPrint("Failed to get $type attendees: ${response.statusCode}");
         return List.empty();
       }
 
@@ -58,10 +58,12 @@ class MyxApi {
           .map((e) => GroupAttendee.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      debugPrint("Error fetching attendees: $e");
+      debugPrint("Error fetching $type attendees: $e");
       return List.empty();
     }
   }
+
+  
 
   Future<Location> getLocationById(int locationId) async {
     final cacheKey = 'location:$locationId';

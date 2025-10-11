@@ -21,12 +21,15 @@ class AttendeeState extends State<AttendeePage> {
   @override
   void initState() {
     super.initState();
-    widget.api.getAllGroupAttendees().then(
-      (attendees) => setState(() {
-        _allItems = attendees;
-        _filteredItems = attendees;
-      }),
-    );
+    Future.wait([
+      widget.api.getAllAttendees("group"),
+      widget.api.getAllAttendees("teacher"),
+    ]).then((results) {
+      setState(() {
+        _allItems = [...results[0], ...results[1]];
+        _filteredItems = _allItems;
+      });
+    });
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -70,7 +73,7 @@ class AttendeeState extends State<AttendeePage> {
                       widget.prefs.setInt("selectedAttendee", item.id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Attendee ${item.code} selected'),
+                          content: Text('${item.role} ${item.code} selected'),
                           duration: Duration(seconds: 1),
                         ),
                       );
