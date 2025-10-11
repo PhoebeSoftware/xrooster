@@ -63,9 +63,9 @@ class WeekListState extends State<WeekList> {
                   padding: EdgeInsets.zero,
                 ),
                 child: Text(
-                  '${day.day}',
+                  DateFormat('d MMM', 'nl').format(day),
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     fontSize: 21.0,
                     color: isToday
                         ? theme.colorScheme.onPrimary

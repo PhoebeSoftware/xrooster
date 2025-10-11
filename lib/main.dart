@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/rooster.dart';
 import 'package:xrooster/week_list.dart';
 import 'package:xrooster/api/myx.dart';
@@ -16,6 +16,8 @@ Future<void> main() async {
       statusBarIconBrightness: Brightness.light, // white icons
     ),
   );
+
+  await initializeDateFormatting('nl');
 
   var cache = await SharedPreferencesWithCache.create(
     cacheOptions: SharedPreferencesWithCacheOptions(),
