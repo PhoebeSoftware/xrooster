@@ -11,44 +11,48 @@ import 'package:xrooster/api/myx.dart';
 // https://talland.myx.nl/?token=...
 Widget inAppWebViewApp({required FutureOr<void> Function(String token) onToken}) {
   if (Platform.isLinux) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('XRooster Login')),
-        body: Center(
-          child: SizedBox(
-            width: 350,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'InAppWebView is not supported on Linux.\nPlease enter your bearer token manually:',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Bearer token",
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.all(16),
-                  ),
-                  onSubmitted: (String token) {
-                    onToken(token);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    return linuxFallback(onToken: onToken);
   }
 
   return MaterialApp(home: InAppWebViewPage(onToken: onToken));
 }
 
+Widget linuxFallback({required FutureOr<void> Function(String token) onToken}) {
+  return MaterialApp(
+    home: Scaffold(
+      appBar: AppBar(title: const Text('XRooster Login')),
+      body: Center(
+        child: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'InAppWebView is not supported on Linux.\nPlease enter your bearer token manually:',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: "Bearer token",
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.all(16),
+                ),
+                onSubmitted: (String token) {
+                  onToken(token);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class InAppWebViewPage extends StatefulWidget {
-  const InAppWebViewPage({Key? key, required this.onToken}) : super(key: key);
+  const InAppWebViewPage({super.key, required this.onToken});
 
   final FutureOr<void> Function(String token) onToken;
 
