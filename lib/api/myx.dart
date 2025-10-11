@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/group_attendee.dart';
+import 'package:xrooster/models/location.dart';
 
 var token = "";
 
@@ -15,12 +16,11 @@ void setToken(String newToken) {
 class MyxApi {
   late final Dio _dio;
 
-  final SharedPreferences prefs;
+  final SharedPreferencesWithCache cache;
 
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
-  MyxApi({required this.prefs, String? tokenOverride}) {
-    // debugPrint('token: $token');
+  MyxApi({required this.cache, String? tokenOverride}) {
     final usedToken = tokenOverride ?? token;
     _dio = Dio(
       BaseOptions(
@@ -38,12 +38,40 @@ class MyxApi {
         return List.empty();
       }
 
-      final attendeesMap = response.data['result'] as Map<String, dynamic>;
+      List<dynamic> attendees = response.data['result'] as List<dynamic>;
 
-      return attendeesMap.entries.toList() as List<GroupAttendee>;
+      return attendees
+          .map((e) => GroupAttendee.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       debugPrint("Error fetching attendees: $e");
       return List.empty();
+    }
+  }
+
+  Future<Location> getLocationById(int locationId) async {
+    final cacheKey = 'location:$locationId';
+    var cachedJson = cache.getString(cacheKey);
+    if (cachedJson != null) {
+      try {
+        return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+      } catch (e) {
+        return Future.error('Error parsing cached appointments: $e');
+      }
+    }
+
+    try {
+      final response = await _dio.get('Attendee/$locationId');
+      if (response.statusCode != 200) {
+        return Future.error("Failed to get appointments: ${response.statusCode}");
+      }
+
+      final locationJson = response.data['result'] as Map<String, dynamic>;
+
+      await cache.setString(cacheKey, jsonEncode(locationJson));
+      return Location.fromJson(locationJson);
+    } catch (e) {
+      return Future.error("Error fetching appointments: $e");
     }
   }
 
@@ -52,7 +80,7 @@ class MyxApi {
     int attendeeId,
   ) async {
     final cacheKey = 'appointments:$date:$attendeeId';
-    var cachedJson = prefs.getString(cacheKey);
+    var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
         return cachedJson
@@ -77,6 +105,7 @@ class MyxApi {
       final appointmentsMap =
           response.data['result']['appointments'] as Map<String, dynamic>;
 
+      // sort appointments with start timedate
       final sorted = appointmentsMap.values.toList()
         ..sort((a, b) {
           DateTime parse(String? stringTime) =>
@@ -88,7 +117,7 @@ class MyxApi {
           .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      await prefs.setString(
+      await cache.setString(
         cacheKey,
         appointments
             .map((appointment) => jsonEncode(appointment.toJson()))

@@ -17,8 +17,10 @@ Future<void> main() async {
     ),
   );
 
-  var prefs = await SharedPreferences.getInstance();
-  await prefs.clear();
+  var cache = await SharedPreferencesWithCache.create(
+    cacheOptions: SharedPreferencesWithCacheOptions(),
+  );
+  await cache.clear();
 
   // Start by showing the InAppWebView to perform authentication and
   // retrieve a token. Once we get the token, build the real app.
@@ -29,7 +31,7 @@ Future<void> main() async {
         // the running app with XApp.
         // debugPrint('[main] received token: $token');
 
-        var api = MyxApi(prefs: prefs, tokenOverride: token);
+        var api = MyxApi(cache: cache, tokenOverride: token);
         runApp(XApp(key: null, api: api));
       },
     ),
@@ -42,7 +44,6 @@ class XApp extends StatefulWidget {
   static String title = 'XRooster';
 
   final MyxApi api;
-  static List<Appointment> items = [];
   final rooster = GlobalKey<RoosterState>();
 
   @override
@@ -54,18 +55,16 @@ class XAppState extends State<XApp> {
   void initState() {
     super.initState();
 
-    widget.api.getAllGroupAttendees().then((attendees) {
-      for (final c in attendees) {
-        debugPrint(c.code);
-      }
-    });
+    // widget.api.getAllGroupAttendees().then((attendees) {
+    //   for (final c in attendees) {
+    //     debugPrint(c.code);
+    //   }
+    // });
 
-    widget.api
-        .getAppointmentsForAttendee(
-          DateFormat("yyyy-MM-dd").format(DateTime.now()),
-          28497,
-        )
-        .then((appointments) => XApp.items = appointments);
+    widget.rooster.currentState?.changeDate(
+      DateFormat("yyyy-MM-dd").format(DateTime.now()),
+      28497,
+    );
   }
 
   @override
@@ -87,7 +86,8 @@ class XAppState extends State<XApp> {
       home: Scaffold(
         bottomNavigationBar: NavigationBar(
           destinations: [
-            NavigationDestination(icon: Icon(Icons.calendar_today), label: 'Rooster'),
+            NavigationDestination(icon: Icon(Icons.calendar_today), label: 'Schedule'),
+            NavigationDestination(icon: Icon(Icons.school), label: 'Classes'),
             NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
@@ -95,12 +95,7 @@ class XAppState extends State<XApp> {
           child: Column(
             children: [
               WeekList(rooster: widget.rooster),
-              Rooster(
-                key: widget.rooster,
-                title: 'Rooster',
-                api: widget.api,
-                items: XApp.items,
-              ),
+              Rooster(key: widget.rooster, title: 'Rooster', api: widget.api),
             ],
           ),
         ),
