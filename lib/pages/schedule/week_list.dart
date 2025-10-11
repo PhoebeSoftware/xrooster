@@ -42,6 +42,7 @@ class WeekListState extends State<WeekList> {
 
             final dayString = DateFormat('yyyy-MM-dd').format(day);
             final isToday = dayString == currentDay;
+            final isSelected = dayString == selectedDayString;
 
             return Align(
               alignment: Alignment.center,
@@ -62,15 +63,33 @@ class WeekListState extends State<WeekList> {
                   minimumSize: const Size(70, 70),
                   padding: EdgeInsets.zero,
                 ),
-                child: Text(
-                  DateFormat('d MMM', 'nl').format(day),
-                  style: TextStyle(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                  Text(
+                    DateFormat.E('nl').format(day), // 2 letters dag naam (wo)
+                    style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 21.0,
-                    color: isToday
-                        ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurface,
+                    color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                    ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('d MMM', 'nl').format(day), // Datum (8 oct)
+                    style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14.0,
+                    color: isSelected
+                      ? theme.colorScheme.primary
+                      : isToday
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  ],
                 ),
                 onPressed: () {
                   setState(() => selectedDayString = dayString);
