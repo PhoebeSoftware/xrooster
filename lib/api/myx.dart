@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/appointment.dart';
+import 'package:xrooster/models/group_attendee.dart';
 
 var token = "";
 
@@ -27,6 +28,23 @@ class MyxApi {
         headers: {"Authorization": "Bearer $usedToken"},
       ),
     );
+  }
+
+  Future<List<GroupAttendee>> getAllGroupAttendees() async {
+    try {
+      final response = await _dio.get('Attendee/Type/group');
+      if (response.statusCode != 200) {
+        debugPrint("Failed to get group attendees: ${response.statusCode}");
+        return List.empty();
+      }
+
+      final attendeesMap = response.data['result'] as Map<String, dynamic>;
+
+      return attendeesMap.entries.toList() as List<GroupAttendee>;
+    } catch (e) {
+      debugPrint("Error fetching attendees: $e");
+      return List.empty();
+    }
   }
 
   Future<List<Appointment>> getAppointmentsForAttendee(

@@ -30,24 +30,19 @@ Future<void> main() async {
         // debugPrint('[main] received token: $token');
 
         var api = MyxApi(prefs: prefs, tokenOverride: token);
-        var appointments = await api.getAppointmentsForAttendee(
-          DateFormat("yyyy-MM-dd").format(DateTime.now()),
-          28497,
-        );
-
-        runApp(XApp(key: null, api: api, items: appointments));
+        runApp(XApp(key: null, api: api));
       },
     ),
   );
 }
 
 class XApp extends StatefulWidget {
-  XApp({super.key, required this.api, required this.items});
+  XApp({super.key, required this.api});
 
   static String title = 'XRooster';
 
   final MyxApi api;
-  final List<Appointment> items;
+  static List<Appointment> items = [];
   final rooster = GlobalKey<RoosterState>();
 
   @override
@@ -55,6 +50,24 @@ class XApp extends StatefulWidget {
 }
 
 class XAppState extends State<XApp> {
+  @override
+  void initState() {
+    super.initState();
+
+    widget.api.getAllGroupAttendees().then((attendees) {
+      for (final c in attendees) {
+        debugPrint(c.code);
+      }
+    });
+
+    widget.api
+        .getAppointmentsForAttendee(
+          DateFormat("yyyy-MM-dd").format(DateTime.now()),
+          28497,
+        )
+        .then((appointments) => XApp.items = appointments);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -86,7 +99,7 @@ class XAppState extends State<XApp> {
                 key: widget.rooster,
                 title: 'Rooster',
                 api: widget.api,
-                items: widget.items,
+                items: XApp.items,
               ),
             ],
           ),

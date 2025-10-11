@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -8,9 +9,41 @@ import 'package:xrooster/api/myx.dart';
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
 // https://talland.myx.nl/?token=...
-Widget inAppWebViewApp({
-  required FutureOr<void> Function(String token) onToken,
-}) {
+Widget inAppWebViewApp({required FutureOr<void> Function(String token) onToken}) {
+  if (Platform.isLinux) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text('XRooster Login')),
+        body: Center(
+          child: SizedBox(
+            width: 350,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'InAppWebView is not supported on Linux.\nPlease enter your bearer token manually:',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: "Bearer token",
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.all(16),
+                  ),
+                  onSubmitted: (String token) {
+                    onToken(token);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   return MaterialApp(home: InAppWebViewPage(onToken: onToken));
 }
 
@@ -33,6 +66,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
     super.initState();
     // Enable web contents debugging on Android debug builds
     if (!kIsWeb &&
+        !Platform.isLinux &&
         kDebugMode &&
         defaultTargetPlatform == TargetPlatform.android) {
       InAppWebViewController.setWebContentsDebuggingEnabled(kDebugMode);
@@ -53,21 +87,17 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text("InAppWebView test")),
         body: Column(
           children: <Widget>[
             Expanded(
               child: InAppWebView(
                 key: webViewKey,
-                initialUrlRequest: URLRequest(
-                  url: WebUri("https://talland.myx.nl"),
-                ),
-                onReceivedServerTrustAuthRequest:
-                    (controller, challenge) async {
-                      return ServerTrustAuthResponse(
-                        action: ServerTrustAuthResponseAction.PROCEED,
-                      );
-                    },
+                initialUrlRequest: URLRequest(url: WebUri("https://talland.myx.nl")),
+                onReceivedServerTrustAuthRequest: (controller, challenge) async {
+                  return ServerTrustAuthResponse(
+                    action: ServerTrustAuthResponseAction.PROCEED,
+                  );
+                },
                 initialSettings: InAppWebViewSettings(
                   allowsBackForwardNavigationGestures: true,
                 ),
@@ -75,9 +105,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   webViewController = controller;
                 },
                 onLoadStop: (controller, url) async {
-                  if (url?.toString().startsWith(
-                        'https://talland.myx.nl/?token=',
-                      ) ??
+                  if (url?.toString().startsWith('https://talland.myx.nl/?token=') ??
                       false) {
                     final urlStr = url.toString();
                     final token = urlStr
