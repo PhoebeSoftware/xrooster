@@ -4,10 +4,16 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/group_attendee.dart';
 
 class AttendeePage extends StatefulWidget {
-  const AttendeePage({super.key, required this.api, required this.prefs});
+  const AttendeePage({
+    super.key,
+    required this.api,
+    required this.prefs,
+    required this.onClassSelected,
+  });
 
   final MyxApi api;
   final SharedPreferencesAsync prefs;
+  final VoidCallback onClassSelected;
   
   @override
   State<AttendeePage> createState() => AttendeeState();
@@ -76,9 +82,10 @@ class AttendeeState extends State<AttendeePage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('${item.role} ${item.code} selected'),
-                          duration: Duration(seconds: 1),
+                          duration: Duration(seconds: 3)
                         ),
                       );
+                      widget.onClassSelected();
                     },
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),

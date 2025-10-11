@@ -63,7 +63,13 @@ class XAppState extends State<XApp> {
       case 0:
         return SchedulePage(rooster: widget.rooster, api: widget.api);
       case 1:
-        return AttendeePage(api: widget.api, prefs: widget.api.prefs);
+        return AttendeePage(
+          api: widget.api,
+          prefs: widget.api.prefs,
+          onClassSelected: () {
+            setState(() => _currentIndex = 0); // ga naar Schedule pagina
+          },
+        );
       case 2:
         return const SafeArea(child: Center(child: Text("Todo")));
       default:
