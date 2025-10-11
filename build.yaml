@@ -1,0 +1,12 @@
+targets:
+    $default:
+        builders:
+            json_serializable:
+                options:
+                    create_to_json: true
+                    create_factory: true
+                    explicit_to_json: true
+                generate_for:
+                    - lib/models/*.dart
+            mockito:mockBuilder:
+                enabled: false
