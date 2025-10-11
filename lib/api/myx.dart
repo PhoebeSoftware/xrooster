@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/io.dart';
-import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/group_attendee.dart';
@@ -39,8 +38,8 @@ class MyxApi {
     // Certificate fix for self-signed certificates
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
+          true;
       return client;
     };
   }
@@ -149,9 +148,7 @@ class MyxApi {
         ..sort((a, b) {
           DateTime parse(String? stringTime) =>
               stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
-          return parse(
-            a['start'] as String?,
-          ).compareTo(parse(b['start'] as String?));
+          return parse(a['start'] as String?).compareTo(parse(b['start'] as String?));
         });
 
       final appointments = sorted

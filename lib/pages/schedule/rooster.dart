@@ -66,8 +66,6 @@ class RoosterState extends State<Rooster> {
     // error fix
     if (!mounted) return;
 
-    setState(() {
-      widget.items = roosterItems;
-    });
+    setState(() => widget.items = roosterItems);
   }
 }

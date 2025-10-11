@@ -18,7 +18,9 @@ class AttendeeState extends State<AttendeePage> {
   @override
   void initState() {
     super.initState();
-    widget.api.getAllGroupAttendees().then((attendees) => widget.items = attendees);
+    widget.api.getAllGroupAttendees().then(
+      (attendees) => setState(() => widget.items = attendees),
+    );
   }
 
   @override

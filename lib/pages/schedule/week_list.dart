@@ -73,9 +73,7 @@ class WeekListState extends State<WeekList> {
                   ),
                 ),
                 onPressed: () {
-                  setState(() {
-                    selectedDayString = dayString;
-                  });
+                  setState(() => selectedDayString = dayString);
                   widget.rooster.currentState?.changeDate(dayString);
                 },
               ),

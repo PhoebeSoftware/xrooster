@@ -56,9 +56,20 @@ class XApp extends StatefulWidget {
 }
 
 class XAppState extends State<XApp> {
-  int _currentIndex = 0;
+  int _currentIndex = 1;
 
-  late final List<Widget> _pages;
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return SchedulePage(rooster: widget.rooster, api: widget.api);
+      case 1:
+        return AttendeePage(api: widget.api, prefs: widget.api.prefs);
+      case 2:
+        return const SafeArea(child: Center(child: Text("Todo")));
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 
   @override
   void initState() {
@@ -67,12 +78,6 @@ class XAppState extends State<XApp> {
     widget.rooster.currentState?.changeDate(
       DateFormat("yyyy-MM-dd").format(DateTime.now()),
     );
-
-    _pages = [
-      SchedulePage(rooster: widget.rooster, api: widget.api),
-      AttendeePage(api: widget.api, prefs: widget.api.prefs),
-      const SafeArea(child: Center(child: Text("Todo"))),
-    ];
   }
 
   @override
@@ -96,9 +101,7 @@ class XAppState extends State<XApp> {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
+            setState(() => _currentIndex = index);
           },
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Schedule'),
@@ -106,7 +109,7 @@ class XAppState extends State<XApp> {
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
-        body: _pages[_currentIndex],
+        body: _getPage(_currentIndex),
       ),
     );
   }
