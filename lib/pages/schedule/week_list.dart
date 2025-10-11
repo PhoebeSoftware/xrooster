@@ -78,7 +78,7 @@ class WeekListState extends State<WeekList> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat('d MMM', 'nl').format(day), // Datum (8 oct)
+                    DateFormat('d MMM', 'nl').format(day), // Datum (8 okt)
                     style: TextStyle(
                     fontWeight: FontWeight.normal,
                     fontSize: 14.0,
@@ -86,7 +86,7 @@ class WeekListState extends State<WeekList> {
                       ? theme.colorScheme.primary
                       : isToday
                         ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   ],

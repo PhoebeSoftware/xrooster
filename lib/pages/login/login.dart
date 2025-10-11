@@ -58,16 +58,15 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) async {
         final controller = webViewController;
-        if (controller != null) {
+        if (!didPop && controller != null) {
           if (await controller.canGoBack()) {
-            controller.goBack();
-            return false;
+          controller.goBack();
           }
         }
-        return true;
       },
       child: Scaffold(
         body: Column(
