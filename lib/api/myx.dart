@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/appointment.dart';
@@ -16,16 +17,20 @@ void setToken(String newToken) {
 class MyxApi {
   late final Dio _dio;
 
+  final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
   final SharedPreferencesWithCache cache;
+  final SharedPreferencesAsync prefs;
 
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
-  MyxApi({required this.cache, String? tokenOverride}) {
+  MyxApi({required this.cache, required this.prefs, String? tokenOverride}) {
     final usedToken = tokenOverride ?? token;
     _dio = Dio(
       BaseOptions(
         baseUrl: 'https://talland.myx.nl/api/',
         headers: {"Authorization": "Bearer $usedToken"},
+        validateStatus: (status) => true,
       ),
     );
   }
@@ -75,17 +80,41 @@ class MyxApi {
     }
   }
 
-  Future<List<Appointment>> getAppointmentsForAttendee(
-    String date,
-    int attendeeId,
-  ) async {
+  Future<List<Appointment>> getAppointmentsForAttendee(String date) async {
+    final attendeeId = await prefs.getInt("selectedAttendee");
+    if (attendeeId == null) {
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('This is an in-app notification!'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      return List.empty();
+    }
+
     final cacheKey = 'appointments:$date:$attendeeId';
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
+        if (cachedJson.isEmpty) {
+          debugPrint('Cached is empty');
+          return List.empty();
+        }
+
         return cachedJson
             .split(';')
-            .map((e) => Appointment.fromJson(jsonDecode(e)))
+            .where((e) => e.isNotEmpty) // Filter out empty strings
+            .map((a) {
+              try {
+                return Appointment.fromJson(jsonDecode(a));
+              } catch (parseError) {
+                debugPrint('Error parsing appointment JSON: $parseError, JSON: $a');
+                return null;
+              }
+            })
+            .where((a) => a != null)
+            .cast<Appointment>()
             .toList();
       } catch (e) {
         debugPrint('Error parsing cached appointments: $e');

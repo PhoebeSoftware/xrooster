@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:xrooster/rooster.dart';
 import 'package:intl/intl.dart';
+import 'package:xrooster/pages/schedule/rooster.dart';
 
 class WeekList extends StatefulWidget {
   const WeekList({super.key, required this.rooster});
@@ -76,7 +76,7 @@ class WeekListState extends State<WeekList> {
                   setState(() {
                     selectedDayString = dayString;
                   });
-                  widget.rooster.currentState?.changeDate(dayString, 28497);
+                  widget.rooster.currentState?.changeDate(dayString);
                 },
               ),
             );

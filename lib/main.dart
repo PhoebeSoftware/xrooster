@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:xrooster/rooster.dart';
-import 'package:xrooster/week_list.dart';
+import 'package:xrooster/pages/classes/attendees.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/inapp_webview_page.dart';
+import 'package:xrooster/pages/schedule/rooster.dart';
+import 'package:xrooster/pages/schedule/schedule.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,7 @@ Future<void> main() async {
   var cache = await SharedPreferencesWithCache.create(
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
-  await cache.clear();
+  var prefs = SharedPreferencesAsync();
 
   // Start by showing the InAppWebView to perform authentication and
   // retrieve a token. Once we get the token, build the real app.
@@ -33,7 +34,7 @@ Future<void> main() async {
         // the running app with XApp.
         // debugPrint('[main] received token: $token');
 
-        var api = MyxApi(cache: cache, tokenOverride: token);
+        var api = MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
         runApp(XApp(key: null, api: api));
       },
     ),
@@ -47,12 +48,18 @@ class XApp extends StatefulWidget {
 
   final MyxApi api;
   final rooster = GlobalKey<RoosterState>();
+  final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   @override
   State<XApp> createState() => XAppState();
 }
 
 class XAppState extends State<XApp> {
+  int _currentIndex = 0;
+
+  late final List<Widget> _pages;
+
   @override
   void initState() {
     super.initState();
@@ -65,8 +72,13 @@ class XAppState extends State<XApp> {
 
     widget.rooster.currentState?.changeDate(
       DateFormat("yyyy-MM-dd").format(DateTime.now()),
-      28497,
     );
+
+    _pages = [
+      SchedulePage(rooster: widget.rooster, api: widget.api),
+      AttendeePage(api: widget.api, prefs: widget.api.prefs),
+      const SafeArea(child: Center(child: Text("Todo"))),
+    ];
   }
 
   @override
@@ -86,21 +98,21 @@ class XAppState extends State<XApp> {
       ),
       themeMode: ThemeMode.system,
       home: Scaffold(
-        bottomNavigationBar: NavigationBar(
-          destinations: [
-            NavigationDestination(icon: Icon(Icons.calendar_today), label: 'Schedule'),
-            NavigationDestination(icon: Icon(Icons.school), label: 'Classes'),
-            NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+        key: widget.rootScaffoldMessengerKey,
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          items: [
+            BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Schedule'),
+            BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              WeekList(rooster: widget.rooster),
-              Rooster(key: widget.rooster, title: 'Rooster', api: widget.api),
-            ],
-          ),
-        ),
+        body: _pages[_currentIndex],
       ),
     );
   }

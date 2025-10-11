@@ -27,32 +27,30 @@ class RoosterState extends State<Rooster> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Expanded(
-      child: ListView.separated(
-        itemCount: widget.items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 4.0),
-        itemBuilder: (context, index) {
-          final item = widget.items[index];
+    return ListView.separated(
+      itemCount: widget.items.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 4.0),
+      itemBuilder: (context, index) {
+        final item = widget.items[index];
 
-          return ListTile(
-            title: Text(
-              "${item.appointment.name}${item.location?.code != null ? ' - ${item.location!.code}' : ''}",
-            ),
-            subtitle: Text(item.appointment.summary),
-            trailing: Text(
-              "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
-            ),
-            contentPadding: EdgeInsetsGeometry.symmetric(horizontal: 15.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-            tileColor: theme.hoverColor,
-          );
-        },
-      ),
+        return ListTile(
+          title: Text(
+            "${item.appointment.name}${item.location?.code != null ? ' - ${item.location!.code}' : ''}",
+          ),
+          subtitle: Text(item.appointment.summary),
+          trailing: Text(
+            "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          tileColor: theme.hoverColor,
+        );
+      },
     );
   }
 
-  void changeDate(String date, int attendeeId) async {
-    var appointments = await widget.api.getAppointmentsForAttendee(date, attendeeId);
+  void changeDate(String date) async {
+    var appointments = await widget.api.getAppointmentsForAttendee(date);
 
     var roosterItems = await Future.wait(
       appointments.map(
@@ -64,6 +62,9 @@ class RoosterState extends State<Rooster> {
         ),
       ),
     );
+
+    // error fix
+    if (!mounted) return;
 
     setState(() {
       widget.items = roosterItems;
