@@ -4,23 +4,46 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/group_attendee.dart';
 
 class AttendeePage extends StatefulWidget {
-  AttendeePage({super.key, required this.api, required this.prefs});
+  const AttendeePage({super.key, required this.api, required this.prefs});
 
   final MyxApi api;
   final SharedPreferencesAsync prefs;
-  List<GroupAttendee> items = [];
-
+  
   @override
   State<AttendeePage> createState() => AttendeeState();
 }
 
 class AttendeeState extends State<AttendeePage> {
+  List<GroupAttendee> _allItems = [];
+  List<GroupAttendee> _filteredItems = [];
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     widget.api.getAllGroupAttendees().then(
-      (attendees) => setState(() => widget.items = attendees),
+      (attendees) => setState(() {
+        _allItems = attendees;
+        _filteredItems = attendees;
+      }),
     );
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredItems = _allItems.where((item) {
+        return item.code.toLowerCase().contains(query) ||
+               item.role.toLowerCase().contains(query);
+      }).toList();
+    });
   }
 
   @override
@@ -30,13 +53,13 @@ class AttendeeState extends State<AttendeePage> {
     return SafeArea(
       child: Column(
         children: [
-          const SearchTextField(),
+          SearchTextField(controller: _searchController),
           Expanded(
             child: ListView.separated(
-              itemCount: widget.items.length,
+              itemCount: _filteredItems.length,
               separatorBuilder: (context, index) => const SizedBox(height: 4.0),
               itemBuilder: (context, index) {
-                final item = widget.items[index];
+                final item = _filteredItems[index];
 
                 return ListTile(
                   title: Text(item.code),
@@ -67,13 +90,16 @@ class AttendeeState extends State<AttendeePage> {
 }
 
 class SearchTextField extends StatelessWidget {
-  const SearchTextField({super.key});
+  const SearchTextField({super.key, required this.controller});
+
+  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.all(8.0),
       child: TextField(
+        controller: controller,
         decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
       ),
     );
