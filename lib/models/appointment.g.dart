@@ -12,6 +12,9 @@ Appointment _$AppointmentFromJson(Map<String, dynamic> json) => Appointment(
   summary: json['summary'] as String,
   start: DateTime.parse(json['start'] as String),
   end: DateTime.parse(json['end'] as String),
+  attendeeIds: AttendeeIds.fromJson(
+    json['attendeeIds'] as Map<String, dynamic>,
+  ),
 );
 
 Map<String, dynamic> _$AppointmentToJson(Appointment instance) =>
@@ -21,4 +24,5 @@ Map<String, dynamic> _$AppointmentToJson(Appointment instance) =>
       'summary': instance.summary,
       'start': instance.start.toIso8601String(),
       'end': instance.end.toIso8601String(),
+      'attendeeIds': instance.attendeeIds.toJson(),
     };
