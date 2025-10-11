@@ -28,32 +28,53 @@ class AttendeeState extends State<AttendeePage> {
     final theme = Theme.of(context);
 
     return SafeArea(
-      child: ListView.separated(
-        itemCount: widget.items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 4.0),
-        itemBuilder: (context, index) {
-          final item = widget.items[index];
+      child: Column(
+        children: [
+          const SearchTextField(),
+          Expanded(
+            child: ListView.separated(
+              itemCount: widget.items.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 4.0),
+              itemBuilder: (context, index) {
+                final item = widget.items[index];
 
-          return ListTile(
-            title: Text(item.code),
-            subtitle: Text(item.role),
-            trailing: TextButton(
-              child: Text("Select"),
-              onPressed: () {
-                widget.prefs.setInt("selectedAttendee", item.id);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Attendee ${item.code} selected'),
-                    duration: Duration(seconds: 1),
+                return ListTile(
+                  title: Text(item.code),
+                  subtitle: Text(item.role),
+                  trailing: TextButton(
+                    child: Text("Select"),
+                    onPressed: () {
+                      widget.prefs.setInt("selectedAttendee", item.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Attendee ${item.code} selected'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
                   ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  tileColor: theme.hoverColor,
                 );
               },
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-            tileColor: theme.hoverColor,
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SearchTextField extends StatelessWidget {
+  const SearchTextField({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(8.0),
+      child: TextField(
+        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
       ),
     );
   }
