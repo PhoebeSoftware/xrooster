@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
@@ -56,7 +55,8 @@ class XApp extends StatefulWidget {
 }
 
 class XAppState extends State<XApp> {
-  int _currentIndex = 1;
+  // standaard de Schedule pagina
+  int _currentIndex = 0;
 
   Widget _getPage(int index) {
     switch (index) {
@@ -75,9 +75,12 @@ class XAppState extends State<XApp> {
   void initState() {
     super.initState();
 
-    widget.rooster.currentState?.changeDate(
-      DateFormat("yyyy-MM-dd").format(DateTime.now()),
-    );
+    // Als geen attendee geselecteerd is dan naar de Attendees pagina
+    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
+      if (attendeeId == null) {
+        setState(() => _currentIndex = 1);
+      }
+    });
   }
 
   @override
