@@ -8,7 +8,9 @@ import 'package:xrooster/api/myx.dart';
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
 // https://talland.myx.nl/?token=...
-Widget inAppWebViewApp({required FutureOr<void> Function(String token) onToken}) {
+Widget inAppWebViewApp({
+  required FutureOr<void> Function(String token) onToken,
+}) {
   return MaterialApp(home: InAppWebViewPage(onToken: onToken));
 }
 
@@ -26,12 +28,13 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   InAppWebViewController? webViewController;
 
-
   @override
   void initState() {
     super.initState();
     // Enable web contents debugging on Android debug builds
-    if (!kIsWeb && kDebugMode && defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb &&
+        kDebugMode &&
+        defaultTargetPlatform == TargetPlatform.android) {
       InAppWebViewController.setWebContentsDebuggingEnabled(kDebugMode);
     }
   }
@@ -56,7 +59,15 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
             Expanded(
               child: InAppWebView(
                 key: webViewKey,
-                initialUrlRequest: URLRequest(url: WebUri("https://talland.myx.nl")),
+                initialUrlRequest: URLRequest(
+                  url: WebUri("https://talland.myx.nl"),
+                ),
+                onReceivedServerTrustAuthRequest:
+                    (controller, challenge) async {
+                      return ServerTrustAuthResponse(
+                        action: ServerTrustAuthResponseAction.PROCEED,
+                      );
+                    },
                 initialSettings: InAppWebViewSettings(
                   allowsBackForwardNavigationGestures: true,
                 ),
@@ -64,7 +75,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   webViewController = controller;
                 },
                 onLoadStop: (controller, url) async {
-                  if (url?.toString().startsWith('https://talland.myx.nl/?token=') ??
+                  if (url?.toString().startsWith(
+                        'https://talland.myx.nl/?token=',
+                      ) ??
                       false) {
                     final urlStr = url.toString();
                     final token = urlStr
