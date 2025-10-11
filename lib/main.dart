@@ -22,19 +22,23 @@ Future<void> main() async {
 
   // Start by showing the InAppWebView to perform authentication and
   // retrieve a token. Once we get the token, build the real app.
-  runApp(inAppWebViewApp(onToken: (token) async {
-    // token received; initialize API and load appointments, then replace
-    // the running app with XApp.
-    // debugPrint('[main] received token: $token');
+  runApp(
+    inAppWebViewApp(
+      onToken: (token) async {
+        // token received; initialize API and load appointments, then replace
+        // the running app with XApp.
+        // debugPrint('[main] received token: $token');
 
-  var api = MyxApi(prefs: prefs, tokenOverride: token);
-    var appointments = await api.getAppointmentsForAttendee(
-      DateFormat("yyyy-MM-dd").format(DateTime.now()),
-      28497,
-    );
+        var api = MyxApi(prefs: prefs, tokenOverride: token);
+        var appointments = await api.getAppointmentsForAttendee(
+          DateFormat("yyyy-MM-dd").format(DateTime.now()),
+          28497,
+        );
 
-    runApp(XApp(key: null, api: api, items: appointments));
-  }));
+        runApp(XApp(key: null, api: api, items: appointments));
+      },
+    ),
+  );
 }
 
 class XApp extends StatefulWidget {
@@ -74,16 +78,18 @@ class XAppState extends State<XApp> {
             NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
-        body: Column(
-          children: [
-            WeekList(rooster: widget.rooster),
-            Rooster(
-              key: widget.rooster,
-              title: 'Rooster',
-              api: widget.api,
-              items: widget.items,
-            ),
-          ],
+        body: SafeArea(
+          child: Column(
+            children: [
+              WeekList(rooster: widget.rooster),
+              Rooster(
+                key: widget.rooster,
+                title: 'Rooster',
+                api: widget.api,
+                items: widget.items,
+              ),
+            ],
+          ),
         ),
       ),
     );
