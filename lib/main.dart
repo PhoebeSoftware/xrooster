@@ -7,26 +7,58 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
+import 'package:xrooster/pages/settings/settings.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // blend with background
-      statusBarIconBrightness: Brightness.light, // white icons
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
 
   await initializeDateFormatting('nl');
 
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(XApp());
+  // Both main and settings-page logic are preserved.
+  // Start by showing the InAppWebView to perform authentication and
+  // retrieve a token. Once we get the token, build the real app.
+  var cache = await SharedPreferencesWithCache.create(
+    cacheOptions: SharedPreferencesWithCacheOptions(),
+  );
+  var prefs = SharedPreferencesAsync();
+
+  runApp(
+    inAppWebViewApp(
+      onToken: (token) async {
+        var api = MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
+
+        // Load saved theme preference
+        final sp = await SharedPreferences.getInstance();
+        final theme = sp.getString('theme') ?? 'system';
+
+        runApp(XApp(
+          key: null,
+          api: api,
+          initialTheme: theme,
+        ));
+      },
+    ),
+  );
 }
 
 class XApp extends StatefulWidget {
-  XApp({super.key});
+  XApp({
+    super.key,
+    required this.api,
+    required this.initialTheme,
+  });
 
   static String title = 'XRooster';
+
+  final MyxApi api;
+  final String initialTheme;
 
   final navigatorKey = GlobalKey<NavigatorState>();
   final rooster = GlobalKey<RoosterState>();
@@ -37,10 +69,40 @@ class XApp extends StatefulWidget {
 }
 
 class XAppState extends State<XApp> {
-  // standaard de Schedule pagina
   int _currentIndex = 0;
-  var prefs = SharedPreferencesAsync();
+  late String _themeMode;
   late MyxApi _api;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeMode = widget.initialTheme;
+    _api = widget.api;
+
+    // Als geen attendee geselecteerd is dan naar de Attendees pagina
+    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
+      if (attendeeId == null) {
+        setState(() => _currentIndex = 1);
+      }
+    });
+  }
+
+  ThemeMode get themeMode {
+    switch (_themeMode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  Future<void> _updateTheme(String newTheme) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme', newTheme);
+    setState(() => _themeMode = newTheme);
+  }
 
   Widget _getPage(int index) {
     switch (index) {
@@ -51,11 +113,11 @@ class XAppState extends State<XApp> {
           api: _api,
           prefs: _api.prefs,
           onClassSelected: () {
-            setState(() => _currentIndex = 0); // ga naar Schedule pagina
+            setState(() => _currentIndex = 0);
           },
         );
       case 2:
-        return const SafeArea(child: Center(child: Text("Todo")));
+        return SettingsPage(onThemeChanged: _updateTheme);
       default:
         return const SizedBox.shrink();
     }
@@ -63,55 +125,30 @@ class XAppState extends State<XApp> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<MyxApi?>(
-      future: () async {
-        final token = await prefs.getString("token");
-        if (token == null) return null;
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        final bool useMaterialYou = _themeMode == 'material_you';
 
-        final cache = await SharedPreferencesWithCache.create(
-          cacheOptions: SharedPreferencesWithCacheOptions(),
-        );
+        final lightScheme = useMaterialYou && lightDynamic != null
+            ? lightDynamic.harmonized()
+            : ColorScheme.fromSeed(seedColor: Colors.blue);
 
-        return MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
-      }(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator()); // api not ready
-        }
-
-        final api = snapshot.data;
-
-        // login if no token = no api
-        if (api == null) {
-          return inAppWebViewApp(
-            onToken: (t) async {
-              await prefs.setString("token", t);
-              setState(() {}); // triggers rebuild, future reruns with new token
-            },
-          );
-        }
-
-        _api = api;
-
-        _api.prefs.getInt("selectedAttendee").then((attendeeId) {
-          if (attendeeId == null) setState(() => _currentIndex = 1);
-        });
+        final darkScheme = useMaterialYou && darkDynamic != null
+            ? darkDynamic.harmonized()
+            : ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
 
         return MaterialApp(
           title: XApp.title,
           navigatorKey: widget.navigatorKey,
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            colorScheme: lightScheme,
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
-              brightness: Brightness.dark,
-            ),
+            colorScheme: darkScheme,
             useMaterial3: true,
           ),
-          themeMode: ThemeMode.system,
+          themeMode: themeMode,
           home: Scaffold(
             key: widget.scaffoldKey,
             bottomNavigationBar: BottomNavigationBar(
@@ -119,13 +156,19 @@ class XAppState extends State<XApp> {
               onTap: (index) {
                 setState(() => _currentIndex = index);
               },
-              items: [
+              items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.calendar_today),
                   label: 'Schedule',
                 ),
-                BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
-                BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.school),
+                  label: 'Attendees',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
               ],
             ),
             body: _getPage(_currentIndex),
