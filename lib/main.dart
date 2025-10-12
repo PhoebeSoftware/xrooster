@@ -21,13 +21,14 @@ Future<void> main() async {
 
   await initializeDateFormatting('nl');
 
+  // Both main and settings-page logic are preserved.
+  // Start by showing the InAppWebView to perform authentication and
+  // retrieve a token. Once we get the token, build the real app.
   var cache = await SharedPreferencesWithCache.create(
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
   var prefs = SharedPreferencesAsync();
 
-  // Start by showing the InAppWebView to perform authentication and
-  // retrieve a token. Once we get the token, build the real app.
   runApp(
     inAppWebViewApp(
       onToken: (token) async {
@@ -37,7 +38,11 @@ Future<void> main() async {
         final sp = await SharedPreferences.getInstance();
         final theme = sp.getString('theme') ?? 'system';
 
-        runApp(XApp(key: null, api: api, initialTheme: theme));
+        runApp(XApp(
+          key: null,
+          api: api,
+          initialTheme: theme,
+        ));
       },
     ),
   );
@@ -55,9 +60,9 @@ class XApp extends StatefulWidget {
   final MyxApi api;
   final String initialTheme;
 
+  final navigatorKey = GlobalKey<NavigatorState>();
   final rooster = GlobalKey<RoosterState>();
-  final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
+  final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   State<XApp> createState() => XAppState();
@@ -66,11 +71,13 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   int _currentIndex = 0;
   late String _themeMode;
+  late MyxApi _api;
 
   @override
   void initState() {
     super.initState();
     _themeMode = widget.initialTheme;
+    _api = widget.api;
 
     // Als geen attendee geselecteerd is dan naar de Attendees pagina
     widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
@@ -100,11 +107,11 @@ class XAppState extends State<XApp> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return SchedulePage(rooster: widget.rooster, api: widget.api);
+        return SchedulePage(rooster: widget.rooster, api: _api);
       case 1:
         return AttendeePage(
-          api: widget.api,
-          prefs: widget.api.prefs,
+          api: _api,
+          prefs: _api.prefs,
           onClassSelected: () {
             setState(() => _currentIndex = 0);
           },
@@ -132,6 +139,7 @@ class XAppState extends State<XApp> {
 
         return MaterialApp(
           title: XApp.title,
+          navigatorKey: widget.navigatorKey,
           theme: ThemeData(
             colorScheme: lightScheme,
             useMaterial3: true,
@@ -142,7 +150,7 @@ class XAppState extends State<XApp> {
           ),
           themeMode: themeMode,
           home: Scaffold(
-            key: widget.rootScaffoldMessengerKey,
+            key: widget.scaffoldKey,
             bottomNavigationBar: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) {
@@ -150,11 +158,17 @@ class XAppState extends State<XApp> {
               },
               items: const [
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.calendar_today), label: 'Schedule'),
+                  icon: Icon(Icons.calendar_today),
+                  label: 'Schedule',
+                ),
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.school), label: 'Attendees'),
+                  icon: Icon(Icons.school),
+                  label: 'Attendees',
+                ),
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.settings), label: 'Settings'),
+                  icon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
               ],
             ),
             body: _getPage(_currentIndex),
