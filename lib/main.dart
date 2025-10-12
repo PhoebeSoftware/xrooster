@@ -19,36 +19,18 @@ Future<void> main() async {
 
   await initializeDateFormatting('nl');
 
-  var cache = await SharedPreferencesWithCache.create(
-    cacheOptions: SharedPreferencesWithCacheOptions(),
-  );
-  var prefs = SharedPreferencesAsync();
-
-  // Start by showing the InAppWebView to perform authentication and
-  // retrieve a token. Once we get the token, build the real app.
-  runApp(
-    inAppWebViewApp(
-      onToken: (token) async {
-        // token received; initialize API and load appointments, then replace
-        // the running app with XApp.
-        // debugPrint('[main] received token: $token');
-
-        var api = MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
-        runApp(XApp(key: null, api: api));
-      },
-    ),
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(XApp());
 }
 
 class XApp extends StatefulWidget {
-  XApp({super.key, required this.api});
+  XApp({super.key});
 
   static String title = 'XRooster';
 
-  final MyxApi api;
+  final navigatorKey = GlobalKey<NavigatorState>();
   final rooster = GlobalKey<RoosterState>();
-  final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
+  final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   State<XApp> createState() => XAppState();
@@ -57,15 +39,17 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   // standaard de Schedule pagina
   int _currentIndex = 0;
+  var prefs = SharedPreferencesAsync();
+  late MyxApi _api;
 
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return SchedulePage(rooster: widget.rooster, api: widget.api);
+        return SchedulePage(rooster: widget.rooster, api: _api);
       case 1:
         return AttendeePage(
-          api: widget.api,
-          prefs: widget.api.prefs,
+          api: _api,
+          prefs: _api.prefs,
           onClassSelected: () {
             setState(() => _currentIndex = 0); // ga naar Schedule pagina
           },
@@ -78,48 +62,76 @@ class XAppState extends State<XApp> {
   }
 
   @override
-  void initState() {
-    super.initState();
-
-    // Als geen attendee geselecteerd is dan naar de Attendees pagina
-    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
-      if (attendeeId == null) {
-        setState(() => _currentIndex = 1);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: XApp.title,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      themeMode: ThemeMode.system,
-      home: Scaffold(
-        key: widget.rootScaffoldMessengerKey,
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() => _currentIndex = index);
-          },
-          items: [
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Schedule'),
-            BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-          ],
-        ),
-        body: _getPage(_currentIndex),
-      ),
+    return FutureBuilder<MyxApi?>(
+      future: () async {
+        final token = await prefs.getString("token");
+        if (token == null) return null;
+
+        final cache = await SharedPreferencesWithCache.create(
+          cacheOptions: SharedPreferencesWithCacheOptions(),
+        );
+
+        return MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
+      }(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator()); // api not ready
+        }
+
+        final api = snapshot.data;
+
+        // login if no token = no api
+        if (api == null) {
+          return inAppWebViewApp(
+            onToken: (t) async {
+              await prefs.setString("token", t);
+              setState(() {}); // triggers rebuild, future reruns with new token
+            },
+          );
+        }
+
+        _api = api;
+
+        _api.prefs.getInt("selectedAttendee").then((attendeeId) {
+          if (attendeeId == null) setState(() => _currentIndex = 1);
+        });
+
+        return MaterialApp(
+          title: XApp.title,
+          navigatorKey: widget.navigatorKey,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          themeMode: ThemeMode.system,
+          home: Scaffold(
+            key: widget.scaffoldKey,
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) {
+                setState(() => _currentIndex = index);
+              },
+              items: [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_today),
+                  label: 'Schedule',
+                ),
+                BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
+                BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+              ],
+            ),
+            body: _getPage(_currentIndex),
+          ),
+        );
+      },
     );
   }
 }
