@@ -4,13 +4,15 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/location.dart';
 import 'package:xrooster/models/teacher.dart';
+import 'package:xrooster/models/group_attendee.dart';
 
 class RoosterItem {
   final Appointment appointment;
   final Location? location;
   final Teacher? teacher;
+  final GroupAttendee? group;
 
-  RoosterItem({required this.appointment, required this.location, required this.teacher});
+  RoosterItem({required this.appointment, required this.location, required this.teacher, required this.group});
 }
 
 class Rooster extends StatefulWidget {
@@ -65,6 +67,9 @@ class RoosterState extends State<Rooster> {
               : null,
           teacher: a.attendeeIds.teacher.isNotEmpty
               ? await widget.api.getTeacherById(a.attendeeIds.teacher[0])
+              : null,
+          group: a.attendeeIds.group.isNotEmpty
+              ? await widget.api.getGroupById(a.attendeeIds.group[0])
               : null,
         ),
       ),
@@ -125,7 +130,7 @@ class RoosterState extends State<Rooster> {
                 const Icon(Icons.location_on, size: 20),
                 const SizedBox(width: 10),
                 Text(
-                  item.location!.code,
+                  item.location?.code ?? 'No location found',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -137,7 +142,24 @@ class RoosterState extends State<Rooster> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    "${item.teacher!.code} (${item.teacher!.login})",
+                    item.teacher != null
+                      ? "${item.teacher!.code} (${item.teacher!.login})"
+                      : 'No teacher found',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Icon(Icons.people, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item.group != null
+                        ? item.group!.code
+                        : 'No class found',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),

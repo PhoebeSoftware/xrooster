@@ -126,6 +126,32 @@ class MyxApi extends ChangeNotifier {
     }
   }
 
+  Future<GroupAttendee> getGroupById(int groupId) async {
+    final cacheKey = 'group:$groupId';
+    var cachedJson = cache.getString(cacheKey);
+    if (cachedJson != null) {
+      try {
+        return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+      } catch (e) {
+        return Future.error('Error parsing cached group: $e');
+      }
+    }
+
+    try {
+      final response = await _dio.get('Attendee/$groupId');
+      if (response.statusCode != 200) {
+        return Future.error("Failed to get group: ${response.statusCode}");
+      }
+
+      final groupJson = response.data['result'] as Map<String, dynamic>;
+
+      await cache.setString(cacheKey, jsonEncode(groupJson));
+      return GroupAttendee.fromJson(groupJson);
+    } catch (e) {
+      return Future.error("Error fetching group: $e");
+    }
+  }
+
   Future<List<Appointment>> getAppointmentsForAttendee(String date) async {
     final attendeeId = await prefs.getInt("selectedAttendee");
     if (attendeeId == null) {
