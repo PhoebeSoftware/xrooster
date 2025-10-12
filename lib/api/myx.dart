@@ -9,7 +9,7 @@ import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/models/location.dart';
 import 'package:xrooster/models/teacher.dart';
-
+import 'package:xrooster/pages/login/login.dart';
 
 var token = "";
 
@@ -17,11 +17,11 @@ void setToken(String newToken) {
   token = newToken;
 }
 
-class MyxApi {
+class MyxApi extends ChangeNotifier {
   late final Dio _dio;
 
-  final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
+  final navigatorKey = GlobalKey<NavigatorState>();
+  final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
   final SharedPreferencesWithCache cache;
   final SharedPreferencesAsync prefs;
 
@@ -33,7 +33,17 @@ class MyxApi {
       BaseOptions(
         baseUrl: 'https://talland.myx.nl/api/',
         headers: {"Authorization": "Bearer $usedToken"},
-        validateStatus: (status) => true,
+        validateStatus: (status) {
+          if (status == 401) {
+            debugPrint("token invalid");
+
+            // invalidate
+            prefs.remove("token");
+            notifyListeners();
+          }
+
+          return true;
+        },
       ),
     );
 
@@ -65,8 +75,6 @@ class MyxApi {
     }
   }
 
-  
-
   Future<Location> getLocationById(int locationId) async {
     final cacheKey = 'location:$locationId';
     var cachedJson = cache.getString(cacheKey);
@@ -92,7 +100,6 @@ class MyxApi {
       return Future.error("Error fetching appointments: $e");
     }
   }
-
 
   Future<Teacher> getTeacherById(int teacherId) async {
     final cacheKey = 'teacher:$teacherId';
@@ -123,7 +130,7 @@ class MyxApi {
   Future<List<Appointment>> getAppointmentsForAttendee(String date) async {
     final attendeeId = await prefs.getInt("selectedAttendee");
     if (attendeeId == null) {
-      rootScaffoldMessengerKey.currentState?.showSnackBar(
+      scaffoldKey.currentState?.showSnackBar(
         SnackBar(
           content: Text('This is an in-app notification!'),
           duration: Duration(seconds: 3),
