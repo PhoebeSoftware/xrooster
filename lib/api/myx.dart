@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/models/location.dart';
+import 'package:xrooster/models/teacher.dart';
+
 
 var token = "";
 
@@ -88,6 +90,33 @@ class MyxApi {
       return Location.fromJson(locationJson);
     } catch (e) {
       return Future.error("Error fetching appointments: $e");
+    }
+  }
+
+
+  Future<Teacher> getTeacherById(int teacherId) async {
+    final cacheKey = 'teacher:$teacherId';
+    var cachedJson = cache.getString(cacheKey);
+    if (cachedJson != null) {
+      try {
+        return Teacher.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+      } catch (e) {
+        return Future.error('Error parsing cached teacher: $e');
+      }
+    }
+
+    try {
+      final response = await _dio.get('Attendee/$teacherId');
+      if (response.statusCode != 200) {
+        return Future.error("Failed to get teacher: ${response.statusCode}");
+      }
+
+      final teacherJson = response.data['result'] as Map<String, dynamic>;
+
+      await cache.setString(cacheKey, jsonEncode(teacherJson));
+      return Teacher.fromJson(teacherJson);
+    } catch (e) {
+      return Future.error("Error fetching teacher: $e");
     }
   }
 
