@@ -24,78 +24,83 @@ class WeekListState extends State<WeekList> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final now = DateTime.now();
-
     final currentDay = DateFormat('yyyy-MM-dd').format(now);
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    const itemCount = 7;
+    final buttonWidth = screenWidth / itemCount;
 
     return Material(
       color: theme.colorScheme.surface,
       child: SizedBox(
         height: 70,
-        child: ListView.separated(
+        child: ListView.builder(
           physics: const NeverScrollableScrollPhysics(),
           scrollDirection: Axis.horizontal,
-          itemCount: 5,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          separatorBuilder: (context, index) => const SizedBox(width: 16.0),
+          itemCount: itemCount,
+          padding: EdgeInsets.zero,
           itemBuilder: (context, index) {
             final monday = now.subtract(Duration(days: now.weekday - DateTime.monday));
             final day = monday.add(Duration(days: index));
-
             final dayString = DateFormat('yyyy-MM-dd').format(day);
             final isToday = dayString == currentDay;
             final isSelected = dayString == selectedDayString;
 
-            return Align(
-              alignment: Alignment.center,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: isToday ? theme.colorScheme.primary : theme.cardColor,
-                  foregroundColor: isToday
+            return SizedBox(
+              width: buttonWidth,
+              child: Align(
+                alignment: Alignment.center,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: isToday 
                       ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.onSurface,
-                  side: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 3,
-                    style: dayString == selectedDayString
+                      : theme.cardColor,
+                    side: BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 3,
+                      style: isSelected
                         ? BorderStyle.solid
                         : BorderStyle.none,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                  minimumSize: const Size(70, 70),
-                  padding: EdgeInsets.zero,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                  Text(
-                    DateFormat.E('nl').format(day), // 2 letters dag naam (wo)
-                    style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 21.0,
-                    color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface,
                     ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                    minimumSize: const Size(70, 70),
+                    padding: EdgeInsets.zero,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat('d MMM', 'nl').format(day), // Datum (8 okt)
-                    style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: 14.0,
-                    color: isSelected
-                      ? theme.colorScheme.primary
-                      : isToday
-                        ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat.E('nl').format(day),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 21.0,
+                          color: isSelected
+                            ? theme.colorScheme.primary
+                            : isToday
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('d MMM', 'nl').format(day),
+                        style: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 14.0,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : isToday
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
-                  ],
+                  onPressed: () {
+                    setState(() => selectedDayString = dayString);
+                    widget.rooster.currentState?.changeDate(dayString);
+                  },
                 ),
-                onPressed: () {
-                  setState(() => selectedDayString = dayString);
-                  widget.rooster.currentState?.changeDate(dayString);
-                },
               ),
             );
           },
