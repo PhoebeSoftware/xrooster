@@ -66,6 +66,10 @@ class XAppState extends State<XApp> {
   late String _themeMode;
   var prefs = SharedPreferencesAsync();
   late MyxApi _api;
+  // cached future so FutureBuilder doesn't recreate a new future each build
+  late Future<MyxApi?> _apiFuture;
+  // ensure we only check selectedAttendee once to avoid setState loops
+  bool _checkedSelectedAttendee = false;
 
   @override
   void initState() {
@@ -73,12 +77,26 @@ class XAppState extends State<XApp> {
     _themeMode = widget.initialTheme;
     _api = widget.api;
 
+    // initialize cached future
+    _apiFuture = _buildApiFuture();
+
     // Als geen attendee geselecteerd is dan naar de Attendees pagina
     widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
       if (attendeeId == null) {
         setState(() => _currentIndex = 1);
       }
     });
+  }
+
+  Future<MyxApi?> _buildApiFuture() async {
+    final token = await prefs.getString("token");
+    if (token == null) return null;
+
+    final cache = await SharedPreferencesWithCache.create(
+      cacheOptions: SharedPreferencesWithCacheOptions(),
+    );
+
+    return MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
   }
 
   ThemeMode get themeMode {
@@ -120,16 +138,7 @@ class XAppState extends State<XApp> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<MyxApi?>(
-      future: () async {
-        final token = await prefs.getString("token");
-        if (token == null) return null;
-
-        final cache = await SharedPreferencesWithCache.create(
-          cacheOptions: SharedPreferencesWithCacheOptions(),
-        );
-
-        return MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
-      }(),
+      future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(
@@ -144,16 +153,25 @@ class XAppState extends State<XApp> {
           return inAppWebViewApp(
             onToken: (t) async {
               await prefs.setString("token", t);
-              setState(() {}); // triggers rebuild, future reruns with new token
+              // refresh cached future and trigger a single rebuild
+              _apiFuture = _buildApiFuture();
+              setState(() {});
             },
           );
         }
 
         _api = api;
 
-        _api.prefs.getInt("selectedAttendee").then((attendeeId) {
-          if (attendeeId == null) setState(() => _currentIndex = 1);
-        });
+        // Only check selectedAttendee once to avoid triggering repeated rebuilds
+        if (!_checkedSelectedAttendee) {
+          _checkedSelectedAttendee = true;
+          _api.prefs.getInt("selectedAttendee").then((attendeeId) {
+            if (!mounted) return;
+            if (attendeeId == null && _currentIndex != 1) {
+              setState(() => _currentIndex = 1);
+            }
+          });
+        }
 
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
