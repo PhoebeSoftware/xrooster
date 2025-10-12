@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final void Function(String theme)? onThemeChanged;
+
+  const SettingsPage({super.key, this.onThemeChanged});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -31,6 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _saveThemeMode(String value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme', value);
+    widget.onThemeChanged?.call(value);
   }
 
   Future<void> _saveLanguage(String value) async {
@@ -47,20 +50,20 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
           ListTile(
             title: const Text('Color Theme'),
-            subtitle: Text(_themeMode == 'system'
-                ? 'System Default'
-                : _themeMode == 'light'
-                    ? 'Light'
-                    : _themeMode == 'dark'
-                        ? 'Dark'
-                        : 'Material You'),
+            subtitle: Text(
+              switch (_themeMode) {
+                'system' => 'System Default',
+                'light' => 'Light',
+                'dark' => 'Dark',
+                'material_you' => 'Material You',
+                _ => _themeMode,
+              },
+            ),
             trailing: DropdownButton<String>(
               value: _themeMode,
               items: const [
@@ -80,11 +83,13 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(),
           ListTile(
             title: const Text('Language'),
-            subtitle: Text(_language == 'system'
-                ? 'System Default'
-                : _language == 'en'
-                    ? 'English'
-                    : 'Dutch'),
+            subtitle: Text(
+              _language == 'system'
+                  ? 'System Default'
+                  : _language == 'en'
+                      ? 'English'
+                      : 'Nederlands',
+            ),
             trailing: DropdownButton<String>(
               value: _language,
               items: const [

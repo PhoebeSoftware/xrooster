@@ -9,7 +9,6 @@ import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
@@ -31,23 +30,30 @@ Future<void> main() async {
   runApp(
     inAppWebViewApp(
       onToken: (token) async {
-        // token received; initialize API and load appointments, then replace
-        // the running app with XApp.
-        // debugPrint('[main] received token: $token');
-
         var api = MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
-        runApp(XApp(key: null, api: api));
+
+        // Load saved theme preference
+        final sp = await SharedPreferences.getInstance();
+        final theme = sp.getString('theme') ?? 'system';
+
+        runApp(XApp(key: null, api: api, initialTheme: theme));
       },
     ),
   );
 }
 
 class XApp extends StatefulWidget {
-  XApp({super.key, required this.api});
+  XApp({
+    super.key,
+    required this.api,
+    required this.initialTheme,
+  });
 
   static String title = 'XRooster';
 
   final MyxApi api;
+  final String initialTheme;
+
   final rooster = GlobalKey<RoosterState>();
   final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
@@ -57,8 +63,38 @@ class XApp extends StatefulWidget {
 }
 
 class XAppState extends State<XApp> {
-  // standaard de Schedule pagina
   int _currentIndex = 0;
+  late String _themeMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeMode = widget.initialTheme;
+
+    // Als geen attendee geselecteerd is dan naar de Attendees pagina
+    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
+      if (attendeeId == null) {
+        setState(() => _currentIndex = 1);
+      }
+    });
+  }
+
+  ThemeMode get themeMode {
+    switch (_themeMode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  Future<void> _updateTheme(String newTheme) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme', newTheme);
+    setState(() => _themeMode = newTheme);
+  }
 
   Widget _getPage(int index) {
     switch (index) {
@@ -69,26 +105,14 @@ class XAppState extends State<XApp> {
           api: widget.api,
           prefs: widget.api.prefs,
           onClassSelected: () {
-            setState(() => _currentIndex = 0); // ga naar Schedule pagina
+            setState(() => _currentIndex = 0);
           },
         );
       case 2:
-        return SettingsPage();
+        return SettingsPage(onThemeChanged: _updateTheme);
       default:
         return const SizedBox.shrink();
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Als geen attendee geselecteerd is dan naar de Attendees pagina
-    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
-      if (attendeeId == null) {
-        setState(() => _currentIndex = 1);
-      }
-    });
   }
 
   @override
@@ -106,7 +130,7 @@ class XAppState extends State<XApp> {
         ),
         useMaterial3: true,
       ),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       home: Scaffold(
         key: widget.rootScaffoldMessengerKey,
         bottomNavigationBar: BottomNavigationBar(
@@ -114,10 +138,13 @@ class XAppState extends State<XApp> {
           onTap: (index) {
             setState(() => _currentIndex = index);
           },
-          items: [
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Schedule'),
-            BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.calendar_today), label: 'Schedule'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.school), label: 'Attendees'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.settings), label: 'Settings'),
           ],
         ),
         body: _getPage(_currentIndex),
