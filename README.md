@@ -42,3 +42,9 @@ flutter run
     <img src="./README/search-class.png" alt="zoeken klas" width="200" />
     <img src="./README/search-teacher.png" alt="zoeken docent" width="200" />
 </p>
+
+## Instellingen
+
+<p float="Instellingen">
+    <img src="./README/settings.png" alt="instellingen" width="200" />
+</p>
