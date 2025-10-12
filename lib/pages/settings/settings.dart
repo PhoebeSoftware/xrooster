@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingsPage extends StatefulWidget {
   final void Function(String theme)? onThemeChanged;
@@ -44,64 +45,106 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
+      body: Column(
         children: [
-          ListTile(
-            title: const Text('Color Theme'),
-            subtitle: Text(
-              switch (_themeMode) {
-                'system' => 'System Default',
-                'light' => 'Light',
-                'dark' => 'Dark',
-                'material_you' => 'Material You',
-                _ => _themeMode,
-              },
-            ),
-            trailing: DropdownButton<String>(
-              value: _themeMode,
-              items: const [
-                DropdownMenuItem(value: 'system', child: Text('System Default')),
-                DropdownMenuItem(value: 'light', child: Text('Light')),
-                DropdownMenuItem(value: 'dark', child: Text('Dark')),
-                DropdownMenuItem(value: 'material_you', child: Text('Material You')),
+          Expanded(
+            child: ListView(
+              children: [
+                Divider(),
+                ListTile(
+                  title: const Text('Color Theme'),
+                  trailing: DropdownButton<String>(
+                    value: _themeMode,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'system',
+                        child: Text('System Default'),
+                      ),
+                      DropdownMenuItem(value: 'light', child: Text('Light')),
+                      DropdownMenuItem(value: 'dark', child: Text('Dark')),
+                      DropdownMenuItem(
+                        value: 'material_you',
+                        child: Text('Material You'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _themeMode = value);
+                        _saveThemeMode(value);
+                      }
+                    },
+                  ),
+                ),
+                // Divider(),
+                ListTile(
+                  title: const Text('Language'),
+                  trailing: DropdownButton<String>(
+                    value: _language,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'system',
+                        child: Text('System Default'),
+                      ),
+                      DropdownMenuItem(value: 'en', child: Text('English')),
+                      DropdownMenuItem(value: 'nl', child: Text('Nederlands')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _language = value);
+                        _saveLanguage(value);
+                      }
+                    },
+                  ),
+                ),
+                // Divider(),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _themeMode = value);
-                  _saveThemeMode(value);
-                }
-              },
             ),
           ),
-          const Divider(),
-          ListTile(
-            title: const Text('Language'),
-            subtitle: Text(
-              _language == 'system'
-                  ? 'System Default'
-                  : _language == 'en'
-                      ? 'English'
-                      : 'Nederlands',
-            ),
-            trailing: DropdownButton<String>(
-              value: _language,
-              items: const [
-                DropdownMenuItem(value: 'system', child: Text('System Default')),
-                DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'nl', child: Text('Nederlands')),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _language = value);
-                  _saveLanguage(value);
-                }
+          Divider(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                final version = snapshot.hasData
+                    ? snapshot.data!.version
+                    : '...';
+                const longGitCommit = String.fromEnvironment('GIT_COMMIT');
+                final shortGitCommit = longGitCommit.substring(0, 7);
+                return InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Full Commit ID'),
+                        content: Text(longGitCommit),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: ListTile(
+                    title: const Text('About'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Version $version'),
+                        Text('Commit: $shortGitCommit'),
+                        Text('Developed by Phoebe Software'),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
               },
             ),
           ),
