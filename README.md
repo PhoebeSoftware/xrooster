@@ -3,8 +3,6 @@
 ## Over xrooster
 Betere rooster app voor myx omdat eduarte kut is.
 
-<img src="./README/screenshot.png" alt="xrooster app" width="200">
-
 ## Installatie
 
 ### Optie 1: Download de laatste release
@@ -29,3 +27,18 @@ cd xrooster
 flutter pub get
 flutter run
 ```
+
+# Screenshots
+## Rooster
+
+<p float="Schedule">
+    <img src="./README/schedule.png" alt="rooster pagina" width="200" />
+    <img src="./README/extra-info-tab.png" alt="extra info tab" width="200" />
+</p>
+
+## Zoeken
+
+<p float="Schedule">
+    <img src="./README/search-class.png" alt="zoeken klas" width="200" />
+    <img src="./README/search-teacher.png" alt="zoeken docent" width="200" />
+</p>
