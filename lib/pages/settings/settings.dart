@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/services.dart';
+import 'package:gif/gif.dart';
 
 class SettingsPage extends StatefulWidget {
   final void Function(String theme)? onThemeChanged;
@@ -122,11 +124,38 @@ class _SettingsPageState extends State<SettingsPage> {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Full Commit ID'),
-                        content: Text(longGitCommit),
+                        //epic easter egg
+                        content: Builder(
+                          builder: (context) {
+                            int clickCount = 0;
+                            return GestureDetector(
+                              onTap: () {
+                                clickCount++;
+                                if (clickCount == 7) {
+                                  clickCount = 0;
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => _SecretDialog(),
+                                  );
+                                }
+                              },
+                              child: Text(longGitCommit),
+                            );
+                          },
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
                             child: const Text('Close'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              await Clipboard.setData(
+                                ClipboardData(text: longGitCommit),
+                              );
+                            },
+                            child: const Text('Copy'),
                           ),
                         ],
                       ),
@@ -150,6 +179,48 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SecretDialog extends StatefulWidget {
+  @override
+  _SecretDialogState createState() => _SecretDialogState();
+}
+
+class _SecretDialogState extends State<_SecretDialog>
+    with TickerProviderStateMixin {
+  late GifController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = GifController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      // title: const Text('Easter Egg'),
+      content: Gif(
+        image: AssetImage('assets/gif.gif'), // epic
+        controller: _controller,
+        fps: 10,
+        autostart: Autostart.loop,
+        placeholder: (context) => const Text('Loading...'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }
