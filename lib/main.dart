@@ -7,6 +7,8 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
+import 'package:xrooster/pages/settings/settings.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,7 +73,7 @@ class XAppState extends State<XApp> {
           },
         );
       case 2:
-        return const SafeArea(child: Center(child: Text("Todo")));
+        return SettingsPage();
       default:
         return const SizedBox.shrink();
     }
