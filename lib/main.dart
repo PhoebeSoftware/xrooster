@@ -10,7 +10,6 @@ import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
@@ -39,11 +38,7 @@ Future<void> main() async {
         final sp = await SharedPreferences.getInstance();
         final theme = sp.getString('theme') ?? 'system';
 
-        runApp(XApp(
-          key: null,
-          api: api,
-          initialTheme: theme,
-        ));
+        runApp(XApp(key: null, api: api, initialTheme: theme));
       },
     ),
   );
@@ -85,7 +80,6 @@ class XAppState extends State<XApp> {
       }
     });
   }
-
 
   ThemeMode get themeMode {
     switch (_themeMode) {
@@ -138,7 +132,9 @@ class XAppState extends State<XApp> {
       }(),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator()); // api not ready
+          return const Center(
+            child: CircularProgressIndicator(),
+          ); // api not ready
         }
 
         final api = snapshot.data;
@@ -169,19 +165,16 @@ class XAppState extends State<XApp> {
 
             final darkScheme = (usingMaterialYou && darkDynamic != null)
                 ? darkDynamic
-                : ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
+                : ColorScheme.fromSeed(
+                    seedColor: Colors.blue,
+                    brightness: Brightness.dark,
+                  );
 
             return MaterialApp(
               title: XApp.title,
               navigatorKey: widget.navigatorKey,
-              theme: ThemeData(
-                colorScheme: lightScheme,
-                useMaterial3: true,
-              ),
-              darkTheme: ThemeData(
-                colorScheme: darkScheme,
-                useMaterial3: true,
-              ),
+              theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
+              darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
               themeMode: themeMode,
               home: Scaffold(
                 key: widget.scaffoldKey,
@@ -195,8 +188,14 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
-                    BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.school),
+                      label: 'Attendees',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.settings),
+                      label: 'Settings',
+                    ),
                   ],
                 ),
                 body: _getPage(_currentIndex),

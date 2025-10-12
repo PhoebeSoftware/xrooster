@@ -18,6 +18,7 @@ class AttendeeIds {
     required this.materials,
   });
 
-  factory AttendeeIds.fromJson(Map<String, dynamic> json) => _$AttendeeIdsFromJson(json);
+  factory AttendeeIds.fromJson(Map<String, dynamic> json) =>
+      _$AttendeeIdsFromJson(json);
   Map<String, dynamic> toJson() => _$AttendeeIdsToJson(this);
 }

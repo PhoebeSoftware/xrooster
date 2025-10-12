@@ -10,7 +10,9 @@ import 'package:xrooster/pages/login/linux.dart';
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
 // https://talland.myx.nl/?token=...
-Widget inAppWebViewApp({required FutureOr<void> Function(String token) onToken}) {
+Widget inAppWebViewApp({
+  required FutureOr<void> Function(String token) onToken,
+}) {
   return MaterialApp(
     theme: ThemeData(
       colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -64,7 +66,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
         final controller = webViewController;
         if (!didPop && controller != null) {
           if (await controller.canGoBack()) {
-          controller.goBack();
+            controller.goBack();
           }
         }
       },
@@ -74,12 +76,15 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
             Expanded(
               child: InAppWebView(
                 key: webViewKey,
-                initialUrlRequest: URLRequest(url: WebUri("https://talland.myx.nl")),
-                onReceivedServerTrustAuthRequest: (controller, challenge) async {
-                  return ServerTrustAuthResponse(
-                    action: ServerTrustAuthResponseAction.PROCEED,
-                  );
-                },
+                initialUrlRequest: URLRequest(
+                  url: WebUri("https://talland.myx.nl"),
+                ),
+                onReceivedServerTrustAuthRequest:
+                    (controller, challenge) async {
+                      return ServerTrustAuthResponse(
+                        action: ServerTrustAuthResponseAction.PROCEED,
+                      );
+                    },
                 initialSettings: InAppWebViewSettings(
                   allowsBackForwardNavigationGestures: true,
                 ),
@@ -87,7 +92,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   webViewController = controller;
                 },
                 onLoadStop: (controller, url) async {
-                  if (url?.toString().startsWith('https://talland.myx.nl/?token=') ??
+                  if (url?.toString().startsWith(
+                        'https://talland.myx.nl/?token=',
+                      ) ??
                       false) {
                     final urlStr = url.toString();
                     final token = urlStr

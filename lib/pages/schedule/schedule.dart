@@ -21,7 +21,11 @@ class ScheduleState extends State<SchedulePage> {
         children: [
           WeekList(rooster: widget.rooster),
           Expanded(
-            child: Rooster(key: widget.rooster, title: 'Rooster', api: widget.api),
+            child: Rooster(
+              key: widget.rooster,
+              title: 'Rooster',
+              api: widget.api,
+            ),
           ),
         ],
       ),

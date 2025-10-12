@@ -40,7 +40,9 @@ class WeekListState extends State<WeekList> {
           itemCount: itemCount,
           padding: EdgeInsets.zero,
           itemBuilder: (context, index) {
-            final monday = now.subtract(Duration(days: now.weekday - DateTime.monday));
+            final monday = now.subtract(
+              Duration(days: now.weekday - DateTime.monday),
+            );
             final day = monday.add(Duration(days: index));
             final dayString = DateFormat('yyyy-MM-dd').format(day);
             final isToday = dayString == currentDay;
@@ -52,17 +54,17 @@ class WeekListState extends State<WeekList> {
                 alignment: Alignment.center,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: isToday 
-                      ? theme.colorScheme.onPrimary
-                      : theme.cardColor,
+                    backgroundColor: isToday
+                        ? theme.colorScheme.onPrimary
+                        : theme.cardColor,
                     side: BorderSide(
                       color: theme.colorScheme.primary,
                       width: 3,
-                      style: isSelected
-                        ? BorderStyle.solid
-                        : BorderStyle.none,
+                      style: isSelected ? BorderStyle.solid : BorderStyle.none,
                     ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
                     minimumSize: const Size(70, 70),
                     padding: EdgeInsets.zero,
                   ),
@@ -75,10 +77,10 @@ class WeekListState extends State<WeekList> {
                           fontWeight: FontWeight.w600,
                           fontSize: 21.0,
                           color: isSelected
-                            ? theme.colorScheme.primary
-                            : isToday
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface,
+                              ? theme.colorScheme.primary
+                              : isToday
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -90,8 +92,8 @@ class WeekListState extends State<WeekList> {
                           color: isSelected
                               ? theme.colorScheme.primary
                               : isToday
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface,
                         ),
                       ),
                     ],

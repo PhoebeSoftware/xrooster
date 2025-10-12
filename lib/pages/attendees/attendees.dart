@@ -14,7 +14,7 @@ class AttendeePage extends StatefulWidget {
   final MyxApi api;
   final SharedPreferencesAsync prefs;
   final VoidCallback onClassSelected;
-  
+
   @override
   State<AttendeePage> createState() => AttendeeState();
 }
@@ -52,7 +52,7 @@ class AttendeeState extends State<AttendeePage> {
     setState(() {
       _filteredItems = _allItems.where((item) {
         return item.code.toLowerCase().contains(query) ||
-               item.role.toLowerCase().contains(query);
+            item.role.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -82,14 +82,16 @@ class AttendeeState extends State<AttendeePage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('${item.role} ${item.code} selected'),
-                          duration: Duration(seconds: 3)
+                          duration: Duration(seconds: 3),
                         ),
                       );
                       widget.onClassSelected();
                     },
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
                   tileColor: theme.hoverColor,
                 );
               },
@@ -112,7 +114,10 @@ class SearchTextField extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Search',
+        ),
       ),
     );
   }

@@ -49,8 +49,8 @@ class MyxApi extends ChangeNotifier {
     // Certificate fix for self-signed certificates
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
-          true;
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
       return client;
     };
   }
@@ -79,7 +79,9 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return Location.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
         return Future.error('Error parsing cached appointments: $e');
       }
@@ -88,7 +90,9 @@ class MyxApi extends ChangeNotifier {
     try {
       final response = await _dio.get('Attendee/$locationId');
       if (response.statusCode != 200) {
-        return Future.error("Failed to get appointments: ${response.statusCode}");
+        return Future.error(
+          "Failed to get appointments: ${response.statusCode}",
+        );
       }
 
       final locationJson = response.data['result'] as Map<String, dynamic>;
@@ -131,7 +135,9 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return GroupAttendee.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
         return Future.error('Error parsing cached group: $e');
       }
@@ -181,7 +187,9 @@ class MyxApi extends ChangeNotifier {
               try {
                 return Appointment.fromJson(jsonDecode(a));
               } catch (parseError) {
-                debugPrint('Error parsing appointment JSON: $parseError, JSON: $a');
+                debugPrint(
+                  'Error parsing appointment JSON: $parseError, JSON: $a',
+                );
                 return null;
               }
             })
@@ -211,7 +219,9 @@ class MyxApi extends ChangeNotifier {
         ..sort((a, b) {
           DateTime parse(String? stringTime) =>
               stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
-          return parse(a['start'] as String?).compareTo(parse(b['start'] as String?));
+          return parse(
+            a['start'] as String?,
+          ).compareTo(parse(b['start'] as String?));
         });
 
       final appointments = sorted

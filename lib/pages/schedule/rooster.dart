@@ -12,7 +12,12 @@ class RoosterItem {
   final Teacher? teacher;
   final GroupAttendee? group;
 
-  RoosterItem({required this.appointment, required this.location, required this.teacher, required this.group});
+  RoosterItem({
+    required this.appointment,
+    required this.location,
+    required this.teacher,
+    required this.group,
+  });
 }
 
 class Rooster extends StatefulWidget {
@@ -47,7 +52,9 @@ class RoosterState extends State<Rooster> {
             "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
           tileColor: theme.hoverColor,
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
@@ -143,8 +150,8 @@ class RoosterState extends State<Rooster> {
                 Expanded(
                   child: Text(
                     item.teacher != null
-                      ? "${item.teacher!.code} (${item.teacher!.login})"
-                      : 'No teacher found',
+                        ? "${item.teacher!.code} (${item.teacher!.login})"
+                        : 'No teacher found',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -157,9 +164,7 @@ class RoosterState extends State<Rooster> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    item.group != null
-                        ? item.group!.code
-                        : 'No class found',
+                    item.group != null ? item.group!.code : 'No class found',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
