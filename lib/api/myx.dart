@@ -9,7 +9,6 @@ import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/models/location.dart';
 import 'package:xrooster/models/teacher.dart';
-import 'package:xrooster/pages/login/login.dart';
 
 var token = "";
 

@@ -7,24 +7,53 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
+import 'package:xrooster/pages/settings/settings.dart';
+import 'package:dynamic_color/dynamic_color.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // blend with background
-      statusBarIconBrightness: Brightness.light, // white icons
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
 
   await initializeDateFormatting('nl');
 
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(XApp());
+  // Both main and settings-page logic are preserved.
+  // Start by showing the InAppWebView to perform authentication and
+  // retrieve a token. Once we get the token, build the real app.
+  var cache = await SharedPreferencesWithCache.create(
+    cacheOptions: SharedPreferencesWithCacheOptions(),
+  );
+  var prefs = SharedPreferencesAsync();
+
+  runApp(
+    inAppWebViewApp(
+      onToken: (token) async {
+        var api = MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
+
+        // Load saved theme preference
+        final sp = await SharedPreferences.getInstance();
+        final theme = sp.getString('theme') ?? 'system';
+
+        runApp(XApp(
+          key: null,
+          api: api,
+          initialTheme: theme,
+        ));
+      },
+    ),
+  );
 }
 
 class XApp extends StatefulWidget {
-  XApp({super.key});
+  final MyxApi api;
+  final String initialTheme;
+
+  XApp({super.key, required this.api, required this.initialTheme});
 
   static String title = 'XRooster';
 
@@ -39,8 +68,41 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   // standaard de Schedule pagina
   int _currentIndex = 0;
+  late String _themeMode;
   var prefs = SharedPreferencesAsync();
   late MyxApi _api;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeMode = widget.initialTheme;
+    _api = widget.api;
+
+    // Als geen attendee geselecteerd is dan naar de Attendees pagina
+    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
+      if (attendeeId == null) {
+        setState(() => _currentIndex = 1);
+      }
+    });
+  }
+
+
+  ThemeMode get themeMode {
+    switch (_themeMode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  Future<void> _updateTheme(String newTheme) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme', newTheme);
+    setState(() => _themeMode = newTheme);
+  }
 
   Widget _getPage(int index) {
     switch (index) {
@@ -55,7 +117,7 @@ class XAppState extends State<XApp> {
           },
         );
       case 2:
-        return const SafeArea(child: Center(child: Text("Todo")));
+        return SettingsPage(onThemeChanged: _updateTheme);
       default:
         return const SizedBox.shrink();
     }
@@ -97,39 +159,50 @@ class XAppState extends State<XApp> {
           if (attendeeId == null) setState(() => _currentIndex = 1);
         });
 
-        return MaterialApp(
-          title: XApp.title,
-          navigatorKey: widget.navigatorKey,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
-          themeMode: ThemeMode.system,
-          home: Scaffold(
-            key: widget.scaffoldKey,
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (index) {
-                setState(() => _currentIndex = index);
-              },
-              items: [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.calendar_today),
-                  label: 'Schedule',
+        return DynamicColorBuilder(
+          builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+            final usingMaterialYou = _themeMode == 'material_you';
+
+            final lightScheme = (usingMaterialYou && lightDynamic != null)
+                ? lightDynamic
+                : ColorScheme.fromSeed(seedColor: Colors.blue);
+
+            final darkScheme = (usingMaterialYou && darkDynamic != null)
+                ? darkDynamic
+                : ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
+
+            return MaterialApp(
+              title: XApp.title,
+              navigatorKey: widget.navigatorKey,
+              theme: ThemeData(
+                colorScheme: lightScheme,
+                useMaterial3: true,
+              ),
+              darkTheme: ThemeData(
+                colorScheme: darkScheme,
+                useMaterial3: true,
+              ),
+              themeMode: themeMode,
+              home: Scaffold(
+                key: widget.scaffoldKey,
+                bottomNavigationBar: BottomNavigationBar(
+                  currentIndex: _currentIndex,
+                  onTap: (index) {
+                    setState(() => _currentIndex = index);
+                  },
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.calendar_today),
+                      label: 'Schedule',
+                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
+                    BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+                  ],
                 ),
-                BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
-                BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-              ],
-            ),
-            body: _getPage(_currentIndex),
-          ),
+                body: _getPage(_currentIndex),
+              ),
+            );
+          },
         );
       },
     );
