@@ -8,13 +8,14 @@ import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // blend with background
-      statusBarIconBrightness: Brightness.light, // white icons
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
 
@@ -117,38 +118,49 @@ class XAppState extends State<XApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: XApp.title,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      themeMode: themeMode,
-      home: Scaffold(
-        key: widget.rootScaffoldMessengerKey,
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() => _currentIndex = index);
-          },
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today), label: 'Schedule'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.school), label: 'Attendees'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.settings), label: 'Settings'),
-          ],
-        ),
-        body: _getPage(_currentIndex),
-      ),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        final bool useMaterialYou = _themeMode == 'material_you';
+
+        final lightScheme = useMaterialYou && lightDynamic != null
+            ? lightDynamic.harmonized()
+            : ColorScheme.fromSeed(seedColor: Colors.blue);
+
+        final darkScheme = useMaterialYou && darkDynamic != null
+            ? darkDynamic.harmonized()
+            : ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
+
+        return MaterialApp(
+          title: XApp.title,
+          theme: ThemeData(
+            colorScheme: lightScheme,
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: darkScheme,
+            useMaterial3: true,
+          ),
+          themeMode: themeMode,
+          home: Scaffold(
+            key: widget.rootScaffoldMessengerKey,
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) {
+                setState(() => _currentIndex = index);
+              },
+              items: const [
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.calendar_today), label: 'Schedule'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.school), label: 'Attendees'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.settings), label: 'Settings'),
+              ],
+            ),
+            body: _getPage(_currentIndex),
+          ),
+        );
+      },
     );
   }
 }
