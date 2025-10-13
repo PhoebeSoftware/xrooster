@@ -13,11 +13,56 @@ class WeekList extends StatefulWidget {
 
 class WeekListState extends State<WeekList> {
   late String selectedDayString;
+  PageController? _pageController;
+  VoidCallback? _pageListener;
 
   @override
   void initState() {
     super.initState();
     selectedDayString = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _attachController());
+  }
+
+  @override
+  void didUpdateWidget(covariant WeekList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.rooster != widget.rooster) {
+      _attachController();
+    }
+  }
+
+  void _attachController() {
+    final controller = widget.rooster.currentState?.pageController;
+
+    if (identical(controller, _pageController)) return;
+
+    if (_pageController != null && _pageListener != null) {
+      _pageController!.removeListener(_pageListener!);
+    }
+
+    _pageController = controller;
+    _pageListener = null;
+
+    if (_pageController != null) {
+      _pageListener = () {
+        final pageValue = _pageController!.hasClients
+            ? (_pageController!.page ?? _pageController!.initialPage.toDouble())
+            : _pageController!.initialPage.toDouble();
+
+        final pageIndex = pageValue.round();
+        final dayOffset = pageIndex - 1000;
+        final date = DateTime.now().add(Duration(days: dayOffset));
+        final dayString = DateFormat('yyyy-MM-dd').format(date);
+
+        if (dayString != selectedDayString) {
+          setState(() {
+            selectedDayString = dayString;
+          });
+        }
+      };
+
+      _pageController!.addListener(_pageListener!);
+    }
   }
 
   @override
@@ -50,59 +95,52 @@ class WeekListState extends State<WeekList> {
 
             return SizedBox(
               width: buttonWidth,
-              child: Align(
-                alignment: Alignment.center,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: isToday
-                        ? theme.colorScheme.onPrimary
-                        : theme.cardColor,
-                    side: BorderSide(
-                      color: theme.colorScheme.primary,
-                      width: 3,
-                      style: isSelected ? BorderStyle.solid : BorderStyle.none,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    minimumSize: const Size(70, 70),
-                    padding: EdgeInsets.zero,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: isToday
+                      ? theme.colorScheme.onPrimary
+                      : theme.cardColor,
+                  side: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 3,
+                    style: isSelected ? BorderStyle.solid : BorderStyle.none,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        DateFormat.E('nl').format(day),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 21.0,
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : isToday
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('d MMM', 'nl').format(day),
-                        style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 14.0,
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : isToday
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  onPressed: () {
-                    setState(() => selectedDayString = dayString);
-                    widget.rooster.currentState?.changeDate(dayString);
-                  },
+                  minimumSize: const Size(70, 70),
+                  padding: EdgeInsets.zero,
                 ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      DateFormat.E('nl').format(day),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 21.0,
+                        color: isSelected || isToday
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('d MMM', 'nl').format(day),
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14.0,
+                        color: isSelected || isToday
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                onPressed: () {
+                  setState(() => selectedDayString = dayString);
+                  widget.rooster.currentState?.changeDate(dayString);
+                },
               ),
             );
           },

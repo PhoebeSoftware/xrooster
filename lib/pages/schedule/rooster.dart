@@ -31,10 +31,43 @@ class Rooster extends StatefulWidget {
 }
 
 class RoosterState extends State<Rooster> {
-  List<RoosterItem> items = [];
+  Map<String, List<RoosterItem>> itemsCache = {};
+  DateTime currentDate = DateTime.now();
+  PageController pageController = PageController(initialPage: 1000);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentDate();
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    return PageView.builder(
+      controller: pageController,
+      onPageChanged: (index) {
+        final dayOffset = index - 1000;
+        currentDate = DateTime.now().add(Duration(days: dayOffset));
+        _loadCurrentDate();
+      },
+      itemBuilder: (context, index) {
+        final dayOffset = index - 1000;
+        final date = DateTime.now().add(Duration(days: dayOffset));
+        final dateKey = DateFormat('yyyy-MM-dd').format(date);
+        final items = itemsCache[dateKey] ?? [];
+
+        return _buildScheduleList(items);
+      },
+    );
+  }
+
+  Widget _buildScheduleList(List<RoosterItem> items) {
     final theme = Theme.of(context);
 
     return ListView.separated(
@@ -62,8 +95,11 @@ class RoosterState extends State<Rooster> {
     );
   }
 
-  void changeDate(String date) async {
-    var appointments = await widget.api.getAppointmentsForAttendee(date);
+  void _loadCurrentDate() async {
+    final dateKey = DateFormat('yyyy-MM-dd').format(currentDate);
+    if (itemsCache.containsKey(dateKey)) return;
+
+    var appointments = await widget.api.getAppointmentsForAttendee(dateKey);
 
     var roosterItems = await Future.wait(
       appointments.map(
@@ -82,10 +118,25 @@ class RoosterState extends State<Rooster> {
       ),
     );
 
-    // error fix
     if (!mounted) return;
 
-    setState(() => items = roosterItems);
+    setState(() {
+      itemsCache[dateKey] = roosterItems;
+    });
+  }
+
+  void changeDate(String date) async {
+    currentDate = DateFormat('yyyy-MM-dd').parse(date);
+
+    // Calculate the offset from today and update PageController
+    final now = DateTime.now();
+    final dayOffset = currentDate
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+    final newPage = 1000 + dayOffset;
+
+    pageController.jumpToPage(newPage);
+    _loadCurrentDate();
   }
 
   void _showAppointmentBottomSheet(BuildContext context, RoosterItem item) {
@@ -127,8 +178,15 @@ class RoosterState extends State<Rooster> {
                 const SizedBox(width: 10),
                 Text(
                   "${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}",
-                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 20),
+                const SizedBox(width: 10),
+                Text(DateFormat("MMMM d, yyyy").format(item.appointment.start)),
               ],
             ),
             const SizedBox(height: 14),
@@ -136,10 +194,7 @@ class RoosterState extends State<Rooster> {
               children: [
                 const Icon(Icons.location_on, size: 20),
                 const SizedBox(width: 10),
-                Text(
-                  item.location?.code ?? 'No location found',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text(item.location?.code ?? 'No location found'),
               ],
             ),
             const SizedBox(height: 14),
@@ -152,7 +207,6 @@ class RoosterState extends State<Rooster> {
                     item.teacher != null
                         ? "${item.teacher!.code} (${item.teacher!.login})"
                         : 'No teacher found',
-                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
               ],
@@ -165,7 +219,6 @@ class RoosterState extends State<Rooster> {
                 Expanded(
                   child: Text(
                     item.group != null ? item.group!.code : 'No class found',
-                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
               ],
