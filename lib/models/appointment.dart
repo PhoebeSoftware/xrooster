@@ -7,6 +7,7 @@ part 'appointment.g.dart';
 class Appointment {
   final int id;
   final String name;
+  @JsonKey(defaultValue: '')
   final String summary;
   final DateTime start;
   final DateTime end;
