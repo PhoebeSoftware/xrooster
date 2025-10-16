@@ -66,46 +66,10 @@ class WeekListState extends State<WeekList> {
           setState(() {
             selectedDayString = dayString;
           });
-          _scrollToSelectedDay();
         }
       };
 
       _pageController!.addListener(_pageListener!);
-    }
-  }
-
-  void _scrollToSelectedDay() {
-    final selectedDate = DateFormat('yyyy-MM-dd').parse(selectedDayString);
-
-    final selectedWeekday = selectedDate.weekday;
-    final daysFromMonday = selectedWeekday == DateTime.sunday
-        ? 6 // Zondag is 6 dagen na maandag van de vorige week
-        : selectedWeekday - DateTime.monday;
-
-    final selectedWeekMonday = selectedDate.subtract(
-      Duration(days: daysFromMonday),
-    );
-
-    final now = DateTime.now();
-    final nowWeekday = now.weekday;
-    final currentWeekDaysFromMonday = nowWeekday == DateTime.sunday
-        ? 6
-        : nowWeekday - DateTime.monday;
-
-    final currentWeekMonday = now.subtract(
-      Duration(days: currentWeekDaysFromMonday),
-    );
-
-    final weeksDifference =
-        selectedWeekMonday.difference(currentWeekMonday).inDays ~/ 7;
-    final targetPage = 1000 + weeksDifference;
-
-    if (_weekPageController.hasClients) {
-      _weekPageController.animateToPage(
-        targetPage,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
     }
   }
 

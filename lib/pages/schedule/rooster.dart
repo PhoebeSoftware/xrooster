@@ -35,6 +35,10 @@ class RoosterState extends State<Rooster> {
   DateTime currentDate = DateTime.now();
   PageController pageController = PageController(initialPage: 1000);
 
+  int _previousPageIndex = 1000;
+
+  bool _suppressOnPageChanged = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +56,29 @@ class RoosterState extends State<Rooster> {
     return PageView.builder(
       controller: pageController,
       onPageChanged: (index) {
+        if (_suppressOnPageChanged) return;
+
+        final prevIndex = _previousPageIndex;
+        final prevDate = DateTime.now().add(Duration(days: prevIndex - 1000));
+        final newDate = DateTime.now().add(Duration(days: index - 1000));
+
+        // Blokkeer scroll tussen weken via dag scroll.
+        if ((prevDate.weekday == DateTime.sunday &&
+                newDate.weekday == DateTime.monday) ||
+            (prevDate.weekday == DateTime.monday &&
+                newDate.weekday == DateTime.sunday)) {
+          _suppressOnPageChanged = true;
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            pageController.jumpToPage(prevIndex);
+
+            Future.microtask(() => _suppressOnPageChanged = false);
+          });
+          return;
+        }
+
+        _previousPageIndex = index;
         final dayOffset = index - 1000;
         currentDate = DateTime.now().add(Duration(days: dayOffset));
         _loadCurrentDate();
@@ -135,6 +162,7 @@ class RoosterState extends State<Rooster> {
         .inDays;
     final newPage = 1000 + dayOffset;
 
+    _previousPageIndex = newPage;
     pageController.jumpToPage(newPage);
     _loadCurrentDate();
   }
