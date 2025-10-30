@@ -1,32 +1,59 @@
-name: Build Flutter APK on Release
+name: Build Flutter APK and IPA on Release
 
 on:
-    release:
-        types: [created]
+  release:
+    types: [created]
 
 jobs:
-    build:
-        name: Build Flutter APK
-        runs-on: ubuntu-latest
+  android:
+    name: Build Flutter APK
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  flutter-version: "3.24.3"
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.3"
 
-            - name: Install dependencies
-              run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-            - name: Build release APK
-              run: flutter build apk --release
+      - name: Build release APK
+        run: flutter build apk --release
 
-            - name: Upload APK to release assets
-              uses: softprops/action-gh-release@v2
-              with:
-                  files: build/app/outputs/flutter-apk/app-release.apk
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload APK to release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ios:
+    name: Build Flutter IPA
+    runs-on: macos-latest
+    needs: android
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.3"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build IPA
+        run: flutter build ipa --release
+
+      - name: Upload IPA to release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/ios/ipa/*.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
