@@ -33,7 +33,7 @@ jobs:
 
   ios:
     name: Build Flutter IPA
-    runs-on: macos-latest
+    runs-on: macos-13
     needs: android
 
     steps:
