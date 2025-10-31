@@ -48,8 +48,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build IPA
+      - name: Build app
         run: flutter build ipa --no-codesign --release
+
+      - name: Extract IPA
+        run: |
+          mkdir -p build/ios/ipa
+          cd build/ios/archive/Runner.xcarchive/Products/Applications
+          zip -r ../../../../ipa/Runner.ipa Runner.app
 
       - name: Upload IPA to release assets
         uses: softprops/action-gh-release@v2
