@@ -34,7 +34,6 @@ jobs:
   ios:
     name: Build Flutter IPA
     runs-on: macos-13
-    needs: android
 
     steps:
       - name: Checkout repository
