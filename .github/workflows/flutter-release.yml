@@ -44,19 +44,30 @@ jobs:
         with:
           flutter-version: "3.35.7"
 
+      - name: Check Xcode version
+        run: |
+          which xcodebuild
+          xcodebuild -version
+
+      - name: Set up Xcode environment
+        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build app
         run: flutter build ipa --no-codesign --release
-
-      - name: Extract IPA
+        
+      - name: Package unsigned IPA
         run: |
           mkdir -p build/ios/ipa
           cd build/ios/archive/Runner.xcarchive/Products/Applications
           zip -r ../../../../ipa/Runner.ipa Runner.app
 
-      - name: Upload IPA to release assets
+      - name: Verify IPA file
+        run: ls -lh build/ios/ipa
+
+      - name: Upload unsigned IPA artifact
         uses: softprops/action-gh-release@v2
         with:
           files: build/ios/ipa/*.ipa
