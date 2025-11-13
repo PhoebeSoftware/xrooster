@@ -57,6 +57,7 @@ jobs:
         
       - name: Package unsigned IPA
         run: |
+          ls build
           cd build/ios/iphoneos
           mkdir Payload
           cp Runner.app Payload
