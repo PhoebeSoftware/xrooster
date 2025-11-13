@@ -49,9 +49,6 @@ jobs:
           which xcodebuild
           xcodebuild -version
 
-      - name: Set up Xcode environment
-        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -60,9 +57,10 @@ jobs:
         
       - name: Package unsigned IPA
         run: |
-          mkdir -p build/ios/ipa
-          cd build/ios/archive/Runner.xcarchive/Products/Applications
-          zip -r ../../../../ipa/Runner.ipa Runner.app
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp Runner.app Payload
+          zip -r Runner.ipa Payload
 
       - name: Verify IPA file
         run: ls -lh build/ios/ipa
@@ -70,6 +68,6 @@ jobs:
       - name: Upload unsigned IPA artifact
         uses: softprops/action-gh-release@v2
         with:
-          files: build/ios/ipa/*.ipa
+          files: build/ios/iphoneos/*.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
