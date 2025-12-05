@@ -32,43 +32,46 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   ios:
-    name: Build Flutter IPA
-    runs-on: macos-13
-
+    name: Build Flutter IPA (unsigned)
+    runs-on: macos-latest
+  
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-
+  
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.7"
-
-      - name: Check Xcode version
-        run: |
-          which xcodebuild
-          xcodebuild -version
-
+  
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Build app
+  
+      - name: Build XCArchive (unsigned)
         run: flutter build ipa --no-codesign --release
-        
-      - name: Package unsigned IPA
+  
+      - name: Create IPA manually
         run: |
-          ls build/ios
-          cd build/ios/iphoneos
-          mkdir Payload
-          cp Runner.app Payload
-          zip -r Runner.ipa Payload
-
-      - name: Verify IPA file
-        run: ls -lh build/ios/ipa
-
-      - name: Upload unsigned IPA artifact
+          ARCHIVE_PATH="build/ios/archive/Runner.xcarchive"
+  
+          echo "Extracting .app…"
+          APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
+  
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+  
+          echo "Creating IPA…"
+          zip -r Runner-unsigned.ipa Payload
+  
+          mkdir -p build/ios/ipa
+          mv Runner-unsigned.ipa build/ios/ipa/
+  
+          ls -lh build/ios/ipa
+  
+      - name: Upload unsigned IPA
         uses: softprops/action-gh-release@v2
         with:
-          files: build/ios/iphoneos/*.ipa
+          files: build/ios/ipa/*.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
