@@ -20,28 +20,73 @@ class MyxApi extends ChangeNotifier {
   late final Dio _dio;
 
   final navigatorKey = GlobalKey<NavigatorState>();
-  final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> scaffoldKey;
   final SharedPreferencesWithCache cache;
   final SharedPreferencesAsync prefs;
 
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
-  MyxApi({required this.cache, required this.prefs, String? tokenOverride}) {
+  MyxApi({
+    required this.cache,
+    required this.prefs,
+    required this.scaffoldKey,
+    String? tokenOverride,
+  }) {
     final usedToken = tokenOverride ?? token;
     _dio = Dio(
       BaseOptions(
         baseUrl: 'https://talland.myx.nl/api/',
         headers: {"Authorization": "Bearer $usedToken"},
-        validateStatus: (status) {
-          if (status == 401) {
-            debugPrint("token invalid");
+        validateStatus: (_) =>
+            true, // no need for dio handling, we do (most) errors ourself
+      ),
+    );
 
-            // invalidate
+    // add dio request interceptor for api errors
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          final statusCode = response.statusCode ?? 000;
+          final statusMessage = response.statusMessage ?? "No status messsage";
+
+          // should show snackbar?
+          if (statusCode == 200) {
+            handler.next(response);
+            return;
+          }
+
+          debugPrint(statusCode.toString());
+          debugPrint(statusMessage);
+
+          scaffoldKey.currentState?.showSnackBar(
+            SnackBar(
+              content: Text('API Error: $statusCode $statusMessage'),
+              duration: Duration(seconds: 10),
+            ),
+          );
+
+          // check if unauthorized
+          if (statusCode == 401) {
+            debugPrint("Interceptor: MyX Token invalid!");
+
+            // invalidate token & re-render app
             prefs.remove("token");
             notifyListeners();
           }
 
-          return true;
+          handler.next(response);
+        },
+        onError: (DioException e, handler) {
+          final statusCode = e.response?.statusCode ?? 000;
+          final statusMessage = e.response?.statusMessage ?? "No status messsage";
+
+          scaffoldKey.currentState?.showSnackBar(
+            SnackBar(
+              content: Text('API Error: $statusCode $statusMessage'),
+              duration: Duration(seconds: 10),
+            ),
+          );
+          handler.next(e);
         },
       ),
     );
@@ -49,29 +94,23 @@ class MyxApi extends ChangeNotifier {
     // Certificate fix for self-signed certificates
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
+          true;
       return client;
     };
   }
 
   Future<List<GroupAttendee>> getAllAttendees(String type) async {
-    try {
-      final response = await _dio.get('Attendee/Type/$type');
-      if (response.statusCode != 200) {
-        debugPrint("Failed to get $type attendees: ${response.statusCode}");
-        return List.empty();
-      }
-
-      List<dynamic> attendees = response.data['result'] as List<dynamic>;
-
-      return attendees
-          .map((e) => GroupAttendee.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      debugPrint("Error fetching $type attendees: $e");
-      return List.empty();
+    final response = await _dio.get('Attendee/Type/$type');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to get $type attendees: ${response.statusMessage}');
     }
+
+    List<dynamic> attendees = response.data['result'] as List<dynamic>;
+
+    return attendees
+        .map((e) => GroupAttendee.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Location> getLocationById(int locationId) async {
@@ -79,55 +118,53 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return Location.fromJson(
-          jsonDecode(cachedJson) as Map<String, dynamic>,
-        );
+        return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        return Future.error('Error parsing cached appointments: $e');
+        debugPrint('Error parsing cached location with locationId $locationId: $e');
+        debugPrint('Invalidating cached location and re-fetching.');
+
+        cache.remove(cacheKey);
       }
     }
 
-    try {
-      final response = await _dio.get('Attendee/$locationId');
-      if (response.statusCode != 200) {
-        return Future.error(
-          "Failed to get appointments: ${response.statusCode}",
-        );
-      }
-
-      final locationJson = response.data['result'] as Map<String, dynamic>;
-
-      await cache.setString(cacheKey, jsonEncode(locationJson));
-      return Location.fromJson(locationJson);
-    } catch (e) {
-      return Future.error("Error fetching appointments: $e");
+    final response = await _dio.get('Attendee/$locationId');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to get location $locationId: ${response.statusMessage}');
     }
+
+    final locationJson = response.data['result'] as Map<String, dynamic>;
+
+    await cache.setString(cacheKey, jsonEncode(locationJson));
+    return Location.fromJson(locationJson);
   }
 
   Future<Teacher> getTeacherById(int teacherId) async {
     final cacheKey = 'teacher:$teacherId';
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
+      if (cachedJson.isEmpty) {
+        cache.remove(cacheKey);
+      }
+
       try {
         return Teacher.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        return Future.error('Error parsing cached teacher: $e');
+        debugPrint('Error parsing cached teacher with teacherId $teacherId: $e');
+        debugPrint('Invalidating cached teacher and re-fetching.');
+
+        cache.remove(cacheKey);
       }
     }
 
-    try {
-      final response = await _dio.get('Attendee/$teacherId');
-      if (response.statusCode != 200) {
-        return Future.error("Failed to get teacher: ${response.statusCode}");
-      }
-
-      final teacherJson = response.data['result'] as Map<String, dynamic>;
-
-      await cache.setString(cacheKey, jsonEncode(teacherJson));
-      return Teacher.fromJson(teacherJson);
-    } catch (e) {
-      return Future.error("Error fetching teacher: $e");
+    final response = await _dio.get('Attendee/$teacherId');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to get teacher $teacherId: ${response.statusMessage}');
     }
+
+    final teacherJson = response.data['result'] as Map<String, dynamic>;
+
+    await cache.setString(cacheKey, jsonEncode(teacherJson));
+    return Teacher.fromJson(teacherJson);
   }
 
   Future<GroupAttendee> getGroupById(int groupId) async {
@@ -135,27 +172,24 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return GroupAttendee.fromJson(
-          jsonDecode(cachedJson) as Map<String, dynamic>,
-        );
+        return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        return Future.error('Error parsing cached group: $e');
+        debugPrint('Error parsing cached groupAttendee with groupid $groupId: $e');
+        debugPrint('Invalidating cached groupAttendee and re-fetching.');
+
+        cache.remove(cacheKey);
       }
     }
 
-    try {
-      final response = await _dio.get('Attendee/$groupId');
-      if (response.statusCode != 200) {
-        return Future.error("Failed to get group: ${response.statusCode}");
-      }
-
-      final groupJson = response.data['result'] as Map<String, dynamic>;
-
-      await cache.setString(cacheKey, jsonEncode(groupJson));
-      return GroupAttendee.fromJson(groupJson);
-    } catch (e) {
-      return Future.error("Error fetching group: $e");
+    final response = await _dio.get('Attendee/$groupId');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to get group $groupId: ${response.statusMessage}');
     }
+
+    final groupJson = response.data['result'] as Map<String, dynamic>;
+
+    await cache.setString(cacheKey, jsonEncode(groupJson));
+    return GroupAttendee.fromJson(groupJson);
   }
 
   Future<List<Appointment>> getAppointmentsForAttendee(String date) async {
@@ -163,7 +197,7 @@ class MyxApi extends ChangeNotifier {
     if (attendeeId == null) {
       scaffoldKey.currentState?.showSnackBar(
         SnackBar(
-          content: Text('This is an in-app notification!'),
+          content: Text('Select an attendee before checking the schedule!'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -175,71 +209,54 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        if (cachedJson.isEmpty) {
-          debugPrint('Cached is empty');
-          return List.empty();
-        }
-
         return cachedJson
             .split(';')
-            .where((e) => e.isNotEmpty) // Filter out empty strings
+            .where((e) => e.isNotEmpty) // filter out empty strings
             .map((a) {
-              try {
-                return Appointment.fromJson(jsonDecode(a));
-              } catch (parseError) {
-                debugPrint(
-                  'Error parsing appointment JSON: $parseError, JSON: $a',
-                );
-                return null;
-              }
+              return Appointment.fromJson(jsonDecode(a));
             })
-            .where((a) => a != null)
             .cast<Appointment>()
             .toList();
       } catch (e) {
-        debugPrint('Error parsing cached appointments: $e');
-        return List.empty();
+        debugPrint('Error parsing cached appointments with date $date: $e');
+        debugPrint('Invalidating cached appointments and re-fetching.');
+
+        cache.remove(cacheKey);
       }
     }
 
-    try {
-      final response = await _dio.get(
-        'Appointment/Date/$date/$date/Attendee?id=$attendeeId',
+    final response = await _dio.get(
+      'Appointment/Date/$date/$date/Attendee?id=$attendeeId',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to get appointments for date $date: ${response.statusMessage}',
       );
-      if (response.statusCode != 200) {
-        debugPrint("Failed to get appointments: ${response.statusCode}");
-        return List.empty();
-      }
-
-      final appointmentsMap =
-          response.data['result']['appointments'] as Map<String, dynamic>;
-
-      // sort appointments with start timedate
-      final sorted = appointmentsMap.values.toList()
-        ..sort((a, b) {
-          DateTime parse(String? stringTime) =>
-              stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
-          return parse(
-            a['start'] as String?,
-          ).compareTo(parse(b['start'] as String?));
-        });
-
-      final appointments = sorted
-          .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
-          .toList();
-
-      await cache.setString(
-        cacheKey,
-        appointments
-            .map((appointment) => jsonEncode(appointment.toJson()))
-            .toList()
-            .join(';'),
-      );
-
-      return appointments;
-    } catch (e) {
-      debugPrint("Error fetching appointments: $e");
-      return List.empty();
     }
+
+    final appointmentsMap =
+        response.data['result']['appointments'] as Map<String, dynamic>;
+
+    // sort appointments with start timedate
+    final sorted = appointmentsMap.values.toList()
+      ..sort((a, b) {
+        DateTime parse(String? stringTime) =>
+            stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
+        return parse(a['start'] as String?).compareTo(parse(b['start'] as String?));
+      });
+
+    final appointments = sorted
+        .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
+        .toList();
+
+    await cache.setString(
+      cacheKey,
+      appointments
+          .map((appointment) => jsonEncode(appointment.toJson()))
+          .toList()
+          .join(';'),
+    );
+
+    return appointments;
   }
 }
