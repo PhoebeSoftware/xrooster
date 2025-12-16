@@ -24,9 +24,12 @@ class MyxApi extends ChangeNotifier {
   final SharedPreferencesWithCache cache;
   final SharedPreferencesAsync prefs;
 
+  final String baseUrl;
+
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
   MyxApi({
+    required this.baseUrl,
     required this.cache,
     required this.prefs,
     required this.scaffoldKey,
@@ -35,7 +38,7 @@ class MyxApi extends ChangeNotifier {
     final usedToken = tokenOverride ?? token;
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://talland.myx.nl/api/',
+        baseUrl: baseUrl,
         headers: {"Authorization": "Bearer $usedToken"},
         validateStatus: (_) =>
             true, // no need for dio handling, we do (most) errors ourself

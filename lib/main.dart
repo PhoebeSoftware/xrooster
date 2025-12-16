@@ -10,6 +10,8 @@ import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
+const apiBaseUrl = 'https://talland.myx.nl/api/';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
@@ -34,6 +36,7 @@ Future<void> main() async {
       onToken: (token) async {
         var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
         var api = MyxApi(
+          baseUrl: apiBaseUrl,
           cache: cache,
           prefs: prefs,
           tokenOverride: token,
@@ -110,6 +113,7 @@ class XAppState extends State<XApp> {
     );
 
     return MyxApi(
+      baseUrl: apiBaseUrl,
       cache: cache,
       prefs: prefs,
       tokenOverride: token,
