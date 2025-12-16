@@ -191,11 +191,11 @@ class XAppState extends State<XApp> {
             return MaterialApp(
               title: XApp.title,
               navigatorKey: widget.navigatorKey,
+              scaffoldMessengerKey: widget.scaffoldKey,
               theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
               darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
               themeMode: themeMode,
               home: Scaffold(
-                key: widget.scaffoldKey,
                 bottomNavigationBar: BottomNavigationBar(
                   currentIndex: _currentIndex,
                   onTap: (index) {
