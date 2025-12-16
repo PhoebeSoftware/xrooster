@@ -32,13 +32,19 @@ Future<void> main() async {
   runApp(
     inAppWebViewApp(
       onToken: (token) async {
-        var api = MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
+        var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+        var api = MyxApi(
+          cache: cache,
+          prefs: prefs,
+          tokenOverride: token,
+          scaffoldKey: scaffoldKey,
+        );
 
         // Load saved theme preference
         final sp = await SharedPreferences.getInstance();
         final theme = sp.getString('theme') ?? 'system';
 
-        runApp(XApp(key: null, api: api, initialTheme: theme));
+        runApp(XApp(key: null, api: api, initialTheme: theme, scaffoldKey: scaffoldKey));
       },
     ),
   );
@@ -48,13 +54,18 @@ class XApp extends StatefulWidget {
   final MyxApi api;
   final String initialTheme;
 
-  XApp({super.key, required this.api, required this.initialTheme});
+  XApp({
+    super.key,
+    required this.api,
+    required this.scaffoldKey,
+    required this.initialTheme,
+  });
 
   static String title = 'XRooster';
 
   final navigatorKey = GlobalKey<NavigatorState>();
   final rooster = GlobalKey<RoosterState>();
-  final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> scaffoldKey;
 
   @override
   State<XApp> createState() => XAppState();
@@ -66,8 +77,10 @@ class XAppState extends State<XApp> {
   late String _themeMode;
   var prefs = SharedPreferencesAsync();
   late MyxApi _api;
+
   // cached future so FutureBuilder doesn't recreate a new future each build
   late Future<MyxApi?> _apiFuture;
+
   // ensure we only check selectedAttendee once to avoid setState loops
   bool _checkedSelectedAttendee = false;
 
@@ -96,7 +109,12 @@ class XAppState extends State<XApp> {
       cacheOptions: SharedPreferencesWithCacheOptions(),
     );
 
-    return MyxApi(cache: cache, prefs: prefs, tokenOverride: token);
+    return MyxApi(
+      cache: cache,
+      prefs: prefs,
+      tokenOverride: token,
+      scaffoldKey: widget.scaffoldKey,
+    );
   }
 
   ThemeMode get themeMode {
@@ -141,9 +159,7 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          ); // api not ready
+          return const Center(child: CircularProgressIndicator()); // api not ready
         }
 
         final api = snapshot.data;
@@ -206,10 +222,7 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.school),
-                      label: 'Attendees',
-                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',
