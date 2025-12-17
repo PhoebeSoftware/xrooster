@@ -1,8 +1,9 @@
 name: Build Flutter APK and IPA on Release
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - release
 
 jobs:
   android:
@@ -10,14 +11,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Read version from pubspec.yaml
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Get commit ID
-        id: vars
         run: echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      # -------- Gradle cache --------
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -37,61 +40,81 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
-        run: flutter build apk --verbose --release --dart-define=GIT_COMMIT=$COMMIT_ID
+      - name: Build APK
+        run: flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID
 
-      - name: Upload APK to release assets
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
   ios:
     name: Build Flutter IPA (unsigned)
     runs-on: macos-latest
-  
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Read version from pubspec.yaml
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Get commit ID
-        id: vars
         run: echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
-    
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.5"
           cache: true
-  
+
       - name: Install dependencies
         run: flutter pub get
-  
+
       - name: Build XCArchive (unsigned)
-        run: flutter build ipa --verbose --no-codesign --release --dart-define=GIT_COMMIT=$COMMIT_ID
-  
+        run: flutter build ipa --no-codesign --release --dart-define=GIT_COMMIT=$COMMIT_ID
+
       - name: Create IPA manually
         run: |
           ARCHIVE_PATH="build/ios/archive/Runner.xcarchive"
-  
-          echo "Extracting .app…"
           APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
-  
+
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-  
-          echo "Creating IPA…"
           zip -r Runner-unsigned.ipa Payload
-  
-          mkdir -p build/ios/ipa
-          mv Runner-unsigned.ipa build/ios/ipa/
-  
-          ls -lh build/ios/ipa
-  
-      - name: Upload unsigned IPA
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa
+          path: Runner-unsigned.ipa
+
+  release:
+    name: Create GitHub Release
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from pubspec.yaml
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/ios/ipa/*.ipa
+          tag_name: v${{ env.APP_VERSION }}
+          name: v${{ env.APP_VERSION }}
+          generate_release_notes: true
+          files: |
+            apk/app-release.apk
+            ipa/Runner-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
