@@ -26,7 +26,7 @@ jobs:
         run: flutter pub get
 
       - name: Build release APK
-        run: flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID
+        run: flutter build apk --verbose --release --dart-define=GIT_COMMIT=$COMMIT_ID
 
       - name: Upload APK to release assets
         uses: softprops/action-gh-release@v2
@@ -56,7 +56,7 @@ jobs:
         run: flutter pub get
   
       - name: Build XCArchive (unsigned)
-        run: flutter build ipa --no-codesign --release --dart-define=GIT_COMMIT=$COMMIT_ID
+        run: flutter build ipa --verbose --no-codesign --release --dart-define=GIT_COMMIT=$COMMIT_ID
   
       - name: Create IPA manually
         run: |
