@@ -116,13 +116,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 final version = snapshot.hasData
                     ? snapshot.data!.version
                     : '...';
-                var longGitCommit = const String.fromEnvironment('GIT_COMMIT');
-                String shortGitCommit;
+                const longGitCommit = String.fromEnvironment(
+                  'GIT_COMMIT',
+                  defaultValue: 'unknown',
+                );
 
-                if (longGitCommit.isEmpty) {
-                  longGitCommit = 'unknown';
-                  shortGitCommit = 'unknown';
-                } else {
+                String shortGitCommit = 'unknown';
+                if (longGitCommit != 'unknown') {
                   shortGitCommit = longGitCommit.substring(0, 7);
                 }
                 return InkWell(
