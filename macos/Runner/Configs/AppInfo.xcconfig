@@ -8,7 +8,7 @@
 PRODUCT_NAME = xrooster
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.xrooster
+PRODUCT_BUNDLE_IDENTIFIER = com.phoebesoftware.xrooster
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
