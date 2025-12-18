@@ -104,12 +104,29 @@ class MyxApi extends ChangeNotifier {
   }
 
   Future<List<GroupAttendee>> getAllAttendees(String type) async {
+    final cacheKey = 'attendees:$type';
+    var cachedJson = cache.getString(cacheKey);
+    if (cachedJson != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(cachedJson) as List<dynamic>;
+        return decoded
+            .map((e) => GroupAttendee.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        debugPrint('Error parsing cached attendees for type $type: $e');
+        debugPrint('Invalidating cached attendees and re-fetching.');
+        cache.remove(cacheKey);
+      }
+    }
+
     final response = await _dio.get('Attendee/Type/$type');
     if (response.statusCode != 200) {
       throw Exception('Failed to get $type attendees: ${response.statusMessage}');
     }
 
     List<dynamic> attendees = response.data['result'] as List<dynamic>;
+
+    await cache.setString(cacheKey, jsonEncode(attendees));
 
     return attendees
         .map((e) => GroupAttendee.fromJson(e as Map<String, dynamic>))
