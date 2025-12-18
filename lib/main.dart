@@ -47,7 +47,14 @@ Future<void> main() async {
         final sp = await SharedPreferences.getInstance();
         final theme = sp.getString('theme') ?? 'system';
 
-        runApp(XApp(key: null, api: api, initialTheme: theme, scaffoldKey: scaffoldKey));
+        runApp(
+          XApp(
+            key: null,
+            api: api,
+            initialTheme: theme,
+            scaffoldKey: scaffoldKey,
+          ),
+        );
       },
     ),
   );
@@ -163,7 +170,9 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator()); // api not ready
+          return const Center(
+            child: CircularProgressIndicator(),
+          ); // api not ready
         }
 
         final api = snapshot.data;
@@ -226,7 +235,10 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.school),
+                      label: 'Attendees',
+                    ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',
