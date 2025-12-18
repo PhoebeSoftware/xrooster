@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/api/myx.dart';
@@ -27,18 +28,31 @@ class AttendeeState extends State<AttendeePage> {
   @override
   void initState() {
     super.initState();
-    Future.wait([
-      widget.api.getAllAttendees("group"),
-      widget.api.getAllAttendees("teacher"),
-    ]).then((results) {
-      // error fix
+    _loadAttendees();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _loadAttendees() async {
+    try {
+      final results = await Future.wait([
+        widget.api.getAllAttendees("group"),
+        widget.api.getAllAttendees("teacher"),
+      ]);
+
       if (!mounted) return;
+
       setState(() {
         _allItems = [...results[0], ...results[1]];
         _filteredItems = _allItems;
       });
-    });
-    _searchController.addListener(_onSearchChanged);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      debugPrint("ApiError: ${e.response?.statusMessage}");
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")));
+    }
   }
 
   @override
@@ -89,9 +103,7 @@ class AttendeeState extends State<AttendeePage> {
                     },
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                   tileColor: theme.hoverColor,
                 );
               },
@@ -114,10 +126,7 @@ class SearchTextField extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Search',
-        ),
+        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
       ),
     );
   }

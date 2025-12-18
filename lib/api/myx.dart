@@ -40,33 +40,15 @@ class MyxApi extends ChangeNotifier {
       BaseOptions(
         baseUrl: baseUrl,
         headers: {"Authorization": "Bearer $usedToken"},
-        validateStatus: (_) =>
-            true, // no need for dio handling, we do (most) errors ourself
+        validateStatus: (status) => status != null && status >= 200 && status < 300,
       ),
     );
 
     // add dio request interceptor for api errors
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onResponse: (response, handler) {
-          final statusCode = response.statusCode ?? 000;
-          final statusMessage = response.statusMessage ?? "No status messsage";
-
-          // should show snackbar?
-          if (statusCode == 200) {
-            handler.next(response);
-            return;
-          }
-
-          debugPrint(statusCode.toString());
-          debugPrint(statusMessage);
-
-          scaffoldKey.currentState?.showSnackBar(
-            SnackBar(
-              content: Text('API Error: $statusCode $statusMessage'),
-              duration: Duration(seconds: 10),
-            ),
-          );
+        onError: (DioException e, handler) {
+          final statusCode = e.response?.statusCode ?? 000;
 
           // check if unauthorized
           if (statusCode == 401) {
@@ -77,19 +59,6 @@ class MyxApi extends ChangeNotifier {
             notifyListeners();
           }
 
-          handler.next(response);
-        },
-        onError: (DioException e, handler) {
-          final statusCode = e.response?.statusCode ?? 000;
-          final statusMessage =
-              e.response?.statusMessage ?? "No status messsage";
-
-          scaffoldKey.currentState?.showSnackBar(
-            SnackBar(
-              content: Text('API Error: $statusCode $statusMessage'),
-              duration: Duration(seconds: 10),
-            ),
-          );
           handler.next(e);
         },
       ),
@@ -98,8 +67,8 @@ class MyxApi extends ChangeNotifier {
     // Certificate fix for self-signed certificates
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
+          true;
       return client;
     };
   }
@@ -121,12 +90,6 @@ class MyxApi extends ChangeNotifier {
     }
 
     final response = await _dio.get('Attendee/Type/$type');
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to get $type attendees: ${response.statusMessage}',
-      );
-    }
-
     List<dynamic> attendees = response.data['result'] as List<dynamic>;
 
     await cache.setString(cacheKey, jsonEncode(attendees));
@@ -141,13 +104,9 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return Location.fromJson(
-          jsonDecode(cachedJson) as Map<String, dynamic>,
-        );
+        return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        debugPrint(
-          'Error parsing cached location with locationId $locationId: $e',
-        );
+        debugPrint('Error parsing cached location with locationId $locationId: $e');
         debugPrint('Invalidating cached location and re-fetching.');
 
         cache.remove(cacheKey);
@@ -155,12 +114,6 @@ class MyxApi extends ChangeNotifier {
     }
 
     final response = await _dio.get('Attendee/$locationId');
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to get location $locationId: ${response.statusMessage}',
-      );
-    }
-
     final locationJson = response.data['result'] as Map<String, dynamic>;
 
     await cache.setString(cacheKey, jsonEncode(locationJson));
@@ -171,16 +124,10 @@ class MyxApi extends ChangeNotifier {
     final cacheKey = 'teacher:$teacherId';
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
-      if (cachedJson.isEmpty) {
-        cache.remove(cacheKey);
-      }
-
       try {
         return Teacher.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        debugPrint(
-          'Error parsing cached teacher with teacherId $teacherId: $e',
-        );
+        debugPrint('Error parsing cached teacher with teacherId $teacherId: $e');
         debugPrint('Invalidating cached teacher and re-fetching.');
 
         cache.remove(cacheKey);
@@ -188,12 +135,6 @@ class MyxApi extends ChangeNotifier {
     }
 
     final response = await _dio.get('Attendee/$teacherId');
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to get teacher $teacherId: ${response.statusMessage}',
-      );
-    }
-
     final teacherJson = response.data['result'] as Map<String, dynamic>;
 
     await cache.setString(cacheKey, jsonEncode(teacherJson));
@@ -205,13 +146,9 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return GroupAttendee.fromJson(
-          jsonDecode(cachedJson) as Map<String, dynamic>,
-        );
+        return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        debugPrint(
-          'Error parsing cached groupAttendee with groupid $groupId: $e',
-        );
+        debugPrint('Error parsing cached groupAttendee with groupid $groupId: $e');
         debugPrint('Invalidating cached groupAttendee and re-fetching.');
 
         cache.remove(cacheKey);
@@ -219,12 +156,6 @@ class MyxApi extends ChangeNotifier {
     }
 
     final response = await _dio.get('Attendee/$groupId');
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to get group $groupId: ${response.statusMessage}',
-      );
-    }
-
     final groupJson = response.data['result'] as Map<String, dynamic>;
 
     await cache.setString(cacheKey, jsonEncode(groupJson));
@@ -241,10 +172,11 @@ class MyxApi extends ChangeNotifier {
         ),
       );
 
-      return List.empty();
+      return [];
     }
 
     final cacheKey = 'appointments:$date:$attendeeId';
+
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
@@ -267,11 +199,6 @@ class MyxApi extends ChangeNotifier {
     final response = await _dio.get(
       'Appointment/Date/$date/$date/Attendee?id=$attendeeId',
     );
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to get appointments for date $date: ${response.statusMessage}',
-      );
-    }
 
     final appointmentsMap =
         response.data['result']['appointments'] as Map<String, dynamic>;
@@ -281,9 +208,7 @@ class MyxApi extends ChangeNotifier {
       ..sort((a, b) {
         DateTime parse(String? stringTime) =>
             stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
-        return parse(
-          a['start'] as String?,
-        ).compareTo(parse(b['start'] as String?));
+        return parse(a['start'] as String?).compareTo(parse(b['start'] as String?));
       });
 
     final appointments = sorted

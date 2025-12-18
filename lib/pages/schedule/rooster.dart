@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:xrooster/api/myx.dart';
@@ -51,6 +52,7 @@ class RoosterState extends State<Rooster> {
     super.dispose();
   }
 
+  // 1000 = date center point for infinite scrolling
   @override
   Widget build(BuildContext context) {
     return PageView.builder(
@@ -63,10 +65,8 @@ class RoosterState extends State<Rooster> {
         final newDate = DateTime.now().add(Duration(days: index - 1000));
 
         // Blokkeer scroll tussen weken via dag scroll.
-        if ((prevDate.weekday == DateTime.sunday &&
-                newDate.weekday == DateTime.monday) ||
-            (prevDate.weekday == DateTime.monday &&
-                newDate.weekday == DateTime.sunday)) {
+        if ((prevDate.weekday == DateTime.sunday && newDate.weekday == DateTime.monday) ||
+            (prevDate.weekday == DateTime.monday && newDate.weekday == DateTime.sunday)) {
           _suppressOnPageChanged = true;
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,9 +112,7 @@ class RoosterState extends State<Rooster> {
             "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
           tileColor: theme.hoverColor,
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
@@ -129,20 +127,34 @@ class RoosterState extends State<Rooster> {
     var appointments = await widget.api.getAppointmentsForAttendee(dateKey);
 
     var roosterItems = await Future.wait(
-      appointments.map(
-        (a) async => RoosterItem(
+      appointments.map((a) async {
+        // satisfy original null check on dio error
+        Future<T?> safeGet<T>(Future<T> future) async {
+          try {
+            return await future;
+          } on DioException catch (e) {
+            if (!mounted) return null;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')),
+            );
+            return null;
+          }
+        }
+
+        return RoosterItem(
           appointment: a,
           location: a.attendeeIds.classroom.isNotEmpty
-              ? await widget.api.getLocationById(a.attendeeIds.classroom[0])
+              ? await safeGet(widget.api.getLocationById(a.attendeeIds.classroom[0]))
               : null,
           teacher: a.attendeeIds.teacher.isNotEmpty
-              ? await widget.api.getTeacherById(a.attendeeIds.teacher[0])
+              ? await safeGet(widget.api.getTeacherById(a.attendeeIds.teacher[0]))
               : null,
           group: a.attendeeIds.group.isNotEmpty
-              ? await widget.api.getGroupById(a.attendeeIds.group[0])
+              ? await safeGet(widget.api.getGroupById(a.attendeeIds.group[0]))
               : null,
-        ),
-      ),
+        );
+      }),
     );
 
     if (!mounted) return;
@@ -190,15 +202,9 @@ class RoosterState extends State<Rooster> {
                 ),
               ),
             ),
-            Text(
-              item.appointment.name,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(item.appointment.name, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 10),
-            Text(
-              item.appointment.summary,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            Text(item.appointment.summary, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 22),
             Row(
               children: [
@@ -245,9 +251,7 @@ class RoosterState extends State<Rooster> {
                 const Icon(Icons.people, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    item.group != null ? item.group!.code : 'No class found',
-                  ),
+                  child: Text(item.group != null ? item.group!.code : 'No class found'),
                 ),
               ],
             ),
