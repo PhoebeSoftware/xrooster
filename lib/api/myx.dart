@@ -213,16 +213,15 @@ class MyxApi extends ChangeNotifier {
         .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
         .toList();
 
-    // sort week appointments by start timedate
-    weekAppointments.sort((a, b) {
-      return a.start.compareTo(b.start);
-    });
-
     // group week appointments into day appointment lists
     var dayAppointments = weekAppointments.groupListsBy(
       (a) => DateFormat('yyyy-MM-dd').format(a.start),
     );
 
+    // sort appointments within each day by start datetime
+    dayAppointments.forEach((_, appointments) {
+      appointments.sort((a, b) => a.start.compareTo(b.start));
+    });
     // store encoded week json in cache
     await cache.setString(
       cacheKey,
