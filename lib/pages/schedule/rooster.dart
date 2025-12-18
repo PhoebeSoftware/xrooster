@@ -127,7 +127,7 @@ class RoosterState extends State<Rooster> {
     if (itemsCache.containsKey(dateKey)) return;
 
     final firstDayOfWeek = currentDate.subtract(Duration(days: currentDate.weekday - 1));
-    final lastDayOfWeek = currentDate.add(Duration(days: currentDate.weekday - 1));
+    final lastDayOfWeek = currentDate.add(Duration(days: 7 - currentDate.weekday));
 
     final appointments = await widget.api.getAppointmentsForAttendee(
       apiFormat.format(firstDayOfWeek),
