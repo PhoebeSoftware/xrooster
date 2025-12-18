@@ -116,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 final version = snapshot.hasData
                     ? snapshot.data!.version
                     : '...';
-                var longGitCommit = String.fromEnvironment('GIT_COMMIT');
+                var longGitCommit = const String.fromEnvironment('GIT_COMMIT');
                 String shortGitCommit;
 
                 if (longGitCommit.isEmpty) {
