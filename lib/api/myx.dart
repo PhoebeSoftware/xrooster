@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/io.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:collection/collection.dart';
+
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/models/location.dart';
@@ -162,7 +165,10 @@ class MyxApi extends ChangeNotifier {
     return GroupAttendee.fromJson(groupJson);
   }
 
-  Future<List<Appointment>> getAppointmentsForAttendee(String date) async {
+  Future<Map<String, List<Appointment>>> getAppointmentsForAttendee(
+    String startDate,
+    String endDate,
+  ) async {
     final attendeeId = await prefs.getInt("selectedAttendee");
     if (attendeeId == null) {
       scaffoldKey.currentState?.showSnackBar(
@@ -172,24 +178,26 @@ class MyxApi extends ChangeNotifier {
         ),
       );
 
-      return [];
+      return {};
     }
 
-    final cacheKey = 'appointments:$date:$attendeeId';
+    final cacheKey = 'appointments:$startDate:$endDate:$attendeeId';
 
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return cachedJson
-            .split(';')
-            .where((e) => e.isNotEmpty) // filter out empty strings
-            .map((a) {
-              return Appointment.fromJson(jsonDecode(a));
-            })
-            .cast<Appointment>()
-            .toList();
+        final decoded = jsonDecode(cachedJson) as Map<String, dynamic>;
+        return decoded.map((d, a) {
+          final appointments = (a as List<dynamic>)
+              .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
+              .toList();
+
+          return MapEntry(d, appointments);
+        });
       } catch (e) {
-        debugPrint('Error parsing cached appointments with date $date: $e');
+        debugPrint(
+          'Error parsing cached appointments with date starting at $startDate: $e',
+        );
         debugPrint('Invalidating cached appointments and re-fetching.');
 
         cache.remove(cacheKey);
@@ -197,32 +205,33 @@ class MyxApi extends ChangeNotifier {
     }
 
     final response = await _dio.get(
-      'Appointment/Date/$date/$date/Attendee?id=$attendeeId',
+      'Appointment/Date/$startDate/$endDate/Attendee?id=$attendeeId',
     );
 
-    final appointmentsMap =
-        response.data['result']['appointments'] as Map<String, dynamic>;
-
-    // sort appointments with start timedate
-    final sorted = appointmentsMap.values.toList()
-      ..sort((a, b) {
-        DateTime parse(String? stringTime) =>
-            stringTime == null ? DateTime.now() : DateTime.parse(stringTime);
-        return parse(a['start'] as String?).compareTo(parse(b['start'] as String?));
-      });
-
-    final appointments = sorted
+    // map week appointments to type
+    final weekAppointments = (response.data['result']['appointments'] as Map).values
         .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
         .toList();
 
-    await cache.setString(
-      cacheKey,
-      appointments
-          .map((appointment) => jsonEncode(appointment.toJson()))
-          .toList()
-          .join(';'),
+    // group week appointments into day appointment lists
+    var dayAppointments = weekAppointments.groupListsBy(
+      (a) => DateFormat('yyyy-MM-dd').format(a.start),
     );
 
-    return appointments;
+    // sort appointments within each day by start datetime
+    dayAppointments.forEach((_, appointments) {
+      appointments.sort((a, b) => a.start.compareTo(b.start));
+    });
+    // store encoded week json in cache
+    await cache.setString(
+      cacheKey,
+      jsonEncode(
+        dayAppointments.map((date, appointments) {
+          return MapEntry(date, appointments.map((a) => a.toJson()).toList());
+        }),
+      ),
+    );
+
+    return dayAppointments;
   }
 }

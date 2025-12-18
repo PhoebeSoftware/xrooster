@@ -40,6 +40,8 @@ class RoosterState extends State<Rooster> {
 
   bool _suppressOnPageChanged = false;
 
+  DateFormat apiFormat = DateFormat('yyyy-MM-dd');
+
   @override
   void initState() {
     super.initState();
@@ -86,7 +88,7 @@ class RoosterState extends State<Rooster> {
       itemBuilder: (context, index) {
         final dayOffset = index - 1000;
         final date = DateTime.now().add(Duration(days: dayOffset));
-        final dateKey = DateFormat('yyyy-MM-dd').format(date);
+        final dateKey = apiFormat.format(date);
         final items = itemsCache[dateKey] ?? [];
 
         return _buildScheduleList(items);
@@ -121,51 +123,68 @@ class RoosterState extends State<Rooster> {
   }
 
   void _loadCurrentDate() async {
-    final dateKey = DateFormat('yyyy-MM-dd').format(currentDate);
+    final dateKey = apiFormat.format(currentDate);
     if (itemsCache.containsKey(dateKey)) return;
 
-    var appointments = await widget.api.getAppointmentsForAttendee(dateKey);
+    final firstDayOfWeek = currentDate.subtract(Duration(days: currentDate.weekday - 1));
+    final lastDayOfWeek = currentDate.add(Duration(days: 7 - currentDate.weekday));
 
-    var roosterItems = await Future.wait(
-      appointments.map((a) async {
-        // satisfy original null check on dio error
-        Future<T?> safeGet<T>(Future<T> future) async {
-          try {
-            return await future;
-          } on DioException catch (e) {
-            if (!mounted) return null;
+    final appointments = await widget.api.getAppointmentsForAttendee(
+      apiFormat.format(firstDayOfWeek),
+      apiFormat.format(lastDayOfWeek),
+    );
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')),
-            );
-            return null;
-          }
-        }
+    // satisfy original null check on dio error
+    Future<T?> safeGet<T>(Future<T> future) async {
+      try {
+        return await future;
+      } on DioException catch (e) {
+        if (!mounted) return null;
 
-        return RoosterItem(
-          appointment: a,
-          location: a.attendeeIds.classroom.isNotEmpty
-              ? await safeGet(widget.api.getLocationById(a.attendeeIds.classroom[0]))
-              : null,
-          teacher: a.attendeeIds.teacher.isNotEmpty
-              ? await safeGet(widget.api.getTeacherById(a.attendeeIds.teacher[0]))
-              : null,
-          group: a.attendeeIds.group.isNotEmpty
-              ? await safeGet(widget.api.getGroupById(a.attendeeIds.group[0]))
-              : null,
-        );
-      }),
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')));
+        return null;
+      }
+    }
+
+    final weekRoosterMap = Map.fromEntries(
+      await Future.wait(
+        appointments.entries.map((e) async {
+          final date = e.key;
+          final items = await Future.wait(
+            e.value.map(
+              (a) async => RoosterItem(
+                appointment: a,
+                location: a.attendeeIds.classroom.isNotEmpty
+                    ? await safeGet(
+                        widget.api.getLocationById(a.attendeeIds.classroom[0]),
+                      )
+                    : null,
+                teacher: a.attendeeIds.teacher.isNotEmpty
+                    ? await safeGet(widget.api.getTeacherById(a.attendeeIds.teacher[0]))
+                    : null,
+                group: a.attendeeIds.group.isNotEmpty
+                    ? await safeGet(widget.api.getGroupById(a.attendeeIds.group[0]))
+                    : null,
+              ),
+            ),
+          );
+
+          return MapEntry(date, items);
+        }),
+      ),
     );
 
     if (!mounted) return;
 
     setState(() {
-      itemsCache[dateKey] = roosterItems;
+      weekRoosterMap.forEach((date, items) => itemsCache[date] = items);
     });
   }
 
   void changeDate(String date) async {
-    currentDate = DateFormat('yyyy-MM-dd').parse(date);
+    currentDate = apiFormat.parse(date);
 
     // Calculate the offset from today and update PageController
     final now = DateTime.now();

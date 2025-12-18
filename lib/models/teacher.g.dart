@@ -15,7 +15,7 @@ Teacher _$TeacherFromJson(Map<String, dynamic> json) => Teacher(
 
 Map<String, dynamic> _$TeacherToJson(Teacher instance) => <String, dynamic>{
   'id': instance.id,
-  'teacher': instance.login,
+  'login': instance.login,
   'code': instance.code,
   'role': instance.role,
 };
