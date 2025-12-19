@@ -49,9 +49,9 @@ class AttendeeState extends State<AttendeePage> {
       if (!mounted) return;
       debugPrint("ApiError: ${e.response?.statusMessage}");
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")),
+      );
     }
   }
 
@@ -103,7 +103,9 @@ class AttendeeState extends State<AttendeePage> {
                     },
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
                   tileColor: theme.hoverColor,
                 );
               },
@@ -126,7 +128,10 @@ class SearchTextField extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Search',
+        ),
       ),
     );
   }

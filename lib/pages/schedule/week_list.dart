@@ -13,8 +13,8 @@ class WeekList extends StatefulWidget {
 
 class WeekListState extends State<WeekList> {
   late String selectedDayString;
-  PageController? _pageController;
-  VoidCallback? _pageListener;
+  ValueNotifier<int>? _pageIndexNotifier;
+  VoidCallback? _notifierListener;
   late PageController _weekPageController;
 
   @override
@@ -28,6 +28,9 @@ class WeekListState extends State<WeekList> {
   @override
   void dispose() {
     _weekPageController.dispose();
+    if (_pageIndexNotifier != null && _notifierListener != null) {
+      _pageIndexNotifier!.removeListener(_notifierListener!);
+    }
     super.dispose();
   }
 
@@ -40,37 +43,45 @@ class WeekListState extends State<WeekList> {
   }
 
   void _attachController() {
-    final controller = widget.rooster.currentState?.pageController;
+    final rs = widget.rooster.currentState;
+    if (rs == null) return;
 
-    if (identical(controller, _pageController)) return;
-
-    if (_pageController != null && _pageListener != null) {
-      _pageController!.removeListener(_pageListener!);
+    final notifier = rs.pageIndexNotifier;
+    if (_pageIndexNotifier != null && _notifierListener != null) {
+      _pageIndexNotifier!.removeListener(_notifierListener!);
     }
+    _pageIndexNotifier = notifier;
+    _notifierListener = () => _onPageIndexChanged(_pageIndexNotifier!.value);
+    _pageIndexNotifier!.addListener(_notifierListener!);
+    _notifierListener!();
+  }
 
-    _pageController = controller;
-    _pageListener = null;
+  void _onPageIndexChanged(int pageIndex) {
+    final dayOffset = pageIndex - 1000;
+    final now = DateTime.now();
+    final date = now.add(Duration(days: dayOffset));
+    final dayString = DateFormat('yyyy-MM-dd').format(date);
+    if (dayString == selectedDayString) return;
+    setState(() => selectedDayString = dayString);
 
-    if (_pageController != null) {
-      _pageListener = () {
-        final pageValue = _pageController!.hasClients
-            ? (_pageController!.page ?? _pageController!.initialPage.toDouble())
-            : _pageController!.initialPage.toDouble();
-
-        final pageIndex = pageValue.round();
-        final dayOffset = pageIndex - 1000;
-        final date = DateTime.now().add(Duration(days: dayOffset));
-        final dayString = DateFormat('yyyy-MM-dd').format(date);
-
-        if (dayString != selectedDayString) {
-          setState(() {
-            selectedDayString = dayString;
-          });
-        }
-      };
-
-      _pageController!.addListener(_pageListener!);
-    }
+    final selectedMonday = date.subtract(
+      Duration(days: date.weekday - DateTime.monday),
+    );
+    final baseMonday = now.subtract(
+      Duration(days: now.weekday - DateTime.monday),
+    );
+    final weekOffset = selectedMonday.difference(baseMonday).inDays ~/ 7;
+    final weekIndex = 1000 + weekOffset;
+    if (!_weekPageController.hasClients) return;
+    final currentWeekPage =
+        (_weekPageController.page ?? _weekPageController.initialPage.toDouble())
+            .round();
+    if (currentWeekPage == weekIndex) return;
+    _weekPageController.animateToPage(
+      weekIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override

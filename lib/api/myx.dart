@@ -43,7 +43,8 @@ class MyxApi extends ChangeNotifier {
       BaseOptions(
         baseUrl: baseUrl,
         headers: {"Authorization": "Bearer $usedToken"},
-        validateStatus: (status) => status != null && status >= 200 && status < 300,
+        validateStatus: (status) =>
+            status != null && status >= 200 && status < 300,
       ),
     );
 
@@ -70,8 +71,8 @@ class MyxApi extends ChangeNotifier {
     // Certificate fix for self-signed certificates
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
-          true;
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
       return client;
     };
   }
@@ -107,9 +108,13 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return Location.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
-        debugPrint('Error parsing cached location with locationId $locationId: $e');
+        debugPrint(
+          'Error parsing cached location with locationId $locationId: $e',
+        );
         debugPrint('Invalidating cached location and re-fetching.');
 
         cache.remove(cacheKey);
@@ -130,7 +135,9 @@ class MyxApi extends ChangeNotifier {
       try {
         return Teacher.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
-        debugPrint('Error parsing cached teacher with teacherId $teacherId: $e');
+        debugPrint(
+          'Error parsing cached teacher with teacherId $teacherId: $e',
+        );
         debugPrint('Invalidating cached teacher and re-fetching.');
 
         cache.remove(cacheKey);
@@ -149,9 +156,13 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
       try {
-        return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return GroupAttendee.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
-        debugPrint('Error parsing cached groupAttendee with groupid $groupId: $e');
+        debugPrint(
+          'Error parsing cached groupAttendee with groupid $groupId: $e',
+        );
         debugPrint('Invalidating cached groupAttendee and re-fetching.');
 
         cache.remove(cacheKey);
@@ -209,7 +220,8 @@ class MyxApi extends ChangeNotifier {
     );
 
     // map week appointments to type
-    final weekAppointments = (response.data['result']['appointments'] as Map).values
+    final weekAppointments = (response.data['result']['appointments'] as Map)
+        .values
         .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
         .toList();
 

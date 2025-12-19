@@ -36,9 +36,7 @@ class RoosterState extends State<Rooster> {
   DateTime currentDate = DateTime.now();
   PageController pageController = PageController(initialPage: 1000);
 
-  int _previousPageIndex = 1000;
-
-  bool _suppressOnPageChanged = false;
+  final ValueNotifier<int> pageIndexNotifier = ValueNotifier<int>(1000);
 
   DateFormat apiFormat = DateFormat('yyyy-MM-dd');
 
@@ -51,6 +49,7 @@ class RoosterState extends State<Rooster> {
   @override
   void dispose() {
     pageController.dispose();
+    pageIndexNotifier.dispose();
     super.dispose();
   }
 
@@ -60,27 +59,7 @@ class RoosterState extends State<Rooster> {
     return PageView.builder(
       controller: pageController,
       onPageChanged: (index) {
-        if (_suppressOnPageChanged) return;
-
-        final prevIndex = _previousPageIndex;
-        final prevDate = DateTime.now().add(Duration(days: prevIndex - 1000));
-        final newDate = DateTime.now().add(Duration(days: index - 1000));
-
-        // Blokkeer scroll tussen weken via dag scroll.
-        if ((prevDate.weekday == DateTime.sunday && newDate.weekday == DateTime.monday) ||
-            (prevDate.weekday == DateTime.monday && newDate.weekday == DateTime.sunday)) {
-          _suppressOnPageChanged = true;
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            pageController.jumpToPage(prevIndex);
-
-            Future.microtask(() => _suppressOnPageChanged = false);
-          });
-          return;
-        }
-
-        _previousPageIndex = index;
+        pageIndexNotifier.value = index;
         final dayOffset = index - 1000;
         currentDate = DateTime.now().add(Duration(days: dayOffset));
         _loadCurrentDate();
@@ -114,7 +93,9 @@ class RoosterState extends State<Rooster> {
             "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
           tileColor: theme.hoverColor,
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
@@ -126,24 +107,26 @@ class RoosterState extends State<Rooster> {
     final dateKey = apiFormat.format(currentDate);
     if (itemsCache.containsKey(dateKey)) return;
 
-    final firstDayOfWeek = currentDate.subtract(Duration(days: currentDate.weekday - 1));
-    final lastDayOfWeek = currentDate.add(Duration(days: 7 - currentDate.weekday));
+    final firstDayOfWeek = currentDate.subtract(
+      Duration(days: currentDate.weekday - 1),
+    );
+    final lastDayOfWeek = currentDate.add(
+      Duration(days: 7 - currentDate.weekday),
+    );
 
     final appointments = await widget.api.getAppointmentsForAttendee(
       apiFormat.format(firstDayOfWeek),
       apiFormat.format(lastDayOfWeek),
     );
 
-    // satisfy original null check on dio error
     Future<T?> safeGet<T>(Future<T> future) async {
       try {
         return await future;
       } on DioException catch (e) {
         if (!mounted) return null;
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')),
+        );
         return null;
       }
     }
@@ -162,10 +145,14 @@ class RoosterState extends State<Rooster> {
                       )
                     : null,
                 teacher: a.attendeeIds.teacher.isNotEmpty
-                    ? await safeGet(widget.api.getTeacherById(a.attendeeIds.teacher[0]))
+                    ? await safeGet(
+                        widget.api.getTeacherById(a.attendeeIds.teacher[0]),
+                      )
                     : null,
                 group: a.attendeeIds.group.isNotEmpty
-                    ? await safeGet(widget.api.getGroupById(a.attendeeIds.group[0]))
+                    ? await safeGet(
+                        widget.api.getGroupById(a.attendeeIds.group[0]),
+                      )
                     : null,
               ),
             ),
@@ -192,9 +179,9 @@ class RoosterState extends State<Rooster> {
         .difference(DateTime(now.year, now.month, now.day))
         .inDays;
     final newPage = 1000 + dayOffset;
-
-    _previousPageIndex = newPage;
     pageController.jumpToPage(newPage);
+    pageIndexNotifier.value = newPage;
+    // debug: changeDate called
     _loadCurrentDate();
   }
 
@@ -221,9 +208,15 @@ class RoosterState extends State<Rooster> {
                 ),
               ),
             ),
-            Text(item.appointment.name, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              item.appointment.name,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 10),
-            Text(item.appointment.summary, style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              item.appointment.summary,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 22),
             Row(
               children: [
@@ -270,7 +263,9 @@ class RoosterState extends State<Rooster> {
                 const Icon(Icons.people, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(item.group != null ? item.group!.code : 'No class found'),
+                  child: Text(
+                    item.group != null ? item.group!.code : 'No class found',
+                  ),
                 ),
               ],
             ),
