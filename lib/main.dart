@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
+import 'package:xrooster/pages/login/school_selector.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
@@ -23,41 +24,49 @@ Future<void> main() async {
 
   await initializeDateFormatting('nl');
 
-  // Both main and settings-page logic are preserved.
-  // Start by showing the InAppWebView to perform authentication and
-  // retrieve a token. Once we get the token, build the real app.
-  var cache = await SharedPreferencesWithCache.create(
-    cacheOptions: SharedPreferencesWithCacheOptions(),
-  );
-  var prefs = SharedPreferencesAsync();
+  final sp = await SharedPreferences.getInstance();
+  final selectedSchool = sp.getString('selectedSchool');
 
-  runApp(
-    inAppWebViewApp(
-      onToken: (token) async {
-        var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
-        var api = MyxApi(
-          baseUrl: apiBaseUrl,
-          cache: cache,
-          prefs: prefs,
-          tokenOverride: token,
-          scaffoldKey: scaffoldKey,
-        );
-
-        // Load saved theme preference
-        final sp = await SharedPreferences.getInstance();
-        final theme = sp.getString('theme') ?? 'system';
-
-        runApp(
-          XApp(
-            key: null,
-            api: api,
-            initialTheme: theme,
+  void startLoginFlow() async {
+    var cache = await SharedPreferencesWithCache.create(
+      cacheOptions: SharedPreferencesWithCacheOptions(),
+    );
+    var prefs = SharedPreferencesAsync();
+    runApp(
+      inAppWebViewApp(
+        onToken: (token) async {
+          var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+          var api = MyxApi(
+            baseUrl: apiBaseUrl,
+            cache: cache,
+            prefs: prefs,
+            tokenOverride: token,
             scaffoldKey: scaffoldKey,
-          ),
-        );
-      },
-    ),
-  );
+          );
+
+          // Load saved theme preference
+          final theme = sp.getString('theme') ?? 'system';
+
+          runApp(XApp(api: api, initialTheme: theme, scaffoldKey: scaffoldKey));
+        },
+      ),
+    );
+  }
+
+  if (selectedSchool == null) {
+    runApp(
+      MaterialApp(
+        home: SchoolSelectorPage(
+          onSchoolSelected: (school) async {
+            await sp.setString('selectedSchool', school);
+            startLoginFlow();
+          },
+        ),
+      ),
+    );
+  } else {
+    startLoginFlow();
+  }
 }
 
 class XApp extends StatefulWidget {
