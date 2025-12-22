@@ -37,6 +37,9 @@ jobs:
           flutter-version: "3.38.5"
           cache: true
 
+      - name: Clean
+        run: flutter clean
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -53,14 +56,17 @@ jobs:
           keyAlias=upload
           EOF
 
+      - name: Build split APKs
+        run: flutter build apk --release --split-per-abi --dart-define=GIT_COMMIT=$COMMIT_ID
+
       - name: Build APK
         run: flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID
 
-      - name: Upload APK artifact
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/*.apk
 
   ios:
     name: Build Flutter IPA (unsigned)
@@ -127,7 +133,7 @@ jobs:
           name: v${{ env.APP_VERSION }}
           generate_release_notes: true
           files: |
-            apk/app-release.apk
+            apk/*.apk
             ipa/Runner-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
