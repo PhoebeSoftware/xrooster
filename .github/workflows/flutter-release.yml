@@ -37,12 +37,6 @@ jobs:
           flutter-version: "3.38.5"
           cache: true
 
-      - name: Clean
-        run: flutter clean
-
-      - name: Install dependencies
-        run: flutter pub get
-
       - name: Decode Android keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
@@ -88,9 +82,6 @@ jobs:
         with:
           flutter-version: "3.38.5"
           cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
 
       - name: Build XCArchive (unsigned)
         run: flutter build ipa --no-codesign --release --dart-define=GIT_COMMIT=$COMMIT_ID
