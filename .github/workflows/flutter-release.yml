@@ -1,4 +1,4 @@
-name: Build Flutter APK and IPA on Release
+name: Build Flutter APK and IPA
 
 on:
   push:
@@ -39,6 +39,19 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Decode Android keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat <<EOF > android/key.properties
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=upload
+          EOF
 
       - name: Build APK
         run: flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID

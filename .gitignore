@@ -46,3 +46,6 @@ app.*.map.json
 
 # DevTools configuration file
 devtools_options.yaml
+
+# Signing key
+upload-keystore.jks

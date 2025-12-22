@@ -9,7 +9,7 @@ flutter clean
 
 flutter pub get
 
-flutter build apk --dart-define=GIT_COMMIT=$COMMIT_ID
+flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID
 
 echo "----------------------------------------------------------------------"
 echo "✅ Build complete. Commit: $COMMIT_ID"
