@@ -1,12 +1,14 @@
-# xrooster
+<p align="center">
+  <img src="./assets/icon.webp" alt="rooster pagina" width="150" />
+  <br>
+  <strong>xrooster</strong>
+</p>
 
-## Over xrooster
-Betere rooster app voor myx omdat eduarte kut is.
 
 ## Installatie
 
 ### Optie 1: Download de laatste release
-Download de nieuwste versie van de app via de [releases pagina](https://github.com/PhoebeSoftware/xrooster/releases).
+Download de nieuwste versie van de app via de [releases pagina](https://github.com/PhoebeSoftware/xrooster/releases/latest).
 
 ### Optie 2: Zelf bouwen
 
@@ -32,19 +34,18 @@ flutter run
 ## Rooster
 
 <p float="Schedule">
-    <img src="./README/schedule.png" alt="rooster pagina" width="200" />
-    <img src="./README/extra-info-tab.png" alt="extra info tab" width="200" />
+    <img src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="rooster pagina" width="200" />
+    <img src="./fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="extra info tab" width="200" />
 </p>
 
 ## Zoeken
 
 <p float="Schedule">
-    <img src="./README/search-class.png" alt="zoeken klas" width="200" />
-    <img src="./README/search-teacher.png" alt="zoeken docent" width="200" />
+    <img src="./fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="zoeken" width="200" />
 </p>
 
 ## Instellingen
 
 <p float="Instellingen">
-    <img src="./README/settings.png" alt="instellingen" width="200" />
+    <img src="./fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" alt="instellingen" width="200" />
 </p>
