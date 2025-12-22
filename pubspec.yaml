@@ -70,7 +70,7 @@ flutter:
 
     # To add assets to your application, add an assets section, like this:
     assets:
-      - assets/icon.png
+      - assets/icon.webp
       - assets/gif.gif
 
     # An image asset can refer to one or more resolution-specific "variants", see
@@ -99,22 +99,22 @@ flutter:
     # For details regarding fonts from package dependencies,
     # see https://flutter.dev/to/font-from-package
 
-flutter_launcher_icons:
+flutter_launcher_icons: # flutter pub run flutter_launcher_icons
     android: "launcher_icon"
     ios: true
-    image_path: "assets/icon.png"
+    image_path: "assets/icon.webp"
     min_sdk_android: 21 # android min sdk min:16, default 21
     web:
         generate: true
-        image_path: "assets/icon.png"
+        image_path: "assets/icon.webp"
         background_color: "#915827"
         theme_color: "#ED7D25"
     windows:
         generate: true
-        image_path: "assets/icon.png"
+        image_path: "assets/icon.webp"
         icon_size: 48 # min:48, max:256, default: 48
     macos:
         generate: true
-        image_path: "assets/icon.png"
+        image_path: "assets/icon.webp"
         android: true
         ios: true
