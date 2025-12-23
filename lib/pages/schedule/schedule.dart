@@ -9,17 +9,28 @@ class SchedulePage extends StatefulWidget {
     required this.rooster,
     required this.api,
     this.attendeeIdOverride,
+    this.initialDate,
   });
 
   final GlobalKey<RoosterState> rooster;
   final MyxApi api;
   final int? attendeeIdOverride;
+  final String? initialDate;
 
   @override
   State<SchedulePage> createState() => ScheduleState();
 }
 
 class ScheduleState extends State<SchedulePage> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialDate != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.rooster.currentState?.changeDate(widget.initialDate!);
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return SafeArea(

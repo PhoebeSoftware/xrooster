@@ -267,6 +267,7 @@ class RoosterState extends State<Rooster> {
                             // if (!mounted) return;
 
                             final key = GlobalKey<RoosterState>();
+                            final dateString = apiFormat.format(item.appointment.start);
 
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -276,6 +277,7 @@ class RoosterState extends State<Rooster> {
                                     rooster: key,
                                     api: widget.api,
                                     attendeeIdOverride: item.teacher!.id,
+                                    initialDate: dateString,
                                   ),
                                 ),
                               ),
