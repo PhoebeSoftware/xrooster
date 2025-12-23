@@ -6,6 +6,7 @@ import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/location.dart';
 import 'package:xrooster/models/teacher.dart';
 import 'package:xrooster/models/group_attendee.dart';
+import 'package:xrooster/pages/schedule/schedule.dart';
 
 class RoosterItem {
   final Appointment appointment;
@@ -22,10 +23,16 @@ class RoosterItem {
 }
 
 class Rooster extends StatefulWidget {
-  const Rooster({super.key, required this.title, required this.api});
+  const Rooster({
+    super.key,
+    required this.title,
+    required this.api,
+    this.attendeeIdOverride,
+  });
 
   final String title;
   final MyxApi api;
+  final int? attendeeIdOverride;
 
   @override
   State<Rooster> createState() => RoosterState();
@@ -117,6 +124,7 @@ class RoosterState extends State<Rooster> {
     final appointments = await widget.api.getAppointmentsForAttendee(
       apiFormat.format(firstDayOfWeek),
       apiFormat.format(lastDayOfWeek),
+      attendeeId: widget.attendeeIdOverride,
     );
 
     Future<T?> safeGet<T>(Future<T> future) async {
@@ -249,11 +257,33 @@ class RoosterState extends State<Rooster> {
                 const Icon(Icons.person, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    item.teacher != null
-                        ? "${item.teacher!.code} (${item.teacher!.login})"
-                        : 'No teacher found',
-                  ),
+                  child: item.teacher != null
+                      ? TextButton(
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            alignment: Alignment.centerLeft,
+                          ),
+                          onPressed: () async {
+                            final key = GlobalKey<RoosterState>();
+                            final dateString = apiFormat.format(item.appointment.start);
+
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => Scaffold(
+                                  appBar: AppBar(title: Text(item.teacher!.code)),
+                                  body: SchedulePage(
+                                    rooster: key,
+                                    api: widget.api,
+                                    attendeeIdOverride: item.teacher!.id,
+                                    initialDate: dateString,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text('${item.teacher!.code} (${item.teacher!.login})'),
+                        )
+                      : const Text('No teacher found'),
                 ),
               ],
             ),
@@ -263,9 +293,33 @@ class RoosterState extends State<Rooster> {
                 const Icon(Icons.people, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    item.group != null ? item.group!.code : 'No class found',
-                  ),
+                  child: item.group != null
+                      ? TextButton(
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            alignment: Alignment.centerLeft,
+                          ),
+                          onPressed: () {
+                            final key = GlobalKey<RoosterState>();
+                            final dateString = apiFormat.format(item.appointment.start);
+
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => Scaffold(
+                                  appBar: AppBar(title: Text(item.group!.code)),
+                                  body: SchedulePage(
+                                    rooster: key,
+                                    api: widget.api,
+                                    attendeeIdOverride: item.group!.id,
+                                    initialDate: dateString,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(item.group!.code),
+                        )
+                      : const Text('No class found'),
                 ),
               ],
             ),

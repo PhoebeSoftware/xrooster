@@ -178,10 +178,11 @@ class MyxApi extends ChangeNotifier {
 
   Future<Map<String, List<Appointment>>> getAppointmentsForAttendee(
     String startDate,
-    String endDate,
-  ) async {
-    final attendeeId = await prefs.getInt("selectedAttendee");
-    if (attendeeId == null) {
+    String endDate, {
+    int? attendeeId,
+  }) async {
+    final usedAttendeeId = attendeeId ?? await prefs.getInt("selectedAttendee");
+    if (usedAttendeeId == null) {
       scaffoldKey.currentState?.showSnackBar(
         SnackBar(
           content: Text('Select an attendee before checking the schedule!'),
@@ -191,8 +192,7 @@ class MyxApi extends ChangeNotifier {
 
       return {};
     }
-
-    final cacheKey = 'appointments:$startDate:$endDate:$attendeeId';
+    final cacheKey = 'appointments:$startDate:$endDate:$usedAttendeeId';
 
     var cachedJson = cache.getString(cacheKey);
     if (cachedJson != null) {
@@ -216,7 +216,7 @@ class MyxApi extends ChangeNotifier {
     }
 
     final response = await _dio.get(
-      'Appointment/Date/$startDate/$endDate/Attendee?id=$attendeeId',
+      'Appointment/Date/$startDate/$endDate/Attendee?id=$usedAttendeeId',
     );
 
     // map week appointments to type
