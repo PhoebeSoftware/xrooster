@@ -308,6 +308,8 @@ class RoosterState extends State<Rooster> {
                       ? TextButton(
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             alignment: Alignment.centerLeft,
                           ),
                           onPressed: () async {
@@ -344,6 +346,8 @@ class RoosterState extends State<Rooster> {
                       ? TextButton(
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             alignment: Alignment.centerLeft,
                           ),
                           onPressed: () {
