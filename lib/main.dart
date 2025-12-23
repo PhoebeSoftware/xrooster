@@ -11,7 +11,8 @@ import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
-const apiBaseUrl = 'https://talland.myx.nl/api/';
+String apiBaseUrl = '';
+String selectedSchoolUrl = '';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,13 @@ Future<void> main() async {
   final sp = await SharedPreferences.getInstance();
   final selectedSchool = sp.getString('selectedSchool');
 
+  String normalizeApiBase(String url) {
+    var s = url.trim();
+    if (s.endsWith('/api/')) return s;
+    s = s.replaceAll(RegExp(r'/+$'), '');
+    return '$s/api/';
+  }
+
   void startLoginFlow() async {
     var cache = await SharedPreferencesWithCache.create(
       cacheOptions: SharedPreferencesWithCacheOptions(),
@@ -34,7 +42,11 @@ Future<void> main() async {
     var prefs = SharedPreferencesAsync();
     runApp(
       inAppWebViewApp(
+        baseWebUrl: selectedSchoolUrl,
         onToken: (token) async {
+          if ((sp.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+            await sp.setString('selectedSchool', selectedSchoolUrl);
+          }
           var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
           var api = MyxApi(
             baseUrl: apiBaseUrl,
@@ -58,13 +70,16 @@ Future<void> main() async {
       MaterialApp(
         home: SchoolSelectorPage(
           onSchoolSelected: (school) async {
-            await sp.setString('selectedSchool', school);
+            selectedSchoolUrl = school;
+            apiBaseUrl = normalizeApiBase(school);
             startLoginFlow();
           },
         ),
       ),
     );
   } else {
+    selectedSchoolUrl = selectedSchool;
+    apiBaseUrl = normalizeApiBase(selectedSchool);
     startLoginFlow();
   }
 }
@@ -189,7 +204,13 @@ class XAppState extends State<XApp> {
         // login if no token = no api
         if (api == null) {
           return inAppWebViewApp(
+            baseWebUrl: selectedSchoolUrl,
             onToken: (t) async {
+              final sp2 = await SharedPreferences.getInstance();
+              if ((sp2.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+                await sp2.setString('selectedSchool', selectedSchoolUrl);
+              }
+
               await prefs.setString("token", t);
               // refresh cached future and trigger a single rebuild
               _apiFuture = _buildApiFuture();

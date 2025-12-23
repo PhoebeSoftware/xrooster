@@ -13,11 +13,11 @@ class SchoolSelectorPage extends StatefulWidget {
 class _SchoolSelectorPageState extends State<SchoolSelectorPage> {
   String? _selectedSchool;
 
-  Future<List<String>> _loadSchools() async {
+  Future<List<Map<String, dynamic>>> _loadSchools() async {
     final jsonStr = await rootBundle.loadString('assets/schools.json');
     final List<dynamic> data = jsonDecode(jsonStr);
 
-    return data.map((e) => e['name'] as String).toList();
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   @override
@@ -26,7 +26,7 @@ class _SchoolSelectorPageState extends State<SchoolSelectorPage> {
       appBar: AppBar(title: const Text('Select School')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: FutureBuilder<List<String>>(
+        child: FutureBuilder<List<Map<String, dynamic>>>(
           future: _loadSchools(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
@@ -47,7 +47,7 @@ class _SchoolSelectorPageState extends State<SchoolSelectorPage> {
                   initialValue: _selectedSchool,
                   items: [
                     for (final s in schools)
-                      DropdownMenuItem(value: s, child: Text(s)),
+                      DropdownMenuItem(value: s['url'] as String, child: Text(s['name'] as String)),
                   ],
                   onChanged: (v) => setState(() => _selectedSchool = v),
                   decoration: const InputDecoration(
