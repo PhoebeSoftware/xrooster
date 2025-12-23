@@ -25,8 +25,8 @@ Future<void> main() async {
 
   await initializeDateFormatting('nl');
 
-  final sp = await SharedPreferences.getInstance();
-  final selectedSchool = sp.getString('selectedSchool');
+  var sp = SharedPreferencesAsync();
+  final selectedSchool = await sp.getString('selectedSchool');
 
   String normalizeApiBase(String url) {
     var s = url.trim();
@@ -44,9 +44,15 @@ Future<void> main() async {
       inAppWebViewApp(
         baseWebUrl: selectedSchoolUrl,
         onToken: (token) async {
-          if ((sp.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+          if ((await sp.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
             await sp.setString('selectedSchool', selectedSchoolUrl);
           }
+
+          // Persist the token so the app's cached future builder can pick it up
+          // immediately. Without this the `XApp` instance created below will
+          // still try to read the token from prefs and may remain in the
+          // login flow requiring a second token entry on some platforms.
+          await prefs.setString('token', token);
           var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
           var api = MyxApi(
             baseUrl: apiBaseUrl,
@@ -57,7 +63,7 @@ Future<void> main() async {
           );
 
           // Load saved theme preference
-          final theme = sp.getString('theme') ?? 'system';
+          final theme = await sp.getString('theme') ?? 'system';
 
           runApp(XApp(api: api, initialTheme: theme, scaffoldKey: scaffoldKey));
         },
@@ -164,7 +170,6 @@ class XAppState extends State<XApp> {
   }
 
   Future<void> _updateTheme(String newTheme) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme', newTheme);
     setState(() => _themeMode = newTheme);
   }
@@ -206,9 +211,8 @@ class XAppState extends State<XApp> {
           return inAppWebViewApp(
             baseWebUrl: selectedSchoolUrl,
             onToken: (t) async {
-              final sp2 = await SharedPreferences.getInstance();
-              if ((sp2.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
-                await sp2.setString('selectedSchool', selectedSchoolUrl);
+              if ((await prefs.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+                await prefs.setString('selectedSchool', selectedSchoolUrl);
               }
 
               await prefs.setString("token", t);

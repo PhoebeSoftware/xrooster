@@ -25,22 +25,24 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
+    var prefs = SharedPreferencesAsync();
+    final theme = await prefs.getString('theme');
+    final language = await prefs.getString('language');
     setState(() {
-      _themeMode = prefs.getString('theme') ?? 'system';
-      _language = prefs.getString('language') ?? 'system';
+      _themeMode = theme ?? 'system';
+      _language = language ?? 'system';
       _loading = false;
     });
   }
 
   Future<void> _saveThemeMode(String value) async {
-    final prefs = await SharedPreferences.getInstance();
+    var prefs = SharedPreferencesAsync();
     await prefs.setString('theme', value);
     widget.onThemeChanged?.call(value);
   }
 
   Future<void> _saveLanguage(String value) async {
-    final prefs = await SharedPreferences.getInstance();
+    var prefs = SharedPreferencesAsync();
     await prefs.setString('language', value);
   }
 
