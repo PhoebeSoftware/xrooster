@@ -264,8 +264,6 @@ class RoosterState extends State<Rooster> {
                             alignment: Alignment.centerLeft,
                           ),
                           onPressed: () async {
-                            // if (!mounted) return;
-
                             final key = GlobalKey<RoosterState>();
                             final dateString = apiFormat.format(item.appointment.start);
 
@@ -295,9 +293,33 @@ class RoosterState extends State<Rooster> {
                 const Icon(Icons.people, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    item.group != null ? item.group!.code : 'No class found',
-                  ),
+                  child: item.group != null
+                      ? TextButton(
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            alignment: Alignment.centerLeft,
+                          ),
+                          onPressed: () {
+                            final key = GlobalKey<RoosterState>();
+                            final dateString = apiFormat.format(item.appointment.start);
+
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => Scaffold(
+                                  appBar: AppBar(title: Text(item.group!.code)),
+                                  body: SchedulePage(
+                                    rooster: key,
+                                    api: widget.api,
+                                    attendeeIdOverride: item.group!.id,
+                                    initialDate: dateString,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(item.group!.code),
+                        )
+                      : const Text('No class found'),
                 ),
               ],
             ),
