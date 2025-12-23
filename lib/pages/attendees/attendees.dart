@@ -23,6 +23,7 @@ class AttendeePage extends StatefulWidget {
 class AttendeeState extends State<AttendeePage> {
   List<GroupAttendee> _allItems = [];
   List<GroupAttendee> _filteredItems = [];
+  bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -44,10 +45,15 @@ class AttendeeState extends State<AttendeePage> {
       setState(() {
         _allItems = [...results[0], ...results[1]];
         _filteredItems = _allItems;
+        _loading = false;
       });
     } on DioException catch (e) {
       if (!mounted) return;
       debugPrint("ApiError: ${e.response?.statusMessage}");
+
+      setState(() {
+        _loading = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")),
@@ -80,36 +86,45 @@ class AttendeeState extends State<AttendeePage> {
         children: [
           SearchTextField(controller: _searchController),
           Expanded(
-            child: ListView.separated(
-              itemCount: _filteredItems.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 4.0),
-              itemBuilder: (context, index) {
-                final item = _filteredItems[index];
-
-                return ListTile(
-                  title: Text(item.code),
-                  subtitle: Text(item.role),
-                  trailing: TextButton(
-                    child: Text("Select"),
-                    onPressed: () {
-                      widget.prefs.setInt("selectedAttendee", item.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${item.role} ${item.code} selected'),
-                          duration: Duration(seconds: 3),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredItems.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Text('No attendees found', style: theme.textTheme.bodyMedium),
                         ),
-                      );
-                      widget.onClassSelected();
-                    },
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  tileColor: theme.hoverColor,
-                );
-              },
-            ),
+                      )
+                    : ListView.separated(
+                        itemCount: _filteredItems.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 4.0),
+                        itemBuilder: (context, index) {
+                          final item = _filteredItems[index];
+
+                          return ListTile(
+                            title: Text(item.code),
+                            subtitle: Text(item.role),
+                            trailing: TextButton(
+                              child: Text("Select"),
+                              onPressed: () {
+                                widget.prefs.setInt("selectedAttendee", item.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${item.role} ${item.code} selected'),
+                                    duration: Duration(seconds: 3),
+                                  ),
+                                );
+                                widget.onClassSelected();
+                              },
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            tileColor: theme.hoverColor,
+                          );
+                        },
+                      ),
           ),
         ],
       ),
