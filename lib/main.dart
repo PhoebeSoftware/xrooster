@@ -5,12 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
+import 'package:xrooster/pages/login/school_selector.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/settings/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
-const apiBaseUrl = 'https://talland.myx.nl/api/';
+String apiBaseUrl = '';
+String selectedSchoolUrl = '';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,41 +25,63 @@ Future<void> main() async {
 
   await initializeDateFormatting('nl');
 
-  // Both main and settings-page logic are preserved.
-  // Start by showing the InAppWebView to perform authentication and
-  // retrieve a token. Once we get the token, build the real app.
-  var cache = await SharedPreferencesWithCache.create(
-    cacheOptions: SharedPreferencesWithCacheOptions(),
-  );
-  var prefs = SharedPreferencesAsync();
+  final sp = await SharedPreferences.getInstance();
+  final selectedSchool = sp.getString('selectedSchool');
 
-  runApp(
-    inAppWebViewApp(
-      onToken: (token) async {
-        var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
-        var api = MyxApi(
-          baseUrl: apiBaseUrl,
-          cache: cache,
-          prefs: prefs,
-          tokenOverride: token,
-          scaffoldKey: scaffoldKey,
-        );
+  String normalizeApiBase(String url) {
+    var s = url.trim();
+    if (s.endsWith('/api/')) return s;
+    s = s.replaceAll(RegExp(r'/+$'), '');
+    return '$s/api/';
+  }
 
-        // Load saved theme preference
-        final sp = await SharedPreferences.getInstance();
-        final theme = sp.getString('theme') ?? 'system';
-
-        runApp(
-          XApp(
-            key: null,
-            api: api,
-            initialTheme: theme,
+  void startLoginFlow() async {
+    var cache = await SharedPreferencesWithCache.create(
+      cacheOptions: SharedPreferencesWithCacheOptions(),
+    );
+    var prefs = SharedPreferencesAsync();
+    runApp(
+      inAppWebViewApp(
+        baseWebUrl: selectedSchoolUrl,
+        onToken: (token) async {
+          if ((sp.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+            await sp.setString('selectedSchool', selectedSchoolUrl);
+          }
+          var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+          var api = MyxApi(
+            baseUrl: apiBaseUrl,
+            cache: cache,
+            prefs: prefs,
+            tokenOverride: token,
             scaffoldKey: scaffoldKey,
-          ),
-        );
-      },
-    ),
-  );
+          );
+
+          // Load saved theme preference
+          final theme = sp.getString('theme') ?? 'system';
+
+          runApp(XApp(api: api, initialTheme: theme, scaffoldKey: scaffoldKey));
+        },
+      ),
+    );
+  }
+
+  if (selectedSchool == null) {
+    runApp(
+      MaterialApp(
+        home: SchoolSelectorPage(
+          onSchoolSelected: (school) async {
+            selectedSchoolUrl = school;
+            apiBaseUrl = normalizeApiBase(school);
+            startLoginFlow();
+          },
+        ),
+      ),
+    );
+  } else {
+    selectedSchoolUrl = selectedSchool;
+    apiBaseUrl = normalizeApiBase(selectedSchool);
+    startLoginFlow();
+  }
 }
 
 class XApp extends StatefulWidget {
@@ -180,7 +204,13 @@ class XAppState extends State<XApp> {
         // login if no token = no api
         if (api == null) {
           return inAppWebViewApp(
+            baseWebUrl: selectedSchoolUrl,
             onToken: (t) async {
+              final sp2 = await SharedPreferences.getInstance();
+              if ((sp2.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+                await sp2.setString('selectedSchool', selectedSchoolUrl);
+              }
+
               await prefs.setString("token", t);
               // refresh cached future and trigger a single rebuild
               _apiFuture = _buildApiFuture();

@@ -9,8 +9,8 @@ import 'package:xrooster/pages/login/linux.dart';
 
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
-// https://talland.myx.nl/?token=...
 Widget inAppWebViewApp({
+  required String baseWebUrl,
   required FutureOr<void> Function(String token) onToken,
 }) {
   return MaterialApp(
@@ -27,15 +27,16 @@ Widget inAppWebViewApp({
     ),
     themeMode: ThemeMode.system,
     home: Platform.isLinux
-        ? linuxFallback(onToken: onToken)
-        : InAppWebViewPage(onToken: onToken),
+      ? linuxFallback(onToken: onToken)
+      : InAppWebViewPage(onToken: onToken, baseWebUrl: baseWebUrl),
   );
 }
 
 class InAppWebViewPage extends StatefulWidget {
-  const InAppWebViewPage({super.key, required this.onToken});
+  const InAppWebViewPage({super.key, required this.onToken, required this.baseWebUrl});
 
   final FutureOr<void> Function(String token) onToken;
+  final String baseWebUrl;
 
   @override
   State<InAppWebViewPage> createState() => _InAppWebViewPageState();
@@ -60,6 +61,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final baseWebUrl = widget.baseWebUrl;
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) async {
@@ -77,7 +79,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
               child: InAppWebView(
                 key: webViewKey,
                 initialUrlRequest: URLRequest(
-                  url: WebUri("https://talland.myx.nl"),
+                    url: WebUri(baseWebUrl),
                 ),
                 onReceivedServerTrustAuthRequest:
                     (controller, challenge) async {
@@ -92,14 +94,10 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   webViewController = controller;
                 },
                 onLoadStop: (controller, url) async {
-                  if (url?.toString().startsWith(
-                        'https://talland.myx.nl/?token=',
-                      ) ??
-                      false) {
-                    final urlStr = url.toString();
-                    final token = urlStr
-                        .replaceFirst('https://talland.myx.nl/?token=', '')
-                        .replaceAll('&ngsw-bypass=true', '');
+                    if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
+                      final urlStr = url.toString();
+                      var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
+                      token = token.replaceAll('&ngsw-bypass=true', '');
                     // notify caller and allow them to replace the app
                     try {
                       setToken(token);
