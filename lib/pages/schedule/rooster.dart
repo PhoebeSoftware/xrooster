@@ -40,6 +40,9 @@ class Rooster extends StatefulWidget {
 
 class RoosterState extends State<Rooster> {
   Map<String, List<RoosterItem>> itemsCache = {};
+
+  final Set<String> loadingDates = {};
+
   DateTime currentDate = DateTime.now();
   PageController pageController = PageController(initialPage: 1000);
 
@@ -77,13 +80,28 @@ class RoosterState extends State<Rooster> {
         final dateKey = apiFormat.format(date);
         final items = itemsCache[dateKey] ?? [];
 
-        return _buildScheduleList(items);
+        return _buildScheduleList(items, dateKey);
       },
     );
   }
 
-  Widget _buildScheduleList(List<RoosterItem> items) {
+  Widget _buildScheduleList(List<RoosterItem> items, String dateKey) {
     final theme = Theme.of(context);
+
+    if (items.isEmpty && loadingDates.contains(dateKey)) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(height: 12),
+            ],
+          ),
+        ),
+      );
+    }
 
     return ListView.separated(
       itemCount: items.length,
@@ -114,6 +132,12 @@ class RoosterState extends State<Rooster> {
     final dateKey = apiFormat.format(currentDate);
     if (itemsCache.containsKey(dateKey)) return;
 
+    if (!loadingDates.contains(dateKey)) {
+      setState(() {
+        loadingDates.add(dateKey);
+      });
+    }
+
     final firstDayOfWeek = currentDate.subtract(
       Duration(days: currentDate.weekday - 1),
     );
@@ -121,11 +145,23 @@ class RoosterState extends State<Rooster> {
       Duration(days: 7 - currentDate.weekday),
     );
 
-    final appointments = await widget.api.getAppointmentsForAttendee(
-      apiFormat.format(firstDayOfWeek),
-      apiFormat.format(lastDayOfWeek),
-      attendeeId: widget.attendeeIdOverride,
-    );
+    Map<String, List<Appointment>> appointments;
+    try {
+      appointments = await widget.api.getAppointmentsForAttendee(
+        apiFormat.format(firstDayOfWeek),
+        apiFormat.format(lastDayOfWeek),
+        attendeeId: widget.attendeeIdOverride,
+      );
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        loadingDates.remove(dateKey);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')),
+      );
+      return;
+    }
 
     Future<T?> safeGet<T>(Future<T> future) async {
       try {
@@ -139,12 +175,15 @@ class RoosterState extends State<Rooster> {
       }
     }
 
-    final weekRoosterMap = Map.fromEntries(
-      await Future.wait(
-        appointments.entries.map((e) async {
-          final date = e.key;
+    final List<Future<MapEntry<String, List<RoosterItem>>>> futures = [];
+    for (var d = firstDayOfWeek;
+        !d.isAfter(lastDayOfWeek);
+        d = d.add(const Duration(days: 1))) {
+      final dateKey = apiFormat.format(d);
+      if (appointments.containsKey(dateKey)) {
+        futures.add(Future(() async {
           final items = await Future.wait(
-            e.value.map(
+            appointments[dateKey]!.map(
               (a) async => RoosterItem(
                 appointment: a,
                 location: a.attendeeIds.classroom.isNotEmpty
@@ -166,15 +205,23 @@ class RoosterState extends State<Rooster> {
             ),
           );
 
-          return MapEntry(date, items);
-        }),
-      ),
-    );
+          return MapEntry(dateKey, items);
+        }));
+      } else {
+        // return empty list for dates with no appointments so you dont get an infinite loading spinner
+        futures.add(Future.value(MapEntry(dateKey, <RoosterItem>[])));
+      }
+    }
+
+    final weekRoosterMap = Map.fromEntries(await Future.wait(futures));
 
     if (!mounted) return;
 
     setState(() {
       weekRoosterMap.forEach((date, items) => itemsCache[date] = items);
+      for (final d in weekRoosterMap.keys) {
+        loadingDates.remove(d);
+      }
     });
   }
 
