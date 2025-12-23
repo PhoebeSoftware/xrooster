@@ -4,10 +4,16 @@ import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/week_list.dart';
 
 class SchedulePage extends StatefulWidget {
-  const SchedulePage({super.key, required this.rooster, required this.api});
+  const SchedulePage({
+    super.key,
+    required this.rooster,
+    required this.api,
+    this.attendeeIdOverride,
+  });
 
   final GlobalKey<RoosterState> rooster;
   final MyxApi api;
+  final int? attendeeIdOverride;
 
   @override
   State<SchedulePage> createState() => ScheduleState();
@@ -25,6 +31,7 @@ class ScheduleState extends State<SchedulePage> {
               key: widget.rooster,
               title: 'Rooster',
               api: widget.api,
+              attendeeIdOverride: widget.attendeeIdOverride,
             ),
           ),
         ],
