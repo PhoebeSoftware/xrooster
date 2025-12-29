@@ -187,16 +187,10 @@ class RoosterState extends State<Rooster> {
                         )
                       : null,
                   teacher: a.attendeeIds.teacher.isNotEmpty
-                      ? (await widget.api.getAllAttendees(
-                              AttendeeType.teacher,
-                            )).where((t) => t.id == a.attendeeIds.teacher[0]).first
-                            as TeacherAttendee?
+                      ? await widget.api.getTeacherById(a.attendeeIds.teacher.first)
                       : null,
                   group: a.attendeeIds.group.isNotEmpty
-                      ? (await widget.api.getAllAttendees(
-                              AttendeeType.group,
-                            )).where((t) => t.id == a.attendeeIds.group[0]).first
-                            as GroupAttendee?
+                      ? await widget.api.getGroupById(a.attendeeIds.group.first)
                       : null,
                 ),
               ),
