@@ -1,16 +1,12 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:xrooster/models/base_attendee.dart';
 
 part 'group_attendee.g.dart';
 
 @JsonSerializable()
-class GroupAttendee {
-  final int id;
-  final String code;
-  final String role;
+class GroupAttendee extends BaseAttendee {
+  GroupAttendee({required super.id, required super.code, required super.role});
 
-  GroupAttendee({required this.id, required this.code, required this.role});
-
-  factory GroupAttendee.fromJson(Map<String, dynamic> json) =>
-      _$GroupAttendeeFromJson(json);
-  Map<String, dynamic> toJson() => _$GroupAttendeeToJson(this);
+  factory GroupAttendee.fromJson(dynamic json) => _$GroupAttendeeFromJson(json);
+  dynamic toJson() => _$GroupAttendeeToJson(this);
 }
