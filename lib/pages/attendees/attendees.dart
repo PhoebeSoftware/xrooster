@@ -106,7 +106,7 @@ class AttendeeState extends State<AttendeePage> {
 
                       return ListTile(
                         title: Text(item.code),
-                        subtitle: Text(item.role),
+                        subtitle: Text(item.role.name),
                         trailing: TextButton(
                           child: Text("Select"),
                           onPressed: () {
