@@ -2,7 +2,20 @@
   <img src="./assets/icon.webp" alt="rooster pagina" width="150" />
   <br>
   <strong>xrooster</strong>
+  <br><br>
+  Een open-source mobiele app om je <a href="https://myx.nl">myx rooster</a> te bekijken.
+  <br>
+  Gemaakt voor studenten van scholen die myx gebruiken hun rooster.
+  <br><br>
+  Alle ondersteunde scholen zijn te vinden in
+  <code>assets/schools.json</code>.
+  <br>
+  Staat jouw school er niet tussen? Maak dan een
+  <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a>
+  aan.
 </p>
+
+
 
 
 ## Installatie

@@ -1,1 +1,1 @@
-<strong>An open source mobile client for your myx schedule</strong>
+<p><strong>An open-source mobile app for viewing your <a href="https://myx.nl">myX schedule</a>.</strong></p><p>Designed for Dutch students whose schools use myx for their schedules.</p>

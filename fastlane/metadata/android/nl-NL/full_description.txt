@@ -1,1 +1,1 @@
-<strong>Een open source client voor je myx rooster</strong>
+<p><strong>Een open-source mobiele app om je <a href="https://myx.nl">myX-rooster</a> te bekijken.</strong></p><p>Bedoeld voor studenten van scholen die myx gebruiken voor hun rooster.</p>
