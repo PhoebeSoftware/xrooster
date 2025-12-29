@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/appointment.dart';
-import 'package:xrooster/models/base_attendee.dart';
 import 'package:xrooster/models/location.dart';
 import 'package:xrooster/models/teacher_attendee.dart';
 import 'package:xrooster/models/group_attendee.dart';
