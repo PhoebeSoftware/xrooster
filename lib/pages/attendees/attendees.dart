@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/api/myx.dart';
-import 'package:xrooster/models/group_attendee.dart';
+import 'package:xrooster/models/base_attendee.dart';
 
 class AttendeePage extends StatefulWidget {
   const AttendeePage({
@@ -21,8 +21,8 @@ class AttendeePage extends StatefulWidget {
 }
 
 class AttendeeState extends State<AttendeePage> {
-  List<GroupAttendee> _allItems = [];
-  List<GroupAttendee> _filteredItems = [];
+  List<BaseAttendee> _allItems = [];
+  List<BaseAttendee> _filteredItems = [];
   bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
 
@@ -36,8 +36,8 @@ class AttendeeState extends State<AttendeePage> {
   void _loadAttendees() async {
     try {
       final results = await Future.wait([
-        widget.api.getAllAttendees("group"),
-        widget.api.getAllAttendees("teacher"),
+        widget.api.getAllAttendees(AttendeeType.group),
+        widget.api.getAllAttendees(AttendeeType.teacher),
       ]);
 
       if (!mounted) return;
@@ -49,15 +49,15 @@ class AttendeeState extends State<AttendeePage> {
       });
     } on DioException catch (e) {
       if (!mounted) return;
-      debugPrint("ApiError: ${e.response?.statusMessage}");
+      debugPrint("ApiError: ${e.response?.statusMessage} (${e.error?.toString()})");
 
       setState(() {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")));
     }
   }
 
@@ -72,7 +72,7 @@ class AttendeeState extends State<AttendeePage> {
     setState(() {
       _filteredItems = _allItems.where((item) {
         return item.code.toLowerCase().contains(query) ||
-            item.role.toLowerCase().contains(query);
+            item.role.name.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -89,42 +89,45 @@ class AttendeeState extends State<AttendeePage> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredItems.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Text('No attendees found', style: theme.textTheme.bodyMedium),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: _filteredItems.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 4.0),
-                        itemBuilder: (context, index) {
-                          final item = _filteredItems[index];
-
-                          return ListTile(
-                            title: Text(item.code),
-                            subtitle: Text(item.role),
-                            trailing: TextButton(
-                              child: Text("Select"),
-                              onPressed: () {
-                                widget.prefs.setInt("selectedAttendee", item.id);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('${item.role} ${item.code} selected'),
-                                    duration: Duration(seconds: 3),
-                                  ),
-                                );
-                                widget.onClassSelected();
-                              },
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            tileColor: theme.hoverColor,
-                          );
-                        },
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Text(
+                        'No attendees found',
+                        style: theme.textTheme.bodyMedium,
                       ),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: _filteredItems.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 4.0),
+                    itemBuilder: (context, index) {
+                      final item = _filteredItems[index];
+
+                      return ListTile(
+                        title: Text(item.code),
+                        subtitle: Text(item.role),
+                        trailing: TextButton(
+                          child: Text("Select"),
+                          onPressed: () {
+                            widget.prefs.setInt("selectedAttendee", item.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${item.role} ${item.code} selected'),
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                            widget.onClassSelected();
+                          },
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        tileColor: theme.hoverColor,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -143,10 +146,7 @@ class SearchTextField extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Search',
-        ),
+        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
       ),
     );
   }

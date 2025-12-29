@@ -1,23 +1,25 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'group_attendee.dart';
+part of 'teacher_attendee.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-GroupAttendee _$GroupAttendeeFromJson(Map<String, dynamic> json) =>
-    GroupAttendee(
+TeacherAttendee _$TeacherAttendeeFromJson(Map<String, dynamic> json) =>
+    TeacherAttendee(
+      login: json['login'] as String?,
       id: (json['id'] as num).toInt(),
       code: json['code'] as String,
       role: $enumDecode(_$AttendeeTypeEnumMap, json['role']),
     );
 
-Map<String, dynamic> _$GroupAttendeeToJson(GroupAttendee instance) =>
+Map<String, dynamic> _$TeacherAttendeeToJson(TeacherAttendee instance) =>
     <String, dynamic>{
       'id': instance.id,
       'code': instance.code,
       'role': _$AttendeeTypeEnumMap[instance.role]!,
+      'login': instance.login,
     };
 
 const _$AttendeeTypeEnumMap = {

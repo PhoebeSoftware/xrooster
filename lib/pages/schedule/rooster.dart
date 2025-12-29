@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/appointment.dart';
+import 'package:xrooster/models/base_attendee.dart';
 import 'package:xrooster/models/location.dart';
-import 'package:xrooster/models/teacher.dart';
+import 'package:xrooster/models/teacher_attendee.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 
 class RoosterItem {
   final Appointment appointment;
   final Location? location;
-  final Teacher? teacher;
+  final TeacherAttendee? teacher;
   final GroupAttendee? group;
 
   RoosterItem({
@@ -94,10 +95,7 @@ class RoosterState extends State<Rooster> {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              CircularProgressIndicator(),
-              SizedBox(height: 12),
-            ],
+            children: const [CircularProgressIndicator(), SizedBox(height: 12)],
           ),
         ),
       );
@@ -118,9 +116,7 @@ class RoosterState extends State<Rooster> {
             "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
           tileColor: theme.hoverColor,
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
@@ -138,12 +134,8 @@ class RoosterState extends State<Rooster> {
       });
     }
 
-    final firstDayOfWeek = currentDate.subtract(
-      Duration(days: currentDate.weekday - 1),
-    );
-    final lastDayOfWeek = currentDate.add(
-      Duration(days: 7 - currentDate.weekday),
-    );
+    final firstDayOfWeek = currentDate.subtract(Duration(days: currentDate.weekday - 1));
+    final lastDayOfWeek = currentDate.add(Duration(days: 7 - currentDate.weekday));
 
     Map<String, List<Appointment>> appointments;
     try {
@@ -157,9 +149,9 @@ class RoosterState extends State<Rooster> {
       setState(() {
         loadingDates.remove(dateKey);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')));
       return;
     }
 
@@ -168,45 +160,51 @@ class RoosterState extends State<Rooster> {
         return await future;
       } on DioException catch (e) {
         if (!mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')));
         return null;
       }
     }
 
     final List<Future<MapEntry<String, List<RoosterItem>>>> futures = [];
-    for (var d = firstDayOfWeek;
-        !d.isAfter(lastDayOfWeek);
-        d = d.add(const Duration(days: 1))) {
+    for (
+      var d = firstDayOfWeek;
+      !d.isAfter(lastDayOfWeek);
+      d = d.add(const Duration(days: 1))
+    ) {
       final dateKey = apiFormat.format(d);
       if (appointments.containsKey(dateKey)) {
-        futures.add(Future(() async {
-          final items = await Future.wait(
-            appointments[dateKey]!.map(
-              (a) async => RoosterItem(
-                appointment: a,
-                location: a.attendeeIds.classroom.isNotEmpty
-                    ? await safeGet(
-                        widget.api.getLocationById(a.attendeeIds.classroom[0]),
-                      )
-                    : null,
-                teacher: a.attendeeIds.teacher.isNotEmpty
-                    ? await safeGet(
-                        widget.api.getTeacherById(a.attendeeIds.teacher[0]),
-                      )
-                    : null,
-                group: a.attendeeIds.group.isNotEmpty
-                    ? await safeGet(
-                        widget.api.getGroupById(a.attendeeIds.group[0]),
-                      )
-                    : null,
+        futures.add(
+          Future(() async {
+            final items = await Future.wait(
+              appointments[dateKey]!.map(
+                (a) async => RoosterItem(
+                  appointment: a,
+                  location: a.attendeeIds.classroom.isNotEmpty
+                      ? await safeGet(
+                          widget.api.getLocationById(a.attendeeIds.classroom[0]),
+                        )
+                      : null,
+                  teacher: a.attendeeIds.teacher.isNotEmpty
+                      ? (await widget.api.getAllAttendees(
+                              AttendeeType.teacher,
+                            )).where((t) => t.id == a.attendeeIds.teacher[0]).first
+                            as TeacherAttendee?
+                      : null,
+                  group: a.attendeeIds.group.isNotEmpty
+                      ? (await widget.api.getAllAttendees(
+                              AttendeeType.group,
+                            )).where((t) => t.id == a.attendeeIds.group[0]).first
+                            as GroupAttendee?
+                      : null,
+                ),
               ),
-            ),
-          );
+            );
 
-          return MapEntry(dateKey, items);
-        }));
+            return MapEntry(dateKey, items);
+          }),
+        );
       } else {
         // return empty list for dates with no appointments so you dont get an infinite loading spinner
         futures.add(Future.value(MapEntry(dateKey, <RoosterItem>[])));
@@ -263,15 +261,9 @@ class RoosterState extends State<Rooster> {
                 ),
               ),
             ),
-            Text(
-              item.appointment.name,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(item.appointment.name, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 10),
-            Text(
-              item.appointment.summary,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            Text(item.appointment.summary, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 22),
             Row(
               children: [
