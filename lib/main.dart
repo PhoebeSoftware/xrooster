@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -40,11 +43,13 @@ Future<void> main() async {
       cacheOptions: SharedPreferencesWithCacheOptions(),
     );
     var prefs = SharedPreferencesAsync();
+
     runApp(
       inAppWebViewApp(
         baseWebUrl: selectedSchoolUrl,
         onToken: (token) async {
-          if ((await sp.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
+          if ((await sp.getString('selectedSchool') ?? '').isEmpty &&
+              selectedSchoolUrl.isNotEmpty) {
             await sp.setString('selectedSchool', selectedSchoolUrl);
           }
 
@@ -60,6 +65,7 @@ Future<void> main() async {
             prefs: prefs,
             tokenOverride: token,
             scaffoldKey: scaffoldKey,
+            isOnline: true,
           );
 
           // Load saved theme preference
@@ -90,6 +96,15 @@ Future<void> main() async {
   }
 }
 
+bool _isDeviceOnline(List<ConnectivityResult> states) {
+  if (states.contains(ConnectivityResult.wifi) ||
+      states.contains(ConnectivityResult.mobile) ||
+      states.contains(ConnectivityResult.ethernet)) {
+    return true;
+  }
+  return false;
+}
+
 class XApp extends StatefulWidget {
   final MyxApi api;
   final String initialTheme;
@@ -114,8 +129,10 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   // standaard de Schedule pagina
   int _currentIndex = 0;
+  bool _isOnline = true;
+
+  final _prefs = SharedPreferencesAsync();
   late String _themeMode;
-  var prefs = SharedPreferencesAsync();
   late MyxApi _api;
 
   // cached future so FutureBuilder doesn't recreate a new future each build
@@ -130,6 +147,24 @@ class XAppState extends State<XApp> {
     _themeMode = widget.initialTheme;
     _api = widget.api;
 
+    // listen to connection changes
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      if (_isDeviceOnline(results)) {
+        _isOnline = true;
+        widget.scaffoldKey.currentState?.clearMaterialBanners();
+      } else {
+        _isOnline = false;
+        widget.scaffoldKey.currentState?.showMaterialBanner(
+          const MaterialBanner(
+            content: Text('No internet connection'),
+            leading: Icon(Icons.signal_wifi_connected_no_internet_4),
+            backgroundColor: Colors.red,
+            actions: <Widget>[SizedBox()],
+          ),
+        );
+      }
+    });
+
     // initialize cached future
     _apiFuture = _buildApiFuture();
 
@@ -142,7 +177,7 @@ class XAppState extends State<XApp> {
   }
 
   Future<MyxApi?> _buildApiFuture() async {
-    final token = await prefs.getString("token");
+    final token = await _prefs.getString("token");
     if (token == null) return null;
 
     final cache = await SharedPreferencesWithCache.create(
@@ -152,9 +187,10 @@ class XAppState extends State<XApp> {
     return MyxApi(
       baseUrl: apiBaseUrl,
       cache: cache,
-      prefs: prefs,
+      prefs: _prefs,
       tokenOverride: token,
       scaffoldKey: widget.scaffoldKey,
+      isOnline: _isOnline,
     );
   }
 
@@ -170,7 +206,7 @@ class XAppState extends State<XApp> {
   }
 
   Future<void> _updateTheme(String newTheme) async {
-    await prefs.setString('theme', newTheme);
+    await _prefs.setString('theme', newTheme);
     setState(() => _themeMode = newTheme);
   }
 
@@ -199,9 +235,7 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          ); // api not ready
+          return const Center(child: CircularProgressIndicator()); // api not ready
         }
 
         final api = snapshot.data;
@@ -211,11 +245,12 @@ class XAppState extends State<XApp> {
           return inAppWebViewApp(
             baseWebUrl: selectedSchoolUrl,
             onToken: (t) async {
-              if ((await prefs.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
-                await prefs.setString('selectedSchool', selectedSchoolUrl);
+              if ((await _prefs.getString('selectedSchool') ?? '').isEmpty &&
+                  selectedSchoolUrl.isNotEmpty) {
+                await _prefs.setString('selectedSchool', selectedSchoolUrl);
               }
 
-              await prefs.setString("token", t);
+              await _prefs.setString("token", t);
               // refresh cached future and trigger a single rebuild
               _apiFuture = _buildApiFuture();
               setState(() {});
@@ -269,10 +304,7 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.school),
-                      label: 'Attendees',
-                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',

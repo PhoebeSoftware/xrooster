@@ -148,9 +148,13 @@ class RoosterState extends State<Rooster> {
       setState(() {
         loadingDates.remove(dateKey);
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to get appointments: ${e.response?.statusMessage ?? e.error?.toString()}',
+          ),
+        ),
+      );
       return;
     }
 
@@ -159,9 +163,13 @@ class RoosterState extends State<Rooster> {
         return await future;
       } on DioException catch (e) {
         if (!mounted) return null;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('ApiError: ${e.response?.statusMessage}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to get appointment data: ${e.response?.statusMessage ?? e.error?.toString()}',
+            ),
+          ),
+        );
         return null;
       }
     }
