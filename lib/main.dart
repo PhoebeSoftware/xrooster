@@ -42,14 +42,18 @@ Future<void> main() async {
     if (isOnlineNotifier.value == true) {
       scaffoldKey.currentState?.clearMaterialBanners();
     } else {
-      scaffoldKey.currentState?.showMaterialBanner(
-        const MaterialBanner(
-          content: Text('No internet connection'),
-          leading: Icon(Icons.signal_wifi_connected_no_internet_4),
-          backgroundColor: Colors.red,
-          actions: <Widget>[SizedBox()],
-        ),
-      );
+      Future.delayed(const Duration(seconds: 1), () {
+        if (isOnlineNotifier.value == false) {
+          scaffoldKey.currentState?.showMaterialBanner(
+            const MaterialBanner(
+              content: Text('No internet connection'),
+              leading: Icon(Icons.signal_wifi_connected_no_internet_4),
+              backgroundColor: Colors.red,
+              actions: <Widget>[SizedBox()],
+            ),
+          );
+        }
+      });
     }
   });
 
