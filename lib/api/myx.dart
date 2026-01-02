@@ -28,7 +28,7 @@ class MyxApi extends ChangeNotifier {
   final SharedPreferencesWithCache cache;
   final SharedPreferencesAsync prefs;
 
-  final bool isOnline;
+  final ValueNotifier<bool> isOnlineNotifier;
 
   final String baseUrl;
 
@@ -39,7 +39,7 @@ class MyxApi extends ChangeNotifier {
     required this.cache,
     required this.prefs,
     required this.scaffoldKey,
-    required this.isOnline,
+    required this.isOnlineNotifier,
     String? tokenOverride,
   }) {
     final usedToken = tokenOverride ?? token;
@@ -55,11 +55,6 @@ class MyxApi extends ChangeNotifier {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onError: (DioException e, handler) {
-          if (!isOnline) {
-            handler.next(e);
-            return;
-          }
-
           final statusCode = e.response?.statusCode ?? 000;
 
           // check if unauthorized

@@ -47,12 +47,13 @@ class _SchoolSelectorPageState extends State<SchoolSelectorPage> {
                   initialValue: _selectedSchool,
                   items: [
                     for (final s in schools)
-                      DropdownMenuItem(value: s['url'] as String, child: Text(s['name'] as String)),
+                      DropdownMenuItem(
+                        value: s['url'] as String,
+                        child: Text(s['name'] as String),
+                      ),
                   ],
                   onChanged: (v) => setState(() => _selectedSchool = v),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
