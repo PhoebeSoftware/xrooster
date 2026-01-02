@@ -54,7 +54,15 @@ class MyxApi extends ChangeNotifier {
     // add dio request interceptor for api errors
     _dio.interceptors.add(
       InterceptorsWrapper(
+        onResponse: (response, handler) {
+          isOnlineNotifier.value = true;
+          handler.next(response);
+        },
         onError: (DioException e, handler) async {
+          if (e.error is SocketException) {
+            isOnlineNotifier.value = false;
+          }
+
           if (isOnlineNotifier.value != true) {
             handler.next(e);
             return;
