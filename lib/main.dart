@@ -209,6 +209,9 @@ class XAppState extends State<XApp> {
     _themeMode = widget.initialTheme;
     _api = widget.api;
 
+    // listen for token invalidation
+    _api.addListener(_onApiChange);
+
     // initialize cached future
     _apiFuture = _buildApiFuture();
 
@@ -220,22 +223,27 @@ class XAppState extends State<XApp> {
     });
   }
 
+  @override
+  void dispose() {
+    _api.removeListener(_onApiChange);
+    super.dispose();
+  }
+
+  // rebuild on token invalidation
+  void _onApiChange() {
+    setState(() {
+      _apiFuture = _buildApiFuture();
+    });
+  }
+
   Future<MyxApi?> _buildApiFuture() async {
     final token = await _prefs.getString("token");
-    if (token == null) return null;
+    if (token == null) {
+      return null;
+    }
 
-    final cache = await SharedPreferencesWithCache.create(
-      cacheOptions: SharedPreferencesWithCacheOptions(),
-    );
-
-    return MyxApi(
-      baseUrl: apiBaseUrl,
-      cache: cache,
-      prefs: _prefs,
-      tokenOverride: token,
-      scaffoldKey: widget.scaffoldKey,
-      isOnlineNotifier: widget.isOnlineNotifier,
-    );
+    _api.updateToken(token);
+    return _api;
   }
 
   ThemeMode get themeMode {

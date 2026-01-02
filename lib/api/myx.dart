@@ -54,7 +54,12 @@ class MyxApi extends ChangeNotifier {
     // add dio request interceptor for api errors
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onError: (DioException e, handler) {
+        onError: (DioException e, handler) async {
+          if (!isOnlineNotifier.value) {
+            handler.next(e);
+            return;
+          }
+
           final statusCode = e.response?.statusCode ?? 000;
 
           // check if unauthorized
@@ -62,7 +67,7 @@ class MyxApi extends ChangeNotifier {
             debugPrint("Interceptor: MyX Token invalid!");
 
             // invalidate token & re-render app
-            prefs.remove("token");
+            await prefs.remove("token");
             notifyListeners();
           }
 
@@ -78,6 +83,12 @@ class MyxApi extends ChangeNotifier {
           true;
       return client;
     };
+  }
+
+  /// Update the authorization token for this API instance
+  void updateToken(String newToken) {
+    debugPrint("MyxApi: Updating token");
+    _dio.options.headers["Authorization"] = "Bearer $newToken";
   }
 
   BaseAttendee _createAttendeeFromJson(AttendeeType type, Map<String, dynamic> json) {
