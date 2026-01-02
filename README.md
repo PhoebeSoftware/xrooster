@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/icon.webp" alt="rooster pagina" width="150" />
+  <img src="./assets/icon.png" alt="rooster pagina" width="150" />
   <br>
   <strong>xrooster</strong>
   <br><br>

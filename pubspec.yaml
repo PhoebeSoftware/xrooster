@@ -71,7 +71,7 @@ flutter:
 
     # To add assets to your application, add an assets section, like this:
     assets:
-      - assets/icon.webp
+      - assets/icon.png
       - assets/gif.gif
       - assets/schools.json
 
@@ -104,19 +104,19 @@ flutter:
 flutter_launcher_icons: # flutter pub run flutter_launcher_icons
     android: "launcher_icon"
     ios: true
-    image_path: "assets/icon.webp"
+    image_path: "assets/icon.png"
     min_sdk_android: 21 # android min sdk min:16, default 21
     web:
         generate: true
-        image_path: "assets/icon.webp"
+        image_path: "assets/icon.png"
         background_color: "#915827"
         theme_color: "#ED7D25"
     windows:
         generate: true
-        image_path: "assets/icon.webp"
+        image_path: "assets/icon.png"
         icon_size: 48 # min:48, max:256, default: 48
     macos:
         generate: true
-        image_path: "assets/icon.webp"
+        image_path: "assets/icon.png"
         android: true
         ios: true
