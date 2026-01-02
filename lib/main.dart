@@ -121,11 +121,12 @@ Future<void> main() async {
     if (!isOnlineNotifier.value) {
       final token = await prefs.getString('token');
       if (token != null) {
-        // device is offline and token already exists, just start app and wait for connection update
+        // device is offline and token already exists,
+        // just start app and wait for connection update
         startAppFlow(token);
       } else {
         // device is offline and token does not exist,
-        // creating the login would be worthless
+        // creating the login or app would be worthless
         void onlineListener() {
           if (isOnlineNotifier.value) {
             isOnlineNotifier.removeListener(onlineListener);
