@@ -28,7 +28,7 @@ class MyxApi extends ChangeNotifier {
   final SharedPreferencesWithCache cache;
   final SharedPreferencesAsync prefs;
 
-  final ValueNotifier<bool> isOnlineNotifier;
+  final ValueNotifier<bool?> isOnlineNotifier;
 
   final String baseUrl;
 
@@ -55,7 +55,7 @@ class MyxApi extends ChangeNotifier {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onError: (DioException e, handler) async {
-          if (!isOnlineNotifier.value) {
+          if (isOnlineNotifier.value != true) {
             handler.next(e);
             return;
           }
@@ -103,7 +103,7 @@ class MyxApi extends ChangeNotifier {
   Future<List<BaseAttendee>> getAllAttendees(AttendeeType type) async {
     final cacheKey = 'attendees:${type.name}';
     var cachedJson = cache.getString(cacheKey);
-    if (!isOnlineNotifier.value && cachedJson != null) {
+    if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
         final List<dynamic> decoded = jsonDecode(cachedJson) as List<dynamic>;
         return decoded
@@ -129,7 +129,7 @@ class MyxApi extends ChangeNotifier {
   Future<Location> getLocationById(int locationId) async {
     final cacheKey = 'location:$locationId';
     var cachedJson = cache.getString(cacheKey);
-    if (!isOnlineNotifier.value && cachedJson != null) {
+    if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
         return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
@@ -150,7 +150,7 @@ class MyxApi extends ChangeNotifier {
   Future<TeacherAttendee> getTeacherById(int teacherId) async {
     final cacheKey = 'teacher:$teacherId';
     var cachedJson = cache.getString(cacheKey);
-    if (!isOnlineNotifier.value && cachedJson != null) {
+    if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
         return TeacherAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
@@ -171,7 +171,7 @@ class MyxApi extends ChangeNotifier {
   Future<GroupAttendee> getGroupById(int groupId) async {
     final cacheKey = 'group:$groupId';
     var cachedJson = cache.getString(cacheKey);
-    if (!isOnlineNotifier.value && cachedJson != null) {
+    if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
         return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
       } catch (e) {
@@ -208,7 +208,7 @@ class MyxApi extends ChangeNotifier {
     final cacheKey = 'appointments:$startDate:$endDate:$usedAttendeeId';
 
     var cachedJson = cache.getString(cacheKey);
-    if (!isOnlineNotifier.value && cachedJson != null) {
+    if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
         final decoded = jsonDecode(cachedJson) as Map<String, dynamic>;
         return decoded.map((d, a) {

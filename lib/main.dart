@@ -19,7 +19,7 @@ String apiBaseUrl = '';
 String selectedSchoolUrl = '';
 
 // Global connectivity state that can be shared across the app
-final ValueNotifier<bool> isOnlineNotifier = ValueNotifier<bool>(false);
+final ValueNotifier<bool?> isOnlineNotifier = ValueNotifier<bool?>(null);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +38,8 @@ Future<void> main() async {
 
   // handle connection changes
   isOnlineNotifier.addListener(() {
-    if (isOnlineNotifier.value) {
+    debugPrint('Connection status changed');
+    if (isOnlineNotifier.value == true) {
       scaffoldKey.currentState?.clearMaterialBanners();
     } else {
       scaffoldKey.currentState?.showMaterialBanner(
@@ -117,7 +118,7 @@ Future<void> main() async {
     selectedSchoolUrl = selectedSchool;
     apiBaseUrl = normalizeApiBase(selectedSchool);
 
-    if (!isOnlineNotifier.value) {
+    if (isOnlineNotifier.value != true) {
       final token = await prefs.getString('token');
       if (token != null) {
         // device is offline and token already exists,
@@ -127,7 +128,7 @@ Future<void> main() async {
         // device is offline and token does not exist,
         // creating the login or app would be worthless
         void onlineListener() {
-          if (isOnlineNotifier.value) {
+          if (isOnlineNotifier.value == true) {
             isOnlineNotifier.removeListener(onlineListener);
             startLoginFlow();
           }
@@ -169,7 +170,7 @@ class XApp extends StatefulWidget {
   final MyxApi api;
   final String initialTheme;
   final GlobalKey<ScaffoldMessengerState> scaffoldKey;
-  final ValueNotifier<bool> isOnlineNotifier;
+  final ValueNotifier<bool?> isOnlineNotifier;
 
   XApp({
     super.key,
