@@ -32,8 +32,8 @@ Future<void> main() async {
 
   await initializeDateFormatting('nl');
 
-  var sp = SharedPreferencesAsync();
-  final selectedSchool = await sp.getString('selectedSchool');
+  var prefs = SharedPreferencesAsync();
+  final selectedSchool = await prefs.getString('selectedSchool');
   final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
 
   // handle connection changes
@@ -66,7 +66,6 @@ Future<void> main() async {
   var cache = await SharedPreferencesWithCache.create(
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
-  var prefs = SharedPreferencesAsync();
 
   String normalizeApiBase(String url) {
     var s = url.trim();
@@ -77,9 +76,9 @@ Future<void> main() async {
 
   // creates the main app with an token for the api
   void startAppFlow(String token) async {
-    if ((await sp.getString('selectedSchool') ?? '').isEmpty &&
+    if ((await prefs.getString('selectedSchool') ?? '').isEmpty &&
         selectedSchoolUrl.isNotEmpty) {
-      await sp.setString('selectedSchool', selectedSchoolUrl);
+      await prefs.setString('selectedSchool', selectedSchoolUrl);
     }
 
     // Persist the token so the app's cached future builder can pick it up
@@ -97,7 +96,7 @@ Future<void> main() async {
     );
 
     // Load saved theme preference
-    final theme = await sp.getString('theme') ?? 'system';
+    final theme = await prefs.getString('theme') ?? 'system';
 
     runApp(
       XApp(
