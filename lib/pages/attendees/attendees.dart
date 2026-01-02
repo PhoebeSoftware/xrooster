@@ -49,15 +49,17 @@ class AttendeeState extends State<AttendeePage> {
       });
     } on DioException catch (e) {
       if (!mounted) return;
-      debugPrint("ApiError: ${e.response?.statusMessage} (${e.error?.toString()})");
-
       setState(() {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("ApiError: ${e.response?.statusMessage}")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Failed to get attendees: ${e.response?.statusMessage ?? e.error?.toString()}",
+          ),
+        ),
+      );
     }
   }
 

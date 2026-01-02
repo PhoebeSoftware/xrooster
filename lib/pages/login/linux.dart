@@ -5,6 +5,8 @@ import 'package:xrooster/api/myx.dart';
 
 Widget linuxFallback({required FutureOr<void> Function(String token) onToken}) {
   return MaterialApp(
+    darkTheme: ThemeData.dark(),
+    themeMode: ThemeMode.system,
     home: Scaffold(
       appBar: AppBar(title: const Text('XRooster Login')),
       body: FutureBuilder<String?>(

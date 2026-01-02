@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -5,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
+import 'package:xrooster/pages/login/offline.dart';
 import 'package:xrooster/pages/login/school_selector.dart';
 import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
@@ -13,6 +17,9 @@ import 'package:dynamic_color/dynamic_color.dart';
 
 String apiBaseUrl = '';
 String selectedSchoolUrl = '';
+
+// Global connectivity state that can be shared across the app
+final ValueNotifier<bool> isOnlineNotifier = ValueNotifier<bool>(false);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +34,39 @@ Future<void> main() async {
 
   var sp = SharedPreferencesAsync();
   final selectedSchool = await sp.getString('selectedSchool');
+  final scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+
+  // handle connection changes
+  isOnlineNotifier.addListener(() {
+    if (isOnlineNotifier.value) {
+      scaffoldKey.currentState?.clearMaterialBanners();
+    } else {
+      scaffoldKey.currentState?.showMaterialBanner(
+        const MaterialBanner(
+          content: Text('No internet connection'),
+          leading: Icon(Icons.signal_wifi_connected_no_internet_4),
+          backgroundColor: Colors.red,
+          actions: <Widget>[SizedBox()],
+        ),
+      );
+    }
+  });
+
+  // initialize state
+  isOnlineNotifier.value = _isDeviceOnline(await Connectivity().checkConnectivity());
+
+  // listen to connection changes
+  Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+    final newOnlineStatus = _isDeviceOnline(results);
+    if (isOnlineNotifier.value != newOnlineStatus) {
+      isOnlineNotifier.value = newOnlineStatus;
+    }
+  });
+
+  var cache = await SharedPreferencesWithCache.create(
+    cacheOptions: SharedPreferencesWithCacheOptions(),
+  );
+  var prefs = SharedPreferencesAsync();
 
   String normalizeApiBase(String url) {
     var s = url.trim();
@@ -35,77 +75,115 @@ Future<void> main() async {
     return '$s/api/';
   }
 
-  void startLoginFlow() async {
-    var cache = await SharedPreferencesWithCache.create(
-      cacheOptions: SharedPreferencesWithCacheOptions(),
+  // creates the main app with an token for the api
+  void startAppFlow(String token) async {
+    if ((await sp.getString('selectedSchool') ?? '').isEmpty &&
+        selectedSchoolUrl.isNotEmpty) {
+      await sp.setString('selectedSchool', selectedSchoolUrl);
+    }
+
+    // Persist the token so the app's cached future builder can pick it up
+    // immediately. Without this the `XApp` instance created below will
+    // still try to read the token from prefs and may remain in the
+    // login flow requiring a second token entry on some platforms.
+    await prefs.setString('token', token);
+    var api = MyxApi(
+      baseUrl: apiBaseUrl,
+      cache: cache,
+      prefs: prefs,
+      tokenOverride: token,
+      scaffoldKey: scaffoldKey,
+      isOnlineNotifier: isOnlineNotifier,
     );
-    var prefs = SharedPreferencesAsync();
+
+    // Load saved theme preference
+    final theme = await sp.getString('theme') ?? 'system';
+
     runApp(
-      inAppWebViewApp(
-        baseWebUrl: selectedSchoolUrl,
-        onToken: (token) async {
-          if ((await sp.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
-            await sp.setString('selectedSchool', selectedSchoolUrl);
-          }
-
-          // Persist the token so the app's cached future builder can pick it up
-          // immediately. Without this the `XApp` instance created below will
-          // still try to read the token from prefs and may remain in the
-          // login flow requiring a second token entry on some platforms.
-          await prefs.setString('token', token);
-          var scaffoldKey = GlobalKey<ScaffoldMessengerState>();
-          var api = MyxApi(
-            baseUrl: apiBaseUrl,
-            cache: cache,
-            prefs: prefs,
-            tokenOverride: token,
-            scaffoldKey: scaffoldKey,
-          );
-
-          // Load saved theme preference
-          final theme = await sp.getString('theme') ?? 'system';
-
-          runApp(XApp(api: api, initialTheme: theme, scaffoldKey: scaffoldKey));
-        },
+      XApp(
+        api: api,
+        initialTheme: theme,
+        scaffoldKey: scaffoldKey,
+        isOnlineNotifier: isOnlineNotifier,
       ),
     );
   }
 
+  // creates the login page and redirects to main flow after login
+  void startLoginFlow() async {
+    runApp(inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow));
+  }
+
+  void startSchoolSelectedFlow(String selectedSchool) async {
+    selectedSchoolUrl = selectedSchool;
+    apiBaseUrl = normalizeApiBase(selectedSchool);
+
+    if (!isOnlineNotifier.value) {
+      final token = await prefs.getString('token');
+      if (token != null) {
+        // device is offline and token already exists,
+        // just start app and wait for connection update
+        startAppFlow(token);
+      } else {
+        // device is offline and token does not exist,
+        // creating the login or app would be worthless
+        void onlineListener() {
+          if (isOnlineNotifier.value) {
+            isOnlineNotifier.removeListener(onlineListener);
+            startLoginFlow();
+          }
+        }
+
+        isOnlineNotifier.addListener(onlineListener);
+        runApp(offlinePage());
+      }
+    } else {
+      // device is online, start regular old flow
+      startLoginFlow();
+    }
+  }
+
+  // main if-statement
   if (selectedSchool == null) {
     runApp(
       MaterialApp(
-        home: SchoolSelectorPage(
-          onSchoolSelected: (school) async {
-            selectedSchoolUrl = school;
-            apiBaseUrl = normalizeApiBase(school);
-            startLoginFlow();
-          },
-        ),
+        darkTheme: ThemeData.dark(),
+        themeMode: ThemeMode.system,
+        home: SchoolSelectorPage(onSchoolSelected: startSchoolSelectedFlow),
       ),
     );
   } else {
-    selectedSchoolUrl = selectedSchool;
-    apiBaseUrl = normalizeApiBase(selectedSchool);
-    startLoginFlow();
+    startSchoolSelectedFlow(selectedSchool);
   }
+}
+
+bool _isDeviceOnline(List<ConnectivityResult> states) {
+  if (states.contains(ConnectivityResult.wifi) ||
+      states.contains(ConnectivityResult.mobile) ||
+      states.contains(ConnectivityResult.ethernet)) {
+    return true;
+  }
+  return false;
 }
 
 class XApp extends StatefulWidget {
   final MyxApi api;
   final String initialTheme;
+  final GlobalKey<ScaffoldMessengerState> scaffoldKey;
+  final ValueNotifier<bool> isOnlineNotifier;
 
   XApp({
     super.key,
     required this.api,
-    required this.scaffoldKey,
     required this.initialTheme,
+    required this.scaffoldKey,
+    required this.isOnlineNotifier,
   });
 
   static String title = 'XRooster';
 
   final navigatorKey = GlobalKey<NavigatorState>();
   final rooster = GlobalKey<RoosterState>();
-  final GlobalKey<ScaffoldMessengerState> scaffoldKey;
 
   @override
   State<XApp> createState() => XAppState();
@@ -114,8 +192,9 @@ class XApp extends StatefulWidget {
 class XAppState extends State<XApp> {
   // standaard de Schedule pagina
   int _currentIndex = 0;
+
+  final _prefs = SharedPreferencesAsync();
   late String _themeMode;
-  var prefs = SharedPreferencesAsync();
   late MyxApi _api;
 
   // cached future so FutureBuilder doesn't recreate a new future each build
@@ -142,7 +221,7 @@ class XAppState extends State<XApp> {
   }
 
   Future<MyxApi?> _buildApiFuture() async {
-    final token = await prefs.getString("token");
+    final token = await _prefs.getString("token");
     if (token == null) return null;
 
     final cache = await SharedPreferencesWithCache.create(
@@ -152,9 +231,10 @@ class XAppState extends State<XApp> {
     return MyxApi(
       baseUrl: apiBaseUrl,
       cache: cache,
-      prefs: prefs,
+      prefs: _prefs,
       tokenOverride: token,
       scaffoldKey: widget.scaffoldKey,
+      isOnlineNotifier: widget.isOnlineNotifier,
     );
   }
 
@@ -170,7 +250,7 @@ class XAppState extends State<XApp> {
   }
 
   Future<void> _updateTheme(String newTheme) async {
-    await prefs.setString('theme', newTheme);
+    await _prefs.setString('theme', newTheme);
     setState(() => _themeMode = newTheme);
   }
 
@@ -199,9 +279,7 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          ); // api not ready
+          return const Center(child: CircularProgressIndicator()); // api not ready
         }
 
         final api = snapshot.data;
@@ -211,11 +289,12 @@ class XAppState extends State<XApp> {
           return inAppWebViewApp(
             baseWebUrl: selectedSchoolUrl,
             onToken: (t) async {
-              if ((await prefs.getString('selectedSchool') ?? '').isEmpty && selectedSchoolUrl.isNotEmpty) {
-                await prefs.setString('selectedSchool', selectedSchoolUrl);
+              if ((await _prefs.getString('selectedSchool') ?? '').isEmpty &&
+                  selectedSchoolUrl.isNotEmpty) {
+                await _prefs.setString('selectedSchool', selectedSchoolUrl);
               }
 
-              await prefs.setString("token", t);
+              await _prefs.setString("token", t);
               // refresh cached future and trigger a single rebuild
               _apiFuture = _buildApiFuture();
               setState(() {});
@@ -269,10 +348,7 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.school),
-                      label: 'Attendees',
-                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',
