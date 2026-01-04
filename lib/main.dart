@@ -350,6 +350,9 @@ class XAppState extends State<XApp> {
               darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
               themeMode: themeMode,
               home: Scaffold(
+                appBar: AppBar(
+                  toolbarHeight: 0
+                ),
                 bottomNavigationBar: BottomNavigationBar(
                   currentIndex: _currentIndex,
                   onTap: (index) {
@@ -360,7 +363,10 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.school),
+                      label: 'Attendees',
+                    ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',
