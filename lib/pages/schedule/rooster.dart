@@ -288,7 +288,13 @@ class RoosterState extends State<Rooster> {
               children: [
                 const Icon(Icons.location_on, size: 20),
                 const SizedBox(width: 10),
-                Text(item.location?.code ?? 'No location found'),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.location?.code ?? 'No classroom found'),
+                    if (item.location?.location != null) Text(item.location!.location),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 14),
