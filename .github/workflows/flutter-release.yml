@@ -1,9 +1,7 @@
 name: Build Flutter APK and IPA
 
 on:
-  push:
-    branches:
-      - release
+  workflow_dispatch:
 
 jobs:
   android:
