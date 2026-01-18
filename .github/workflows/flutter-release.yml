@@ -16,9 +16,6 @@ jobs:
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Get commit ID
-        run: echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -49,10 +46,10 @@ jobs:
           EOF
 
       - name: Build split APKs
-        run: flutter build apk --release --split-per-abi --dart-define=GIT_COMMIT=$COMMIT_ID
+        run: flutter build apk --release --split-per-abi
 
       - name: Build APK
-        run: flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID
+        run: flutter build apk --release
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
@@ -72,9 +69,6 @@ jobs:
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Get commit ID
-        run: echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -82,7 +76,7 @@ jobs:
           cache: true
 
       - name: Build XCArchive (unsigned)
-        run: flutter build ipa --no-codesign --release --dart-define=GIT_COMMIT=$COMMIT_ID
+        run: flutter build ipa --no-codesign --release
 
       - name: Create IPA manually
         run: |

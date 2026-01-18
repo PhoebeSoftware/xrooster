@@ -29,7 +29,7 @@ Download de nieuwste versie van de app via de [releases pagina](https://github.c
 git clone https://github.com/PhoebeSoftware/xrooster.git
 cd xrooster
 flutter pub get
-flutter build apk --release --dart-define=GIT_COMMIT=$(git rev-parse HEAD)
+flutter build apk --release
 ```
 
 De APK bevindt zich dan in `./build/app/outputs/flutter-apk/app-release.apk`

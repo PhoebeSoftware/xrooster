@@ -118,22 +118,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 final version = snapshot.hasData
                     ? snapshot.data!.version
                     : '...';
-                const longGitCommit = String.fromEnvironment(
-                  'GIT_COMMIT',
-                  defaultValue: 'unknown',
-                );
-
-                String shortGitCommit = 'unknown';
-                if (longGitCommit != 'unknown') {
-                  shortGitCommit = longGitCommit.substring(0, 7);
-                }
                 return InkWell(
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Full Commit ID'),
-                        //epic easter egg
+                        title: const Text('xrooster'),
+                        // epic easter egg
                         content: Builder(
                           builder: (context) {
                             int clickCount = 0;
@@ -148,7 +139,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                   );
                                 }
                               },
-                              child: Text(longGitCommit),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Version $version'),
+                                  Text('Developed by Phoebe Software'),
+                                  const SizedBox(height: 12),
+                                  const Text('Contributors:'),
+                                  const Text('   • AlexJonker'),
+                                  const Text('   • kietelmuis'),
+                                ],
+                              ),
                             );
                           },
                         ),
@@ -156,15 +158,6 @@ class _SettingsPageState extends State<SettingsPage> {
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
                             child: const Text('Close'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              Navigator.of(context).pop();
-                              await Clipboard.setData(
-                                ClipboardData(text: longGitCommit),
-                              );
-                            },
-                            child: const Text('Copy'),
                           ),
                         ],
                       ),
@@ -176,7 +169,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Version $version'),
-                        Text('Commit: $shortGitCommit'),
                         Text('Developed by Phoebe Software'),
                       ],
                     ),

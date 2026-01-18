@@ -1,16 +1,14 @@
 #!/bin/bash
 set -e 
 
-COMMIT_ID=$(git rev-parse HEAD)
-
-echo "🔧 Building Flutter app with commit: $COMMIT_ID"
+echo "🔧 Building Flutter app "
 
 flutter clean
 
 flutter pub get
 
-flutter build apk --release --dart-define=GIT_COMMIT=$COMMIT_ID
+flutter build apk --release
 
 echo "----------------------------------------------------------------------"
-echo "✅ Build complete. Commit: $COMMIT_ID"
+echo "✅ Build complete."
 echo "You can find the APK at build/app/outputs/flutter-apk/app-release.apk"
