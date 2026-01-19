@@ -3,6 +3,9 @@ name: Build Flutter APK and IPA
 on:
   workflow_dispatch:
 
+env:
+  flutter-version: "3.38.7"
+
 jobs:
   android:
     name: Build Flutter APK
@@ -29,7 +32,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.5"
+          flutter-version: ${{ env.flutter-version }}
           cache: true
 
       - name: Decode Android keystore
@@ -72,7 +75,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.5"
+          flutter-version: ${{ env.flutter-version }}
           cache: true
 
       - name: Build XCArchive (unsigned)
