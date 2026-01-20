@@ -130,8 +130,12 @@ class RoosterState extends State<Rooster> {
       separatorBuilder: (context, index) => const SizedBox(height: 4.0),
       itemBuilder: (context, index) {
         final item = sortedItems[index];
+        final hasComment = item.appointment.comment?.isNotEmpty == true;
 
         return ListTile(
+          leading: hasComment
+              ? Icon(Icons.info, color: theme.colorScheme.primary)
+              : null,
           title: Text(
             "${item.appointment.name}${item.location?.code != null ? ' - ${item.location!.code}' : ''}",
           ),
@@ -260,6 +264,7 @@ class RoosterState extends State<Rooster> {
       final eventHeight = max(endOffset - startOffset, 50.0);
       final timeRange = '${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}';
       final locationCode = item.location?.code;
+      final hasComment = item.appointment.comment?.isNotEmpty == true;
 
       return Positioned(
         top: startOffset,
@@ -289,32 +294,54 @@ class RoosterState extends State<Rooster> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      item.appointment.name,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      timeRange,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
-                      ),
-                    ),
-                    if (locationCode != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          locationCode,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hasComment)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6.0, top: 2.0),
+                            child: Icon(
+                              Icons.info,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        Expanded(
+                          child: Text(
+                            item.appointment.name,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              timeRange,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                              ),
+                            ),
+                            if (locationCode != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  locationCode,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -510,141 +537,178 @@ class RoosterState extends State<Rooster> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) {
+        final theme = Theme.of(context);
+        final commentText = item.appointment.comment;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            Text(item.appointment.name, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 10),
-            Text(item.appointment.summary, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                const Icon(Icons.access_time, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  "${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}",
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 20),
-                const SizedBox(width: 10),
-                Text(DateFormat("MMMM d, yyyy").format(item.appointment.start)),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 20),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.location?.code ?? 'No classroom found'),
-                    if (item.location?.location != null) Text(item.location!.location),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(Icons.person, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: item.teacher != null
-                      ? TextButton(
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            alignment: Alignment.centerLeft,
+              Text(item.appointment.name, style: theme.textTheme.headlineSmall),
+              const SizedBox(height: 10),
+              Text(item.appointment.summary, style: theme.textTheme.bodyMedium),
+              if (commentText?.isNotEmpty == true) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.colorScheme.primary),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          commentText!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.w600,
                           ),
-                          onPressed: () async {
-                            final key = GlobalKey<RoosterState>();
-                            final dateString = apiFormat.format(item.appointment.start);
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    "${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}",
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today, size: 20),
+                  const SizedBox(width: 10),
+                  Text(DateFormat("MMMM d, yyyy").format(item.appointment.start)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, size: 20),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.location?.code ?? 'No classroom found'),
+                      if (item.location?.location != null) Text(item.location!.location),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.person, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: item.teacher != null
+                        ? TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              alignment: Alignment.centerLeft,
+                            ),
+                            onPressed: () async {
+                              final key = GlobalKey<RoosterState>();
+                              final dateString = apiFormat.format(item.appointment.start);
 
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => Scaffold(
-                                  appBar: AppBar(title: Text(item.teacher!.code)),
-                                  body: SchedulePage(
-                                    rooster: key,
-                                    api: widget.api,
-                                    attendeeIdOverride: item.teacher!.id,
-                                    initialDate: dateString,
-                                    useModernScheduleLayout: widget.useModernLayout,
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => Scaffold(
+                                    appBar: AppBar(title: Text(item.teacher!.code)),
+                                    body: SchedulePage(
+                                      rooster: key,
+                                      api: widget.api,
+                                      attendeeIdOverride: item.teacher!.id,
+                                      initialDate: dateString,
+                                      useModernScheduleLayout: widget.useModernLayout,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                          child: Text('${item.teacher!.code} (${item.teacher!.login})'),
-                        )
-                      : const Text('No teacher found'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(Icons.people, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: item.group != null
-                      ? TextButton(
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            alignment: Alignment.centerLeft,
-                          ),
-                          onPressed: () {
-                            final key = GlobalKey<RoosterState>();
-                            final dateString = apiFormat.format(item.appointment.start);
+                              );
+                            },
+                            child: Text('${item.teacher!.code} (${item.teacher!.login})'),
+                          )
+                        : const Text('No teacher found'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.people, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: item.group != null
+                        ? TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              alignment: Alignment.centerLeft,
+                            ),
+                            onPressed: () {
+                              final key = GlobalKey<RoosterState>();
+                              final dateString = apiFormat.format(item.appointment.start);
 
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => Scaffold(
-                                  appBar: AppBar(title: Text(item.group!.code)),
-                                  body: SchedulePage(
-                                    rooster: key,
-                                    api: widget.api,
-                                    attendeeIdOverride: item.group!.id,
-                                    initialDate: dateString,
-                                    useModernScheduleLayout: widget.useModernLayout,
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => Scaffold(
+                                    appBar: AppBar(title: Text(item.group!.code)),
+                                    body: SchedulePage(
+                                      rooster: key,
+                                      api: widget.api,
+                                      attendeeIdOverride: item.group!.id,
+                                      initialDate: dateString,
+                                      useModernScheduleLayout: widget.useModernLayout,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                          child: Text(item.group!.code),
-                        )
-                      : const Text('No class found'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+                              );
+                            },
+                            child: Text(item.group!.code),
+                          )
+                        : const Text('No class found'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
+
 }
 
 class _DayTimeline extends StatefulWidget {
