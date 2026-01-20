@@ -196,32 +196,38 @@ class TimetableState extends State<TimetableView> {
       );
     });
 
-    final hourLines = List<Widget>.generate(totalHours + 1, (index) {
-      final top = index * hourHeight;
-      return Positioned(
-        top: top,
-        left: 0,
-        right: 0,
-        child: Container(
-          height: 1,
-          color: applyOpacity(theme.dividerColor, 0.4),
-        ),
-      );
-    });
+    final hourLines = List<Widget>.generate(
+      max(totalHours - 1, 0),
+      (index) {
+        final top = (index + 1) * hourHeight;
+        return Positioned(
+          top: top,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 1,
+            color: applyOpacity(theme.dividerColor, 0.4),
+          ),
+        );
+      },
+    );
 
     const linesPerHour = 2;
-    final halfHourLines = List<Widget>.generate(totalHours * linesPerHour + 1, (index) {
-      final top = index * (hourHeight / linesPerHour);
-      return Positioned(
-        top: top,
-        left: 0,
-        right: 0,
-        child: Container(
-          height: 1,
-          color: applyOpacity(theme.dividerColor, 0.4),
-        ),
-      );
-    });
+    final halfHourLines = List<Widget>.generate(
+      max(totalHours * linesPerHour - 1, 0),
+      (index) {
+        final top = (index + 1) * (hourHeight / linesPerHour);
+        return Positioned(
+          top: top,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 1,
+            color: applyOpacity(theme.dividerColor, 0.4),
+          ),
+        );
+      },
+    );
 
     final nowDate = DateTime.now();
     final isToday = dateKey == apiFormat.format(nowDate);
