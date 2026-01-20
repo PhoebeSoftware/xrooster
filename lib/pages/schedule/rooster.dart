@@ -131,15 +131,12 @@ class RoosterState extends State<Rooster> {
 
       return Positioned(
         top: labelTop,
-        left: 0,
         right: 0,
         child: Text(
-          '${hour.toString().padLeft(2, "0")}:00',
+          hour.toString().padLeft(2, "0"),
           style: theme.textTheme.labelLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
           ),
-          textAlign: TextAlign.right,
         ),
       );
     });
@@ -307,11 +304,11 @@ class RoosterState extends State<Rooster> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: 52,
+                width: 16,
                 height: timelineHeight,
                 child: Stack(children: hourLabels),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Container(
                   height: timelineHeight,
