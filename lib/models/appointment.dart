@@ -16,6 +16,7 @@ class Appointment {
   @JsonKey(name: "endTimeUnit")
   final int endUnit;
   final AttendeeIds attendeeIds;
+  final String? comment;
 
   Appointment({
     required this.id,
@@ -26,6 +27,7 @@ class Appointment {
     required this.end,
     required this.endUnit,
     required this.attendeeIds,
+    this.comment,
   });
 
   factory Appointment.fromJson(Map<String, dynamic> json) => _$AppointmentFromJson(json);
