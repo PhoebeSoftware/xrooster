@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/pages/schedule/day_selector.dart';
 import 'package:xrooster/pages/schedule/timetable.dart';
-import 'package:xrooster/pages/schedule/week_list.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({
@@ -39,7 +39,7 @@ class ScheduleState extends State<SchedulePage> {
     return SafeArea(
       child: Column(
         children: [
-          WeekList(timetableKey: widget.timetableKey),
+          DaySelector(timetableKey: widget.timetableKey),
           Expanded(
             child: TimetableView(
               key: widget.timetableKey,
