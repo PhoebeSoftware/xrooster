@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -28,11 +29,13 @@ class Rooster extends StatefulWidget {
     required this.title,
     required this.api,
     this.attendeeIdOverride,
+    this.useModernLayout = true,
   });
 
   final String title;
   final MyxApi api;
   final int? attendeeIdOverride;
+  final bool useModernLayout;
 
   @override
   State<Rooster> createState() => RoosterState();
@@ -100,11 +103,33 @@ class RoosterState extends State<Rooster> {
       );
     }
 
+    if (widget.useModernLayout) {
+      return _buildTimelineView(items, dateKey);
+    }
+
+    return _buildClassicList(items, theme);
+  }
+
+  Widget _buildClassicList(List<RoosterItem> items, ThemeData theme) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'Geen lessen gepland',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final sortedItems = [...items]
+      ..sort((a, b) => a.appointment.start.compareTo(b.appointment.start));
+
     return ListView.separated(
-      itemCount: items.length,
+      itemCount: sortedItems.length,
       separatorBuilder: (context, index) => const SizedBox(height: 4.0),
       itemBuilder: (context, index) {
-        final item = items[index];
+        final item = sortedItems[index];
 
         return ListTile(
           title: Text(
@@ -120,6 +145,246 @@ class RoosterState extends State<Rooster> {
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
       },
+    );
+  }
+
+  Widget _buildTimelineView(List<RoosterItem> items, String dateKey) {
+    const timelineStartHour = 6;
+    const timelineEndHour = 24;
+    const hourHeight = 120.0;
+    final totalHours = timelineEndHour - timelineStartHour;
+    final timelineHeight = totalHours * hourHeight;
+    final theme = Theme.of(context);
+
+    Color applyOpacity(Color color, double opacity) {
+      final alpha = (opacity * 255).round().clamp(0, 255).toInt();
+      return color.withAlpha(alpha);
+    }
+
+    double timeToOffset(DateTime time) {
+      final totalMinutes = time.hour * 60 + time.minute;
+      final startMinutes = timelineStartHour * 60;
+      return ((totalMinutes - startMinutes) / 60) * hourHeight;
+    }
+
+    double clampOffset(DateTime time) => timeToOffset(time).clamp(0.0, timelineHeight);
+
+    final sortedItems = [...items]
+      ..sort((a, b) => a.appointment.start.compareTo(b.appointment.start));
+
+    final hourLabels = List<Widget>.generate(totalHours + 1, (index) {
+      final hour = timelineStartHour + index;
+      final rawTop = index * hourHeight;
+      final top = min(rawTop, timelineHeight - 16);
+      final labelTop = max(0.0, top - 7);
+
+      return Positioned(
+        top: labelTop,
+        right: 0,
+        child: Text(
+          hour.toString().padLeft(2, "0"),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    });
+
+    final hourLines = List<Widget>.generate(totalHours + 1, (index) {
+      final top = index * hourHeight;
+      return Positioned(
+        top: top,
+        left: 0,
+        right: 0,
+        child: Container(
+          height: 1,
+          color: applyOpacity(theme.dividerColor, 0.4),
+        ),
+      );
+    });
+
+
+    const linesPerHour = 2;
+    final halfHourLines = List<Widget>.generate(totalHours * linesPerHour + 1, (index) {
+      final top = index * (hourHeight / linesPerHour);
+      return Positioned(
+        top: top,
+        left: 0,
+        right: 0,
+        child: Container(
+          height: 1,
+          color: applyOpacity(theme.dividerColor, 0.4),
+        ),
+      );
+    });
+
+    final nowDate = DateTime.now();
+    final isToday = dateKey == apiFormat.format(nowDate);
+    final currentTimeOffset = isToday ? clampOffset(nowDate) : 0.0;
+
+    final currentTimeLine = isToday
+        ? Positioned(
+            top: currentTimeOffset,
+            left: 0,
+            right: 0,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
+
+
+    final eventBlocks = sortedItems.map((item) {
+      final verticalMargin = 2.0;
+
+      final startOffset = clampOffset(item.appointment.start) + verticalMargin;
+      final endOffset = clampOffset(item.appointment.end) - verticalMargin;
+      final eventHeight = max(endOffset - startOffset, 50.0);
+      final timeRange = '${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}';
+      final locationCode = item.location?.code;
+
+      return Positioned(
+        top: startOffset,
+        left: 0,
+        right: 0,
+        child: SizedBox(
+          height: eventHeight,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _showAppointmentBottomSheet(context, item),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: applyOpacity(theme.shadowColor, 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.appointment.name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      timeRange,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                      ),
+                    ),
+                    if (locationCode != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          locationCode,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+
+    final placeholder = items.isEmpty
+        ? Positioned.fill(
+            child: Center(
+              child: Text(
+                'Geen lessen gepland',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
+    final firstEventOffset = sortedItems.isNotEmpty
+        ? clampOffset(sortedItems.first.appointment.start)
+        : 0.0;
+    final scrollTarget =
+        (firstEventOffset - hourHeight / 2).clamp(0.0, timelineHeight);
+
+    return _DayTimeline(
+      scrollTarget: scrollTarget,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: SizedBox(
+          height: timelineHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 16,
+                height: timelineHeight,
+                child: Stack(children: hourLabels),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  height: timelineHeight,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: applyOpacity(theme.dividerColor, 0.4)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        ...hourLines,
+                        ...halfHourLines,
+                        ...eventBlocks,
+                        placeholder,
+                        currentTimeLine,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -324,6 +589,7 @@ class RoosterState extends State<Rooster> {
                                     api: widget.api,
                                     attendeeIdOverride: item.teacher!.id,
                                     initialDate: dateString,
+                                    useModernScheduleLayout: widget.useModernLayout,
                                   ),
                                 ),
                               ),
@@ -362,6 +628,7 @@ class RoosterState extends State<Rooster> {
                                     api: widget.api,
                                     attendeeIdOverride: item.group!.id,
                                     initialDate: dateString,
+                                    useModernScheduleLayout: widget.useModernLayout,
                                   ),
                                 ),
                               ),
@@ -376,6 +643,64 @@ class RoosterState extends State<Rooster> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DayTimeline extends StatefulWidget {
+  const _DayTimeline({
+    required this.scrollTarget,
+    required this.child,
+  });
+
+  final double scrollTarget;
+  final Widget child;
+
+  @override
+  State<_DayTimeline> createState() => _DayTimelineState();
+}
+
+class _DayTimelineState extends State<_DayTimeline> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController(
+      initialScrollOffset: widget.scrollTarget.clamp(0.0, double.maxFinite),
+    );
+    _scheduleJump();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DayTimeline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((widget.scrollTarget - oldWidget.scrollTarget).abs() > 1.0) {
+      _scheduleJump();
+    }
+  }
+
+  void _scheduleJump() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToTarget());
+  }
+
+  void _jumpToTarget() {
+    if (!_controller.hasClients) return;
+
+    final target = widget.scrollTarget
+        .clamp(0.0, _controller.position.maxScrollExtent);
+
+    if ((_controller.offset - target).abs() > 1.0) {
+      _controller.jumpTo(target);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _controller,
+      physics: const BouncingScrollPhysics(),
+      child: widget.child,
     );
   }
 }

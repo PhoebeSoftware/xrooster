@@ -5,8 +5,13 @@ import 'package:gif/gif.dart';
 
 class SettingsPage extends StatefulWidget {
   final void Function(String theme)? onThemeChanged;
+  final void Function(bool useModernScheduleLayout)? onScheduleLayoutChanged;
 
-  const SettingsPage({super.key, this.onThemeChanged});
+  const SettingsPage({
+    super.key,
+    this.onThemeChanged,
+    this.onScheduleLayoutChanged,
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -15,6 +20,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String _themeMode = 'system';
   String _language = 'system';
+  bool _useModernScheduleLayout = true;
   bool _loading = true;
 
   @override
@@ -27,9 +33,11 @@ class _SettingsPageState extends State<SettingsPage> {
     var prefs = SharedPreferencesAsync();
     final theme = await prefs.getString('theme');
     final language = await prefs.getString('language');
+    final scheduleLayout = await prefs.getBool('use_better_schedule');
     setState(() {
       _themeMode = theme ?? 'system';
       _language = language ?? 'system';
+      _useModernScheduleLayout = scheduleLayout ?? true;
       _loading = false;
     });
   }
@@ -43,6 +51,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _saveLanguage(String value) async {
     var prefs = SharedPreferencesAsync();
     await prefs.setString('language', value);
+  }
+
+  Future<void> _saveScheduleLayout(bool value) async {
+    var prefs = SharedPreferencesAsync();
+    await prefs.setBool('use_better_schedule', value);
+    widget.onScheduleLayoutChanged?.call(value);
   }
 
   @override
@@ -103,6 +117,16 @@ class _SettingsPageState extends State<SettingsPage> {
                       }
                     },
                   ),
+                ),
+                Divider(),
+                SwitchListTile(
+                  title: const Text('Modern schedule'),
+                  subtitle: const Text('Use the better schedule layout'),
+                  value: _useModernScheduleLayout,
+                  onChanged: (value) {
+                    setState(() => _useModernScheduleLayout = value);
+                    _saveScheduleLayout(value);
+                  },
                 ),
                 // Divider(),
               ],
