@@ -33,6 +33,7 @@ class ScheduleState extends State<SchedulePage> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(

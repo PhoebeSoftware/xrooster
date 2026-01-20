@@ -58,10 +58,14 @@ Future<void> main() async {
   });
 
   // initialize state
-  isOnlineNotifier.value = _isDeviceOnline(await Connectivity().checkConnectivity());
+  isOnlineNotifier.value = _isDeviceOnline(
+    await Connectivity().checkConnectivity(),
+  );
 
   // listen to connection changes
-  Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+  Connectivity().onConnectivityChanged.listen((
+    List<ConnectivityResult> results,
+  ) {
     final newOnlineStatus = _isDeviceOnline(results);
     if (isOnlineNotifier.value != newOnlineStatus) {
       isOnlineNotifier.value = newOnlineStatus;
@@ -115,7 +119,9 @@ Future<void> main() async {
 
   // creates the login page and redirects to main flow after login
   void startLoginFlow() async {
-    runApp(inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow));
+    runApp(
+      inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow),
+    );
   }
 
   void startSchoolSelectedFlow(String selectedSchool) async {
@@ -312,7 +318,9 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator()); // api not ready
+          return const Center(
+            child: CircularProgressIndicator(),
+          ); // api not ready
         }
 
         final api = snapshot.data;
@@ -371,9 +379,7 @@ class XAppState extends State<XApp> {
               darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
               themeMode: themeMode,
               home: Scaffold(
-                appBar: AppBar(
-                  toolbarHeight: 0
-                ),
+                appBar: AppBar(toolbarHeight: 0),
                 bottomNavigationBar: BottomNavigationBar(
                   currentIndex: _currentIndex,
                   onTap: (index) {

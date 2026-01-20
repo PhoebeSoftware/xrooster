@@ -27,13 +27,17 @@ Widget inAppWebViewApp({
     ),
     themeMode: ThemeMode.system,
     home: Platform.isLinux
-      ? linuxFallback(onToken: onToken)
-      : InAppWebViewPage(onToken: onToken, baseWebUrl: baseWebUrl),
+        ? linuxFallback(onToken: onToken)
+        : InAppWebViewPage(onToken: onToken, baseWebUrl: baseWebUrl),
   );
 }
 
 class InAppWebViewPage extends StatefulWidget {
-  const InAppWebViewPage({super.key, required this.onToken, required this.baseWebUrl});
+  const InAppWebViewPage({
+    super.key,
+    required this.onToken,
+    required this.baseWebUrl,
+  });
 
   final FutureOr<void> Function(String token) onToken;
   final String baseWebUrl;
@@ -78,9 +82,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
             Expanded(
               child: InAppWebView(
                 key: webViewKey,
-                initialUrlRequest: URLRequest(
-                    url: WebUri(baseWebUrl),
-                ),
+                initialUrlRequest: URLRequest(url: WebUri(baseWebUrl)),
                 onReceivedServerTrustAuthRequest:
                     (controller, challenge) async {
                       return ServerTrustAuthResponse(

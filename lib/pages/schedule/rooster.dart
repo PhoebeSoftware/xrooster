@@ -144,7 +144,9 @@ class RoosterState extends State<Rooster> {
             "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
           tileColor: theme.hoverColor,
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
@@ -207,7 +209,6 @@ class RoosterState extends State<Rooster> {
       );
     });
 
-
     const linesPerHour = 2;
     final halfHourLines = List<Widget>.generate(totalHours * linesPerHour + 1, (index) {
       final top = index * (hourHeight / linesPerHour);
@@ -254,7 +255,6 @@ class RoosterState extends State<Rooster> {
             ),
           )
         : const SizedBox.shrink();
-
 
     final eventBlocks = sortedItems.map((item) {
       final verticalMargin = 2.0;
@@ -367,8 +367,7 @@ class RoosterState extends State<Rooster> {
     final firstEventOffset = sortedItems.isNotEmpty
         ? clampOffset(sortedItems.first.appointment.start)
         : 0.0;
-    final scrollTarget =
-        (firstEventOffset - hourHeight / 2).clamp(0.0, timelineHeight);
+    final scrollTarget = (firstEventOffset - hourHeight / 2).clamp(0.0, timelineHeight);
 
     return _DayTimeline(
       scrollTarget: scrollTarget,
@@ -619,7 +618,8 @@ class RoosterState extends State<Rooster> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.location?.code ?? 'No classroom found'),
-                      if (item.location?.location != null) Text(item.location!.location),
+                      if (item.location?.location != null)
+                        Text(item.location!.location),
                     ],
                   ),
                 ],
@@ -645,13 +645,16 @@ class RoosterState extends State<Rooster> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => Scaffold(
-                                    appBar: AppBar(title: Text(item.teacher!.code)),
+                                    appBar: AppBar(
+                                      title: Text(item.teacher!.code),
+                                    ),
                                     body: SchedulePage(
                                       rooster: key,
                                       api: widget.api,
                                       attendeeIdOverride: item.teacher!.id,
                                       initialDate: dateString,
-                                      useModernScheduleLayout: widget.useModernLayout,
+                                      useModernScheduleLayout:
+                                          widget.useModernLayout,
                                     ),
                                   ),
                                 ),
@@ -684,13 +687,16 @@ class RoosterState extends State<Rooster> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => Scaffold(
-                                    appBar: AppBar(title: Text(item.group!.code)),
+                                    appBar: AppBar(
+                                      title: Text(item.group!.code),
+                                    ),
                                     body: SchedulePage(
                                       rooster: key,
                                       api: widget.api,
                                       attendeeIdOverride: item.group!.id,
                                       initialDate: dateString,
-                                      useModernScheduleLayout: widget.useModernLayout,
+                                      useModernScheduleLayout:
+                                          widget.useModernLayout,
                                     ),
                                   ),
                                 ),
@@ -708,7 +714,6 @@ class RoosterState extends State<Rooster> {
       },
     );
   }
-
 }
 
 class _DayTimeline extends StatefulWidget {
@@ -751,8 +756,7 @@ class _DayTimelineState extends State<_DayTimeline> {
   void _jumpToTarget() {
     if (!_controller.hasClients) return;
 
-    final target = widget.scrollTarget
-        .clamp(0.0, _controller.position.maxScrollExtent);
+    final target = widget.scrollTarget.clamp(0.0, _controller.position.maxScrollExtent);
 
     if ((_controller.offset - target).abs() > 1.0) {
       _controller.jumpTo(target);

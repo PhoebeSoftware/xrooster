@@ -53,7 +53,9 @@ class _SchoolSelectorPageState extends State<SchoolSelectorPage> {
                       ),
                   ],
                   onChanged: (v) => setState(() => _selectedSchool = v),
-                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(

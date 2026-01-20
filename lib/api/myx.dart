@@ -241,7 +241,8 @@ class MyxApi extends ChangeNotifier {
     );
 
     // map week appointments to type
-    final weekAppointments = (response.data['result']['appointments'] as Map).values
+    final weekAppointments = (response.data['result']['appointments'] as Map)
+        .values
         .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
         .toList();
 

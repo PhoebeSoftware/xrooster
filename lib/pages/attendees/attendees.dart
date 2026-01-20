@@ -115,14 +115,18 @@ class AttendeeState extends State<AttendeePage> {
                             widget.prefs.setInt("selectedAttendee", item.id);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('${item.role} ${item.code} selected'),
+                                content: Text(
+                                  '${item.role} ${item.code} selected',
+                                ),
                                 duration: Duration(seconds: 3),
                               ),
                             );
                             widget.onClassSelected();
                           },
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 15.0,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
@@ -148,7 +152,10 @@ class SearchTextField extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Search',
+        ),
       ),
     );
   }
