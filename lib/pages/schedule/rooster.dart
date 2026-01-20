@@ -172,6 +172,39 @@ class RoosterState extends State<Rooster> {
       );
     });
 
+    final nowDate = DateTime.now();
+    final isToday = dateKey == apiFormat.format(nowDate);
+    final currentTimeOffset = isToday ? clampOffset(nowDate) : 0.0;
+
+    final currentTimeLine = isToday
+        ? Positioned(
+            top: currentTimeOffset,
+            left: 0,
+            right: 0,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
+
 
     final eventBlocks = sortedItems.map((item) {
       final verticalMargin = 2.0;
@@ -296,6 +329,7 @@ class RoosterState extends State<Rooster> {
                         ...halfHourLines,
                         ...eventBlocks,
                         placeholder,
+                        currentTimeLine,
                       ],
                     ),
                   ),
