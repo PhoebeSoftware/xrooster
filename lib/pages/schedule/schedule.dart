@@ -1,19 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:xrooster/api/myx.dart';
-import 'package:xrooster/pages/schedule/rooster.dart';
+import 'package:xrooster/pages/schedule/timetable.dart';
 import 'package:xrooster/pages/schedule/week_list.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({
     super.key,
-    required this.rooster,
+    required this.timetableKey,
     required this.api,
     this.attendeeIdOverride,
     this.initialDate,
     required this.useModernScheduleLayout,
   });
 
-  final GlobalKey<RoosterState> rooster;
+  final GlobalKey<TimetableState> timetableKey;
   final MyxApi api;
   final int? attendeeIdOverride;
   final String? initialDate;
@@ -29,7 +29,7 @@ class ScheduleState extends State<SchedulePage> {
     super.initState();
     if (widget.initialDate != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        widget.rooster.currentState?.changeDate(widget.initialDate!);
+        widget.timetableKey.currentState?.changeDate(widget.initialDate!);
       });
     }
   }
@@ -39,11 +39,11 @@ class ScheduleState extends State<SchedulePage> {
     return SafeArea(
       child: Column(
         children: [
-          WeekList(rooster: widget.rooster),
+          WeekList(timetableKey: widget.timetableKey),
           Expanded(
-            child: Rooster(
-              key: widget.rooster,
-              title: 'Rooster',
+            child: TimetableView(
+              key: widget.timetableKey,
+              title: 'Schedule',
               api: widget.api,
               attendeeIdOverride: widget.attendeeIdOverride,
               useModernLayout: widget.useModernScheduleLayout,

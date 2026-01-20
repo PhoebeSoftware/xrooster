@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:xrooster/pages/schedule/rooster.dart';
+import 'package:xrooster/pages/schedule/timetable.dart';
 
 class WeekList extends StatefulWidget {
-  const WeekList({super.key, required this.rooster});
+  const WeekList({super.key, required this.timetableKey});
 
-  final GlobalKey<RoosterState> rooster;
+  final GlobalKey<TimetableState> timetableKey;
 
   @override
   State<WeekList> createState() => WeekListState();
@@ -37,13 +37,13 @@ class WeekListState extends State<WeekList> {
   @override
   void didUpdateWidget(covariant WeekList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.rooster != widget.rooster) {
+    if (oldWidget.timetableKey != widget.timetableKey) {
       _attachController();
     }
   }
 
   void _attachController() {
-    final rs = widget.rooster.currentState;
+    final rs = widget.timetableKey.currentState;
     if (rs == null) return;
 
     final notifier = rs.pageIndexNotifier;
@@ -141,7 +141,7 @@ class WeekListState extends State<WeekList> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            DateFormat.E('nl').format(day),
+                            DateFormat.E('en_US').format(day),
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 21.0,
@@ -152,7 +152,7 @@ class WeekListState extends State<WeekList> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            DateFormat('d MMM', 'nl').format(day),
+                            DateFormat('d MMM', 'en_US').format(day),
                             style: TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 14.0,
@@ -165,7 +165,7 @@ class WeekListState extends State<WeekList> {
                       ),
                       onPressed: () {
                         setState(() => selectedDayString = dayString);
-                        widget.rooster.currentState?.changeDate(dayString);
+                        widget.timetableKey.currentState?.changeDate(dayString);
                       },
                     ),
                   );

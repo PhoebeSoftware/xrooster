@@ -9,13 +9,13 @@ import 'package:xrooster/models/teacher_attendee.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 
-class RoosterItem {
+class ScheduleEntry {
   final Appointment appointment;
   final Location? location;
   final TeacherAttendee? teacher;
   final GroupAttendee? group;
 
-  RoosterItem({
+  ScheduleEntry({
     required this.appointment,
     required this.location,
     required this.teacher,
@@ -23,8 +23,8 @@ class RoosterItem {
   });
 }
 
-class Rooster extends StatefulWidget {
-  const Rooster({
+class TimetableView extends StatefulWidget {
+  const TimetableView({
     super.key,
     required this.title,
     required this.api,
@@ -38,11 +38,11 @@ class Rooster extends StatefulWidget {
   final bool useModernLayout;
 
   @override
-  State<Rooster> createState() => RoosterState();
+  State<TimetableView> createState() => TimetableState();
 }
 
-class RoosterState extends State<Rooster> {
-  Map<String, List<RoosterItem>> itemsCache = {};
+class TimetableState extends State<TimetableView> {
+  Map<String, List<ScheduleEntry>> itemsCache = {};
 
   final Set<String> loadingDates = {};
 
@@ -88,7 +88,7 @@ class RoosterState extends State<Rooster> {
     );
   }
 
-  Widget _buildScheduleList(List<RoosterItem> items, String dateKey) {
+  Widget _buildScheduleList(List<ScheduleEntry> items, String dateKey) {
     final theme = Theme.of(context);
 
     if (items.isEmpty && loadingDates.contains(dateKey)) {
@@ -110,11 +110,11 @@ class RoosterState extends State<Rooster> {
     return _buildClassicList(items, theme);
   }
 
-  Widget _buildClassicList(List<RoosterItem> items, ThemeData theme) {
+  Widget _buildClassicList(List<ScheduleEntry> items, ThemeData theme) {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'Geen lessen gepland',
+          'No lessons scheduled',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -154,7 +154,7 @@ class RoosterState extends State<Rooster> {
     );
   }
 
-  Widget _buildTimelineView(List<RoosterItem> items, String dateKey) {
+  Widget _buildTimelineView(List<ScheduleEntry> items, String dateKey) {
     const timelineStartHour = 6;
     const timelineEndHour = 24;
     const hourHeight = 120.0;
@@ -355,7 +355,7 @@ class RoosterState extends State<Rooster> {
         ? Positioned.fill(
             child: Center(
               child: Text(
-                'Geen lessen gepland',
+                'No lessons scheduled',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -465,7 +465,7 @@ class RoosterState extends State<Rooster> {
       }
     }
 
-    final List<Future<MapEntry<String, List<RoosterItem>>>> futures = [];
+    final List<Future<MapEntry<String, List<ScheduleEntry>>>> futures = [];
     for (
       var d = firstDayOfWeek;
       !d.isAfter(lastDayOfWeek);
@@ -477,7 +477,7 @@ class RoosterState extends State<Rooster> {
           Future(() async {
             final items = await Future.wait(
               appointments[dateKey]!.map(
-                (a) async => RoosterItem(
+                (a) async => ScheduleEntry(
                   appointment: a,
                   location: a.attendeeIds.classroom.isNotEmpty
                       ? await safeGet(
@@ -499,17 +499,17 @@ class RoosterState extends State<Rooster> {
         );
       } else {
         // return empty list for dates with no appointments so you dont get an infinite loading spinner
-        futures.add(Future.value(MapEntry(dateKey, <RoosterItem>[])));
+        futures.add(Future.value(MapEntry(dateKey, <ScheduleEntry>[])));
       }
     }
 
-    final weekRoosterMap = Map.fromEntries(await Future.wait(futures));
+    final weeklyScheduleEntries = Map.fromEntries(await Future.wait(futures));
 
     if (!mounted) return;
 
     setState(() {
-      weekRoosterMap.forEach((date, items) => itemsCache[date] = items);
-      for (final d in weekRoosterMap.keys) {
+      weeklyScheduleEntries.forEach((date, items) => itemsCache[date] = items);
+      for (final d in weeklyScheduleEntries.keys) {
         loadingDates.remove(d);
       }
     });
@@ -530,7 +530,7 @@ class RoosterState extends State<Rooster> {
     _loadCurrentDate();
   }
 
-  void _showAppointmentBottomSheet(BuildContext context, RoosterItem item) {
+  void _showAppointmentBottomSheet(BuildContext context, ScheduleEntry item) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -639,7 +639,7 @@ class RoosterState extends State<Rooster> {
                               alignment: Alignment.centerLeft,
                             ),
                             onPressed: () async {
-                              final key = GlobalKey<RoosterState>();
+                              final key = GlobalKey<TimetableState>();
                               final dateString = apiFormat.format(item.appointment.start);
 
                               Navigator.of(context).push(
@@ -649,7 +649,7 @@ class RoosterState extends State<Rooster> {
                                       title: Text(item.teacher!.code),
                                     ),
                                     body: SchedulePage(
-                                      rooster: key,
+                                      timetableKey: key,
                                       api: widget.api,
                                       attendeeIdOverride: item.teacher!.id,
                                       initialDate: dateString,
@@ -681,7 +681,7 @@ class RoosterState extends State<Rooster> {
                               alignment: Alignment.centerLeft,
                             ),
                             onPressed: () {
-                              final key = GlobalKey<RoosterState>();
+                              final key = GlobalKey<TimetableState>();
                               final dateString = apiFormat.format(item.appointment.start);
 
                               Navigator.of(context).push(
@@ -691,7 +691,7 @@ class RoosterState extends State<Rooster> {
                                       title: Text(item.group!.code),
                                     ),
                                     body: SchedulePage(
-                                      rooster: key,
+                                      timetableKey: key,
                                       api: widget.api,
                                       attendeeIdOverride: item.group!.id,
                                       initialDate: dateString,
