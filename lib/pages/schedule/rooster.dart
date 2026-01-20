@@ -258,8 +258,14 @@ class RoosterState extends State<Rooster> {
           )
         : const SizedBox.shrink();
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
+    final firstEventOffset = sortedItems.isNotEmpty
+        ? clampOffset(sortedItems.first.appointment.start)
+        : 0.0;
+    final scrollTarget =
+        (firstEventOffset - hourHeight / 2).clamp(0.0, timelineHeight);
+
+    return _DayTimeline(
+      scrollTarget: scrollTarget,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: SizedBox(
@@ -555,6 +561,64 @@ class RoosterState extends State<Rooster> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DayTimeline extends StatefulWidget {
+  const _DayTimeline({
+    required this.scrollTarget,
+    required this.child,
+  });
+
+  final double scrollTarget;
+  final Widget child;
+
+  @override
+  State<_DayTimeline> createState() => _DayTimelineState();
+}
+
+class _DayTimelineState extends State<_DayTimeline> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController(
+      initialScrollOffset: widget.scrollTarget.clamp(0.0, double.maxFinite),
+    );
+    _scheduleJump();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DayTimeline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((widget.scrollTarget - oldWidget.scrollTarget).abs() > 1.0) {
+      _scheduleJump();
+    }
+  }
+
+  void _scheduleJump() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToTarget());
+  }
+
+  void _jumpToTarget() {
+    if (!_controller.hasClients) return;
+
+    final target = widget.scrollTarget
+        .clamp(0.0, _controller.position.maxScrollExtent);
+
+    if ((_controller.offset - target).abs() > 1.0) {
+      _controller.jumpTo(target);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _controller,
+      physics: const BouncingScrollPhysics(),
+      child: widget.child,
     );
   }
 }
