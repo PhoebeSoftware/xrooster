@@ -29,11 +29,13 @@ class Rooster extends StatefulWidget {
     required this.title,
     required this.api,
     this.attendeeIdOverride,
+    this.useModernLayout = true,
   });
 
   final String title;
   final MyxApi api;
   final int? attendeeIdOverride;
+  final bool useModernLayout;
 
   @override
   State<Rooster> createState() => RoosterState();
@@ -101,11 +103,58 @@ class RoosterState extends State<Rooster> {
       );
     }
 
+    if (widget.useModernLayout) {
+      return _buildTimelineView(items, dateKey);
+    }
+
+    return _buildClassicList(items, theme);
+  }
+
+  Widget _buildClassicList(List<RoosterItem> items, ThemeData theme) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'Geen lessen gepland',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final sortedItems = [...items]
+      ..sort((a, b) => a.appointment.start.compareTo(b.appointment.start));
+
+    return ListView.separated(
+      itemCount: sortedItems.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 4.0),
+      itemBuilder: (context, index) {
+        final item = sortedItems[index];
+
+        return ListTile(
+          title: Text(
+            "${item.appointment.name}${item.location?.code != null ? ' - ${item.location!.code}' : ''}",
+          ),
+          subtitle: Text(item.appointment.summary),
+          trailing: Text(
+            "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          tileColor: theme.hoverColor,
+          onTap: () => _showAppointmentBottomSheet(context, item),
+        );
+      },
+    );
+  }
+
+  Widget _buildTimelineView(List<RoosterItem> items, String dateKey) {
     const timelineStartHour = 6;
     const timelineEndHour = 24;
     const hourHeight = 120.0;
     final totalHours = timelineEndHour - timelineStartHour;
     final timelineHeight = totalHours * hourHeight;
+    final theme = Theme.of(context);
 
     Color applyOpacity(Color color, double opacity) {
       final alpha = (opacity * 255).round().clamp(0, 255).toInt();
@@ -205,7 +254,7 @@ class RoosterState extends State<Rooster> {
 
     final eventBlocks = sortedItems.map((item) {
       final verticalMargin = 2.0;
-      
+
       final startOffset = clampOffset(item.appointment.start) + verticalMargin;
       final endOffset = clampOffset(item.appointment.end) - verticalMargin;
       final eventHeight = max(endOffset - startOffset, 50.0);
@@ -540,6 +589,7 @@ class RoosterState extends State<Rooster> {
                                     api: widget.api,
                                     attendeeIdOverride: item.teacher!.id,
                                     initialDate: dateString,
+                                    useModernScheduleLayout: widget.useModernLayout,
                                   ),
                                 ),
                               ),
@@ -578,6 +628,7 @@ class RoosterState extends State<Rooster> {
                                     api: widget.api,
                                     attendeeIdOverride: item.group!.id,
                                     initialDate: dateString,
+                                    useModernScheduleLayout: widget.useModernLayout,
                                   ),
                                 ),
                               ),

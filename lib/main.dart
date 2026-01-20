@@ -200,6 +200,7 @@ class XAppState extends State<XApp> {
   final _prefs = SharedPreferencesAsync();
   late String _themeMode;
   late MyxApi _api;
+  bool _useModernScheduleLayout = true;
 
   // cached future so FutureBuilder doesn't recreate a new future each build
   late Future<MyxApi?> _apiFuture;
@@ -212,6 +213,8 @@ class XAppState extends State<XApp> {
     super.initState();
     _themeMode = widget.initialTheme;
     _api = widget.api;
+
+    _loadScheduleLayoutPreference();
 
     // listen for token invalidation
     _api.addListener(_onApiChange);
@@ -266,10 +269,25 @@ class XAppState extends State<XApp> {
     setState(() => _themeMode = newTheme);
   }
 
+  Future<void> _loadScheduleLayoutPreference() async {
+    final storedValue = await _prefs.getBool('use_better_schedule');
+    if (!mounted) return;
+    setState(() => _useModernScheduleLayout = storedValue ?? true);
+  }
+
+  Future<void> _updateScheduleLayout(bool useModern) async {
+    await _prefs.setBool('use_better_schedule', useModern);
+    setState(() => _useModernScheduleLayout = useModern);
+  }
+
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return SchedulePage(rooster: widget.rooster, api: _api);
+        return SchedulePage(
+          rooster: widget.rooster,
+          api: _api,
+          useModernScheduleLayout: _useModernScheduleLayout,
+        );
       case 1:
         return AttendeePage(
           api: _api,
@@ -279,7 +297,10 @@ class XAppState extends State<XApp> {
           },
         );
       case 2:
-        return SettingsPage(onThemeChanged: _updateTheme);
+        return SettingsPage(
+          onThemeChanged: _updateTheme,
+          onScheduleLayoutChanged: _updateScheduleLayout,
+        );
       default:
         return const SizedBox.shrink();
     }

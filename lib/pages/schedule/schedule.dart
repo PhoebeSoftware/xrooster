@@ -10,12 +10,14 @@ class SchedulePage extends StatefulWidget {
     required this.api,
     this.attendeeIdOverride,
     this.initialDate,
+    required this.useModernScheduleLayout,
   });
 
   final GlobalKey<RoosterState> rooster;
   final MyxApi api;
   final int? attendeeIdOverride;
   final String? initialDate;
+  final bool useModernScheduleLayout;
 
   @override
   State<SchedulePage> createState() => ScheduleState();
@@ -43,6 +45,7 @@ class ScheduleState extends State<SchedulePage> {
               title: 'Rooster',
               api: widget.api,
               attendeeIdOverride: widget.attendeeIdOverride,
+              useModernLayout: widget.useModernScheduleLayout,
             ),
           ),
         ],
