@@ -1,33 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:xrooster/pages/schedule/rooster.dart';
+import 'package:xrooster/pages/schedule/timetable.dart';
 
-class WeekList extends StatefulWidget {
-  const WeekList({super.key, required this.rooster});
+class DaySelector extends StatefulWidget {
+  const DaySelector({super.key, required this.timetableKey});
 
-  final GlobalKey<RoosterState> rooster;
+  final GlobalKey<TimetableState> timetableKey;
 
   @override
-  State<WeekList> createState() => WeekListState();
+  State<DaySelector> createState() => DaySelectorState();
 }
 
-class WeekListState extends State<WeekList> {
+class DaySelectorState extends State<DaySelector> {
   late String selectedDayString;
   ValueNotifier<int>? _pageIndexNotifier;
   VoidCallback? _notifierListener;
-  late PageController _weekPageController;
+  late PageController _dayPageController;
 
   @override
   void initState() {
     super.initState();
     selectedDayString = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _weekPageController = PageController(initialPage: 1000);
+    _dayPageController = PageController(initialPage: 1000);
     WidgetsBinding.instance.addPostFrameCallback((_) => _attachController());
   }
 
   @override
   void dispose() {
-    _weekPageController.dispose();
+    _dayPageController.dispose();
     if (_pageIndexNotifier != null && _notifierListener != null) {
       _pageIndexNotifier!.removeListener(_notifierListener!);
     }
@@ -35,15 +35,15 @@ class WeekListState extends State<WeekList> {
   }
 
   @override
-  void didUpdateWidget(covariant WeekList oldWidget) {
+  void didUpdateWidget(covariant DaySelector oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.rooster != widget.rooster) {
+    if (oldWidget.timetableKey != widget.timetableKey) {
       _attachController();
     }
   }
 
   void _attachController() {
-    final rs = widget.rooster.currentState;
+    final rs = widget.timetableKey.currentState;
     if (rs == null) return;
 
     final notifier = rs.pageIndexNotifier;
@@ -72,12 +72,12 @@ class WeekListState extends State<WeekList> {
     );
     final weekOffset = selectedMonday.difference(baseMonday).inDays ~/ 7;
     final weekIndex = 1000 + weekOffset;
-    if (!_weekPageController.hasClients) return;
+    if (!_dayPageController.hasClients) return;
     final currentWeekPage =
-        (_weekPageController.page ?? _weekPageController.initialPage.toDouble())
+        (_dayPageController.page ?? _dayPageController.initialPage.toDouble())
             .round();
     if (currentWeekPage == weekIndex) return;
-    _weekPageController.animateToPage(
+    _dayPageController.animateToPage(
       weekIndex,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -99,7 +99,7 @@ class WeekListState extends State<WeekList> {
       child: SizedBox(
         height: 70,
         child: PageView.builder(
-          controller: _weekPageController,
+          controller: _dayPageController,
           itemCount: null, // Infinite scrolling
           itemBuilder: (context, weekIndex) {
             final baseMonday = now.subtract(
@@ -141,7 +141,7 @@ class WeekListState extends State<WeekList> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            DateFormat.E('nl').format(day),
+                            DateFormat.E('en_US').format(day),
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 21.0,
@@ -152,7 +152,7 @@ class WeekListState extends State<WeekList> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            DateFormat('d MMM', 'nl').format(day),
+                            DateFormat('d MMM', 'en_US').format(day),
                             style: TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 14.0,
@@ -165,7 +165,7 @@ class WeekListState extends State<WeekList> {
                       ),
                       onPressed: () {
                         setState(() => selectedDayString = dayString);
-                        widget.rooster.currentState?.changeDate(dayString);
+                        widget.timetableKey.currentState?.changeDate(dayString);
                       },
                     ),
                   );

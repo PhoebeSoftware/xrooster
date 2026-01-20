@@ -10,8 +10,8 @@ import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/login/offline.dart';
 import 'package:xrooster/pages/login/school_selector.dart';
-import 'package:xrooster/pages/schedule/rooster.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
+import 'package:xrooster/pages/schedule/timetable.dart';
 import 'package:xrooster/pages/settings/settings.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
@@ -193,14 +193,14 @@ class XApp extends StatefulWidget {
   static String title = 'XRooster';
 
   final navigatorKey = GlobalKey<NavigatorState>();
-  final rooster = GlobalKey<RoosterState>();
+  final timetableKey = GlobalKey<TimetableState>();
 
   @override
   State<XApp> createState() => XAppState();
 }
 
 class XAppState extends State<XApp> {
-  // standaard de Schedule pagina
+  // default to the Schedule page
   int _currentIndex = 0;
 
   final _prefs = SharedPreferencesAsync();
@@ -228,7 +228,7 @@ class XAppState extends State<XApp> {
     // initialize cached future
     _apiFuture = _buildApiFuture();
 
-    // Als geen attendee geselecteerd is dan naar de Attendees pagina
+    // If no attendee is selected, navigate to the Attendees page
     widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
       if (attendeeId == null) {
         setState(() => _currentIndex = 1);
@@ -290,7 +290,7 @@ class XAppState extends State<XApp> {
     switch (index) {
       case 0:
         return SchedulePage(
-          rooster: widget.rooster,
+          timetableKey: widget.timetableKey,
           api: _api,
           useModernScheduleLayout: _useModernScheduleLayout,
         );
@@ -299,7 +299,7 @@ class XAppState extends State<XApp> {
           api: _api,
           prefs: _api.prefs,
           onClassSelected: () {
-            setState(() => _currentIndex = 0); // ga naar Schedule pagina
+            setState(() => _currentIndex = 0); // go to Schedule page
           },
         );
       case 2:
