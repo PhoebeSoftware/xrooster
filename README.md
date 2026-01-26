@@ -13,6 +13,15 @@
   Staat jouw school er niet tussen? Maak dan een
   <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a>
   aan.
+  <br><br>
+
+  <a href="https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster">
+    <img
+      src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png"
+      height="60"
+      alt="Get it at IzzyOnDroid"
+    />
+  </a>
 </p>
 
 
@@ -20,10 +29,13 @@
 
 ## Installatie
 
-### Optie 1: Download de laatste release
+### Optie 1: Download van IzzyOnDroid (aanbevolen)
+Voeg de [IzzyOnDroid](https://apt.izzysoft.de/fdroid/) repo toe aan je f-droid app en installeer [xrooster](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
+
+### Optie 2: Download de laatste release
 Download de nieuwste versie van de app via de [releases pagina](https://github.com/PhoebeSoftware/xrooster/releases/latest).
 
-### Optie 2: Zelf bouwen
+### Optie 3: Zelf bouwen
 
 ```bash
 git clone https://github.com/PhoebeSoftware/xrooster.git
