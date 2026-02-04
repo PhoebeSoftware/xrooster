@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/base_attendee.dart';
+import 'package:xrooster/pages/schedule/schedule.dart';
+import 'package:xrooster/pages/schedule/timetable.dart';
 
 class AttendeePage extends StatefulWidget {
   const AttendeePage({
@@ -10,11 +13,13 @@ class AttendeePage extends StatefulWidget {
     required this.api,
     required this.prefs,
     required this.onClassSelected,
+    required this.useModernScheduleLayout,
   });
 
   final MyxApi api;
   final SharedPreferencesAsync prefs;
   final VoidCallback onClassSelected;
+  final bool useModernScheduleLayout;
 
   @override
   State<AttendeePage> createState() => AttendeeState();
@@ -25,6 +30,28 @@ class AttendeeState extends State<AttendeePage> {
   List<BaseAttendee> _filteredItems = [];
   bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
+
+  void _openQuickView(BaseAttendee item) {
+    final key = GlobalKey<TimetableState>();
+    final dateString = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text(item.code),
+          ),
+          body: SchedulePage(
+            timetableKey: key,
+            api: widget.api,
+            attendeeIdOverride: item.id,
+            initialDate: dateString,
+            useModernScheduleLayout: widget.useModernScheduleLayout,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -109,6 +136,7 @@ class AttendeeState extends State<AttendeePage> {
                       return ListTile(
                         title: Text(item.code),
                         subtitle: Text(item.role.name),
+                        onTap: () => _openQuickView(item),
                         trailing: TextButton(
                           child: Text("Select"),
                           onPressed: () {

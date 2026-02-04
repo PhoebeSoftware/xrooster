@@ -301,6 +301,7 @@ class XAppState extends State<XApp> {
           onClassSelected: () {
             setState(() => _currentIndex = 0); // go to Schedule page
           },
+          useModernScheduleLayout: _useModernScheduleLayout,
         );
       case 2:
         return SettingsPage(
