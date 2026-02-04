@@ -8,10 +8,10 @@
   Gemaakt voor studenten van scholen die myx gebruiken hun rooster.
   <br><br>
   Alle ondersteunde scholen zijn te vinden in
-  <code>assets/schools.json</code>.
+  <a href="./assets/schools.json"><code>assets/schools.json</code></a>.
   <br>
   Staat jouw school er niet tussen? Maak dan een
-  <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a>
+  <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a> of een <a href="https://github.com/PhoebeSoftware/xrooster/pulls">pull request</a>
   aan.
   <br><br>
 
@@ -25,7 +25,11 @@
 </p>
 
 
+[![GitHub Release](https://img.shields.io/github/v/release/phoebesoftware/xrooster?label=GitHub&style=for-the-badge)](https://github.com/phoebesoftware/xrooster/releases/latest)
 
+[![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.phoebesoftware.xrooster&label=IzzyOnDroid&style=for-the-badge)](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
+
+[![RB Status](https://shields.rbtlog.dev/simple/com.phoebesoftware.xrooster?label=RB%20Status&style=for-the-badge)](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
 
 ## Installatie
 
