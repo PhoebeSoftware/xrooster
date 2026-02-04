@@ -28,8 +28,28 @@ class AttendeePage extends StatefulWidget {
 class AttendeeState extends State<AttendeePage> {
   List<BaseAttendee> _allItems = [];
   List<BaseAttendee> _filteredItems = [];
+  Set<int> _pinned = {};
   bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
+
+  Future<void> _loadPinned() async {
+    final ids = await widget.prefs.getStringList('pinned_attendees') ?? [];
+    setState(() {
+      _pinned = ids.map(int.parse).toSet();
+    });
+  }
+
+  Future<void> _savePinned() async {
+    await widget.prefs.setStringList('pinned_attendees', _pinned.map((e) => e.toString()).toList());
+  }
+
+  Future<void> _togglePin(BaseAttendee item) async {
+    setState(() {
+      _pinned.remove(item.id) || _pinned.add(item.id);
+    });
+  
+    await _savePinned();
+  }
 
   void _openQuickView(BaseAttendee item) {
     final key = GlobalKey<TimetableState>();
@@ -56,7 +76,9 @@ class AttendeeState extends State<AttendeePage> {
   @override
   void initState() {
     super.initState();
-    _loadAttendees();
+    _loadPinned().then((_) {
+      _loadAttendees();
+    });
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -110,6 +132,11 @@ class AttendeeState extends State<AttendeePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // turn the _filteredItems into a list with the pinned at the top
+    final pinned = _filteredItems.where((a) => _pinned.contains(a.id)).toList();
+    final unpinned = _filteredItems.where((a) => !_pinned.contains(a.id)).toList();
+    final displayList = [...pinned, ...unpinned];
+
     return SafeArea(
       child: Column(
         children: [
@@ -117,7 +144,7 @@ class AttendeeState extends State<AttendeePage> {
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
-                : _filteredItems.isEmpty
+                : displayList.isEmpty
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
@@ -128,29 +155,42 @@ class AttendeeState extends State<AttendeePage> {
                     ),
                   )
                 : ListView.separated(
-                    itemCount: _filteredItems.length,
+                    itemCount: displayList.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 4.0),
                     itemBuilder: (context, index) {
-                      final item = _filteredItems[index];
+                      final item = displayList[index];
+                      final pinned = _pinned.contains(item.id);
 
                       return ListTile(
                         title: Text(item.code),
                         subtitle: Text(item.role.name),
                         onTap: () => _openQuickView(item),
-                        trailing: TextButton(
-                          child: Text("Select"),
-                          onPressed: () {
-                            widget.prefs.setInt("selectedAttendee", item.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                              pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                              color: pinned ? theme.colorScheme.primary : null,
+                              ),
+                              onPressed: () => _togglePin(item),
+                            ),
+                            TextButton(
+                              child: Text("Select"),
+                              onPressed: () {
+                              widget.prefs.setInt("selectedAttendee", item.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
                                 content: Text(
                                   '${item.role} ${item.code} selected',
                                 ),
                                 duration: Duration(seconds: 3),
-                              ),
-                            );
-                            widget.onClassSelected();
-                          },
+                                ),
+                              );
+                              widget.onClassSelected();
+                              },
+                            ),
+                          ],
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 15.0,
