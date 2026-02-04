@@ -198,7 +198,7 @@ class AttendeeState extends State<AttendeePage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        tileColor: theme.hoverColor,
+                        tileColor: pinned ? theme.colorScheme.primary.withValues(alpha: .15) : theme.hoverColor,
                       );
                     },
                   ),
