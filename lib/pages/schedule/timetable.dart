@@ -90,24 +90,29 @@ class TimetableState extends State<TimetableView> {
 
   Widget _buildScheduleList(List<ScheduleEntry> items, String dateKey) {
     final theme = Theme.of(context);
+    Widget body;
 
     if (items.isEmpty && loadingDates.contains(dateKey)) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [CircularProgressIndicator(), SizedBox(height: 12)],
-          ),
-        ),
+      body = ListView(
+        physics: AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: 200),
+          Center(child: CircularProgressIndicator()),
+          SizedBox(height: 12),
+        ],
       );
+    } else if (widget.useModernLayout) {
+      body = _buildTimelineView(items, dateKey);
+    } else {
+      body = _buildClassicList(items, theme);
     }
 
-    if (widget.useModernLayout) {
-      return _buildTimelineView(items, dateKey);
-    }
-
-    return _buildClassicList(items, theme);
+    return RefreshIndicator(
+      onRefresh: () async {
+        _refreshCurrentDate();
+      },
+      child: body,
+    );
   }
 
   Widget _buildClassicList(List<ScheduleEntry> items, ThemeData theme) {
@@ -126,6 +131,7 @@ class TimetableState extends State<TimetableView> {
       ..sort((a, b) => a.appointment.start.compareTo(b.appointment.start));
 
     return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: sortedItems.length,
       separatorBuilder: (context, index) => const SizedBox(height: 4.0),
       itemBuilder: (context, index) {
@@ -533,6 +539,14 @@ class TimetableState extends State<TimetableView> {
     pageController.jumpToPage(newPage);
     pageIndexNotifier.value = newPage;
     // debug: changeDate called
+    _loadCurrentDate();
+  }
+
+  void _refreshCurrentDate() async {
+    setState(() {
+      itemsCache.clear();
+      loadingDates.clear();
+    });
     _loadCurrentDate();
   }
 

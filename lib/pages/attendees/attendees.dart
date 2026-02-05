@@ -40,14 +40,17 @@ class AttendeeState extends State<AttendeePage> {
   }
 
   Future<void> _savePinned() async {
-    await widget.prefs.setStringList('pinned_attendees', _pinned.map((e) => e.toString()).toList());
+    await widget.prefs.setStringList(
+      'pinned_attendees',
+      _pinned.map((e) => e.toString()).toList(),
+    );
   }
 
   Future<void> _togglePin(BaseAttendee item) async {
     setState(() {
       _pinned.remove(item.id) || _pinned.add(item.id);
     });
-  
+
     await _savePinned();
   }
 
@@ -58,9 +61,7 @@ class AttendeeState extends State<AttendeePage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: Text(item.code),
-          ),
+          appBar: AppBar(title: Text(item.code)),
           body: SchedulePage(
             timetableKey: key,
             api: widget.api,
@@ -112,6 +113,13 @@ class AttendeeState extends State<AttendeePage> {
     }
   }
 
+  void _refreshAttendees() {
+    setState(() {
+      _loading = true;
+    });
+    _loadAttendees();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -142,66 +150,86 @@ class AttendeeState extends State<AttendeePage> {
         children: [
           SearchTextField(controller: _searchController),
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : displayList.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Text(
-                        'No attendees found',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    itemCount: displayList.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 4.0),
-                    itemBuilder: (context, index) {
-                      final item = displayList[index];
-                      final pinned = _pinned.contains(item.id);
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _refreshAttendees();
+              },
+              child: _loading
+                  ? ListView(
+                      children: [
+                        SizedBox(height: 200),
+                        Center(child: CircularProgressIndicator()),
+                      ],
+                    )
+                  : displayList.isEmpty
+                  ? ListView(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: Center(
+                            child: Text(
+                              'No attendees found',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      itemCount: displayList.length,
+                      separatorBuilder: (context, index) => SizedBox(height: 4.0),
+                      itemBuilder: (context, index) {
+                        final item = displayList[index];
+                        final pinned = _pinned.contains(item.id);
 
-                      return ListTile(
-                        title: Text(item.code),
-                        subtitle: Text(item.role.name),
-                        onTap: () => _openQuickView(item),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                              pinned ? Icons.push_pin : Icons.push_pin_outlined,
-                              color: pinned ? theme.colorScheme.primary : null,
+                        return ListTile(
+                          title: Text(item.code),
+                          subtitle: Text(item.role.name),
+                          onTap: () => _openQuickView(item),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  pinned
+                                      ? Icons.push_pin
+                                      : Icons.push_pin_outlined,
+                                  color: pinned
+                                      ? theme.colorScheme.primary
+                                      : null,
+                                ),
+                                onPressed: () => _togglePin(item),
                               ),
-                              onPressed: () => _togglePin(item),
-                            ),
-                            TextButton(
-                              child: Text("Select"),
-                              onPressed: () {
-                              widget.prefs.setInt("selectedAttendee", item.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                content: Text(
-                                  '${item.role} ${item.code} selected',
-                                ),
-                                duration: Duration(seconds: 3),
-                                ),
-                              );
-                              widget.onClassSelected();
-                              },
-                            ),
-                          ],
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 15.0,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        tileColor: pinned ? theme.colorScheme.primary.withValues(alpha: .15) : theme.hoverColor,
-                      );
-                    },
-                  ),
+                              TextButton(
+                                child: Text("Select"),
+                                onPressed: () {
+                                  widget.prefs.setInt("selectedAttendee", item.id);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        '${item.role} ${item.code} selected',
+                                      ),
+                                      duration: Duration(seconds: 3),
+                                    ),
+                                  );
+                                  widget.onClassSelected();
+                                },
+                              ),
+                            ],
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 15.0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          tileColor: pinned
+                              ? theme.colorScheme.primary.withValues(alpha: .15)
+                              : theme.hoverColor,
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),
