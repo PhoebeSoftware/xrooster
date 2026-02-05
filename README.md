@@ -55,12 +55,11 @@ Staat jouw school er niet tussen? Maak dan een <a href="https://github.com/Phoeb
 
 ### Optie 2: Installeren via Obtainium
 1. Installeer de [Obtanium](https://obtainium.imranr.dev/) app.
-2. Open deze link op je telefoon:  
-   [xrooster via Obtainium](https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.phoebesoftware.xrooster%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FPhoebeSoftware%2Fxrooster%22%2C%22author%22%3A%22Phoebe%20Software%22%2C%22name%22%3A%22xrooster%22%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D)
-3. Dit voegt de app automatisch toe en installeert deze.
+2. Voeg xrooster via [deze link](https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.phoebesoftware.xrooster%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FPhoebeSoftware%2Fxrooster%22%2C%22author%22%3A%22Phoebe%20Software%22%2C%22name%22%3A%22xrooster%22%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D) toe aan Obtanium
+3. Dit voegt de app automatisch toe en installeert hem.
 
 ### Optie 3: Handmatig via GitHub releases
-1. Download [dit apk bestand](https://github.com/PhoebeSoftware/xrooster/releases/download/v1.0.8/app-release.apk) en installeer deze.
+1. Download app-release.apk van [deze pagina](https://github.com/PhoebeSoftware/xrooster/releases/latest) en installeer hem.
 
 # Screenshots
 ## Rooster
