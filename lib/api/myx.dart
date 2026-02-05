@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:collection/collection.dart';
@@ -31,6 +32,8 @@ class MyxApi extends ChangeNotifier {
   final ValueNotifier<bool?> isOnlineNotifier;
 
   final String baseUrl;
+  final bool demoMode;
+  Map<String, dynamic>? _demoDataCache;
 
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
@@ -41,6 +44,7 @@ class MyxApi extends ChangeNotifier {
     required this.scaffoldKey,
     required this.isOnlineNotifier,
     String? tokenOverride,
+    this.demoMode = false,
   }) {
     final usedToken = tokenOverride ?? token;
     _dio = Dio(
@@ -93,6 +97,63 @@ class MyxApi extends ChangeNotifier {
     };
   }
 
+  Future<Map<String, dynamic>> _loadDemoData() async =>
+      _demoDataCache ??= jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
+
+  Future<List<T>> _getDemoList<T>(String key, T Function(Map<String, dynamic>) fromJson) async {
+    final list = (await _loadDemoData())[key] as List;
+
+    return list
+        .map((item) => fromJson(Map.from(item as Map)))
+        .toList();
+  }
+
+  Future<T> _getDemoById<T>(String key, int id, T Function(Map<String, dynamic>) fromJson) async {
+    final rawList = await _getDemoList<Map<String, dynamic>>(key, (rawItem) => rawItem);
+    final matchingItem = rawList.firstWhere((item) => item['id'] == id, orElse: () => rawList.first);
+
+    return fromJson(matchingItem);
+  }
+
+  Future<List<BaseAttendee>> _getDemoAttendees(AttendeeType type) =>
+    _getDemoList(
+      type == AttendeeType.teacher ? 'teachers' : 'groups',
+      (data) => type == AttendeeType.teacher
+        ? TeacherAttendee.fromJson(data..['role'] = 'teacher')
+        : GroupAttendee.fromJson(data..['role'] = 'group'),
+    );
+
+  Future<Location> _getDemoLocation(int id) => _getDemoById('locations', id, Location.fromJson);
+
+  Future<TeacherAttendee> _getDemoTeacher(int id) => _getDemoById('teachers', id, (data) => TeacherAttendee.fromJson(data..['role'] = 'teacher'));
+
+  Future<GroupAttendee> _getDemoGroup(int id) => _getDemoById('groups', id, (data) => GroupAttendee.fromJson(data..['role'] = 'group'));
+
+  Future<Map<String, List<Appointment>>> _getDemoAppointments() async {
+    final now = DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day);
+    final rawAppointments = (await _loadDemoData())['appointments'] as List;
+    final formatter = DateFormat('yyyy-MM-dd HH:mm');
+
+    final appointments = rawAppointments.map((rawItem) {
+      final data = Map<String, dynamic>.from(rawItem);
+      final start = dayStart.add(Duration(days: data['dayOffset'], hours: data['startHour'], minutes: data['startMinute']));
+      final end = dayStart.add(Duration(days: data['dayOffset'], hours: data['endHour'], minutes: data['endMinute']));
+
+      return Appointment.fromJson({
+        ...data,
+        'start': formatter.format(start),
+        'end': formatter.format(end),
+        'startTimeUnit': start.hour * 60 + start.minute,
+        'endTimeUnit': end.hour * 60 + end.minute,
+      });
+    }).toList();
+
+    appointments.sort((first, second) => first.start.compareTo(second.start));
+
+    return {DateFormat('yyyy-MM-dd').format(dayStart): appointments};
+  }
+
   /// Update the authorization token for this API instance
   void updateToken(String newToken) {
     debugPrint("MyxApi: Updating token");
@@ -109,6 +170,10 @@ class MyxApi extends ChangeNotifier {
   }
 
   Future<List<BaseAttendee>> getAllAttendees(AttendeeType type) async {
+    if (demoMode) {
+      return await _getDemoAttendees(type);
+    }
+
     final cacheKey = 'attendees:${type.name}';
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
@@ -135,6 +200,10 @@ class MyxApi extends ChangeNotifier {
   }
 
   Future<Location> getLocationById(int locationId) async {
+    if (demoMode) {
+      return await _getDemoLocation(locationId);
+    }
+
     final cacheKey = 'location:$locationId';
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
@@ -156,6 +225,10 @@ class MyxApi extends ChangeNotifier {
   }
 
   Future<TeacherAttendee> getTeacherById(int teacherId) async {
+    if (demoMode) {
+      return await _getDemoTeacher(teacherId);
+    }
+
     final cacheKey = 'teacher:$teacherId';
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
@@ -177,6 +250,10 @@ class MyxApi extends ChangeNotifier {
   }
 
   Future<GroupAttendee> getGroupById(int groupId) async {
+    if (demoMode) {
+      return await _getDemoGroup(groupId);
+    }
+
     final cacheKey = 'group:$groupId';
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
@@ -202,6 +279,10 @@ class MyxApi extends ChangeNotifier {
     String endDate, {
     int? attendeeId,
   }) async {
+    if (demoMode) {
+      return await _getDemoAppointments();
+    }
+
     final usedAttendeeId = attendeeId ?? await prefs.getInt("selectedAttendee");
     if (usedAttendeeId == null) {
       scaffoldKey.currentState?.showSnackBar(

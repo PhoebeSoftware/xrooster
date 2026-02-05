@@ -76,6 +76,8 @@ Future<void> main() async {
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
 
+  final isDemoMode = const bool.fromEnvironment('DEMO_MODE');
+
   String normalizeApiBase(String url) {
     var s = url.trim();
     if (s.endsWith('/api/')) return s;
@@ -102,6 +104,7 @@ Future<void> main() async {
       tokenOverride: token,
       scaffoldKey: scaffoldKey,
       isOnlineNotifier: isOnlineNotifier,
+      demoMode: isDemoMode,
     );
 
     // Load saved theme preference
@@ -151,6 +154,11 @@ Future<void> main() async {
       // device is online, start regular old flow
       startLoginFlow();
     }
+  }
+
+  if (isDemoMode) {
+    startAppFlow('demo');
+    return;
   }
 
   // main if-statement

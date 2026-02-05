@@ -1,0 +1,87 @@
+{
+  "teachers": [
+    {
+      "id": 1,
+      "code": "jdoe",
+      "login": "jdoe@school.nl"
+    },
+    {
+      "id": 2,
+      "code": "asmith",
+      "login": "asmith@school.nl"
+    }
+  ],
+  "groups": [
+    {
+      "id": 101,
+      "code": "24SD"
+    }
+  ],
+  "locations": [
+    {
+      "id": 221,
+      "location": "Fujiwara Tofu Store",
+      "code": "B221-A",
+      "role": "classroom"
+    },
+    {
+      "id": 228,
+      "location": "Fujiwara Tofu Store",
+      "code": "B228",
+      "role": "classroom"
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1001,
+      "name": "NED",
+      "summary": "Nederlands",
+      "dayOffset": 0,
+      "startHour": 9,
+      "startMinute": 0,
+      "endHour": 10,
+      "endMinute": 0,
+      "attendeeIds": {
+        "teacher": [1],
+        "classroom": [228],
+        "group": [101],
+        "student": [],
+        "materials": []
+      }
+    },
+    {
+      "id": 1002,
+      "name": "ENG",
+      "summary": "Engels Generiek",
+      "dayOffset": 0,
+      "startHour": 10,
+      "startMinute": 30,
+      "endHour": 12,
+      "endMinute": 0,
+      "attendeeIds": {
+        "teacher": [2],
+        "classroom": [228],
+        "group": [101],
+        "student": [],
+        "materials": []
+      }
+    },
+    {
+      "id": 1003,
+      "name": "PROG",
+      "summary": "Programmeren",
+      "dayOffset": 0,
+      "startHour": 12,
+      "startMinute": 0,
+      "endHour": 14,
+      "endMinute": 30,
+      "attendeeIds": {
+        "teacher": [2],
+        "classroom": [221],
+        "group": [101],
+        "student": [],
+        "materials": []
+      }
+    }
+  ]
+}
