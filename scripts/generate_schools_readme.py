@@ -11,8 +11,9 @@ table = [
 for school in schools:
     name = school.get("name", "")
     url = school.get("url", "")
+    url_text = url.replace("https://", "")
     
-    table.append(f"| {name} | [{url}]({url}) |")
+    table.append(f"| {name} | [{url_text}]({url}) |")
 
 with open("README.md") as f:
     readme = f.read()
