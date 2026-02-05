@@ -18,6 +18,12 @@
       alt="Get it at IzzyOnDroid"
     />
   </a>
+  <br>
+  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.phoebesoftware.xrooster%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FPhoebeSoftware%2Fxrooster%22%2C%22author%22%3A%22Phoebe%20Software%22%2C%22name%22%3A%22xrooster%22%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D">
+    <img
+    src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png?raw=true"
+    height="60">
+  </a>
 </p>
 
 
