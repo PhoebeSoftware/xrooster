@@ -36,6 +36,8 @@ De lijst hieronder wordt automatisch gegenereerd vanuit
 | School | URL |
 | --- | --- |
 | Talland College | [https://talland.myx.nl](https://talland.myx.nl) |
+| Konign Willem 1 College | [https://kw1college.myx.nl](https://kw1college.myx.nl) |
+| NHL Stenden | [https://nhlstenden.myx.nl](https://nhlstenden.myx.nl) |
 <!-- schools_end -->
 
 Staat jouw school er niet tussen? Maak dan een <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a> of een <a href="https://github.com/PhoebeSoftware/xrooster/pulls">pull request</a> aan.
