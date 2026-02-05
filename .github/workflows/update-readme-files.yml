@@ -1,7 +1,7 @@
-name: Update supported schools list
+name: Update readme files
 
 on:
-  release:
+  release: # On release because then it will always show the supported schools for the latest downloadable version.
     types: [published]
   workflow_dispatch:
 
