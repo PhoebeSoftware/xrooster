@@ -7,6 +7,35 @@ env:
   flutter-version: "3.38.9"
 
 jobs:
+  update_readme:
+    name: Update readme files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Generate schools list
+        run: python scripts/generate_schools_readme.py
+
+      - name: Commit changes
+        run: |
+              if ! git diff --quiet README.md; then
+                git config user.name "Epic Readme updater"
+                git config user.email "actions@github.com"
+                git add README.md
+                git commit -m "Update README"
+                git push
+              else
+                echo "No changes to commit."
+              fi
+
   android:
     name: Build Flutter APK
     runs-on: ubuntu-latest
@@ -88,7 +117,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: [android, ios]
+    needs: [update_readme, android, ios]
     runs-on: ubuntu-latest
 
     steps:
