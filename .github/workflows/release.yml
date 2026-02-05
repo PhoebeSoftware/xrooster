@@ -29,6 +29,12 @@ jobs:
       - name: Generate schools list
         run: python scripts/update_readme.py
 
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.flutter-version }}
+          cache: true
+
       - name: Generate screenshots
         run: flutter test --update-goldens
 
@@ -41,6 +47,7 @@ jobs:
 
   android:
     name: Build Flutter APK
+    needs: update_files
     runs-on: ubuntu-latest
 
     steps:
@@ -89,6 +96,7 @@ jobs:
 
   ios:
     name: Build Flutter IPA (unsigned)
+    needs: update_files
     runs-on: macos-latest
 
     steps:
@@ -120,7 +128,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: [update_files, android, ios]
+    needs: [android, ios]
     runs-on: ubuntu-latest
 
     steps:
