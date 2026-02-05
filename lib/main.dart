@@ -214,6 +214,7 @@ class XAppState extends State<XApp> {
   final _prefs = SharedPreferencesAsync();
   late String _themeMode;
   late MyxApi _api;
+  Color _seedColor = Colors.blue;
   bool _useModernScheduleLayout = true;
 
   // cached future so FutureBuilder doesn't recreate a new future each build
@@ -228,6 +229,7 @@ class XAppState extends State<XApp> {
     _themeMode = widget.initialTheme;
     _api = widget.api;
 
+    _loadSeedColorPreference();
     _loadScheduleLayoutPreference();
 
     // listen for token invalidation
@@ -283,6 +285,17 @@ class XAppState extends State<XApp> {
     setState(() => _themeMode = newTheme);
   }
 
+  Future<void> _updateSeedColor(Color color) async {
+    await _prefs.setInt('theme_seed_color', color.toARGB32());
+    setState(() => _seedColor = color);
+  }
+
+  Future<void> _loadSeedColorPreference() async {
+    final storedValue = await _prefs.getInt('theme_seed_color');
+    if (!mounted) return;
+    setState(() => _seedColor = Color(storedValue ?? Colors.blue.toARGB32()));
+  }
+
   Future<void> _loadScheduleLayoutPreference() async {
     final storedValue = await _prefs.getBool('use_better_schedule');
     if (!mounted) return;
@@ -314,6 +327,7 @@ class XAppState extends State<XApp> {
       case 2:
         return SettingsPage(
           onThemeChanged: _updateTheme,
+          onSeedColorChanged: _updateSeedColor,
           onScheduleLayoutChanged: _updateScheduleLayout,
         );
       default:
@@ -368,15 +382,19 @@ class XAppState extends State<XApp> {
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             final usingMaterialYou = _themeMode == 'material_you';
+            final usingCustomSeed = _themeMode == 'system' ||
+                _themeMode == 'light' ||
+                _themeMode == 'dark';
+            final seedColor = usingCustomSeed ? _seedColor : Colors.blue;
 
             final lightScheme = (usingMaterialYou && lightDynamic != null)
                 ? lightDynamic
-                : ColorScheme.fromSeed(seedColor: Colors.blue);
+                : ColorScheme.fromSeed(seedColor: seedColor);
 
             final darkScheme = (usingMaterialYou && darkDynamic != null)
                 ? darkDynamic
                 : ColorScheme.fromSeed(
-                    seedColor: Colors.blue,
+                    seedColor: seedColor,
                     brightness: Brightness.dark,
                   );
 
