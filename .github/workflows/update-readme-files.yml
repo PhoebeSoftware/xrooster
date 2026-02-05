@@ -1,0 +1,35 @@
+name: Update supported schools list
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Generate schools list
+        run: python scripts/generate_schools_readme.py
+
+      - name: Commit changes
+        run: |
+          if git status | grep 'README.md'; then
+            git config user.name "Epic Readme updater"
+            git add README.md
+            git commit -m "Update readme"
+            git push
+          else
+            echo "No changes to commit."
+          fi

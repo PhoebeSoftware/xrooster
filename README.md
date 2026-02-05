@@ -8,11 +8,7 @@
   Gemaakt voor studenten van scholen die myx gebruiken hun rooster.
   <br><br>
   Alle ondersteunde scholen zijn te vinden in
-  <a href="./assets/schools.json"><code>assets/schools.json</code></a>.
-  <br>
-  Staat jouw school er niet tussen? Maak dan een
-  <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a> of een <a href="https://github.com/PhoebeSoftware/xrooster/pulls">pull request</a>
-  aan.
+<a href="#ondersteunde-scholen">Ondersteunde scholen</a>
   <br><br>
 
   <a href="https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster">
@@ -30,6 +26,19 @@
 [![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.phoebesoftware.xrooster&label=IzzyOnDroid&style=for-the-badge)](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
 
 [![RB Status](https://shields.rbtlog.dev/simple/com.phoebesoftware.xrooster?label=RB%20Status&style=for-the-badge)](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
+
+## Ondersteunde scholen
+
+De lijst hieronder wordt automatisch gegenereerd vanuit
+<a href="./assets/schools.json"><code>assets/schools.json</code></a>.
+
+<!-- schools_start -->
+| School | URL |
+| --- | --- |
+| Talland College | [https://talland.myx.nl](https://talland.myx.nl) |
+<!-- schools_end -->
+
+Staat jouw school er niet tussen? Maak dan een <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a> of een <a href="https://github.com/PhoebeSoftware/xrooster/pulls">pull request</a> aan.
 
 ## Installatie
 
@@ -51,7 +60,6 @@ flutter build apk --release
 De APK bevindt zich dan in `./build/app/outputs/flutter-apk/app-release.apk`
 
 ### Optie 3: Debug mode
-
 ```bash
 git clone https://github.com/PhoebeSoftware/xrooster.git
 cd xrooster
