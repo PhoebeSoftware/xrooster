@@ -7,8 +7,8 @@ env:
   flutter-version: "3.38.9"
 
 jobs:
-  update_readme:
-    name: Update readme files
+  update_files:
+    name: Update files
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,25 +16,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Read version from pubspec.yaml
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
       - name: Generate schools list
-        run: python scripts/generate_schools_readme.py
+        run: python scripts/update_readme.py
+
+      - name: Generate screenshots
+        run: flutter test --update-goldens
 
       - name: Commit changes
         run: |
-              if ! git diff --quiet README.md; then
-                git config user.name "Epic Readme updater"
-                git config user.email "actions@github.com"
-                git add README.md
-                git commit -m "Update README"
-                git push
-              else
-                echo "No changes to commit."
-              fi
+          git config user.name "Epic Bot"
+          git add -A
+          git commit -m "Release v${{ env.APP_VERSION }}"
+          git push
 
   android:
     name: Build Flutter APK
@@ -117,7 +120,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: [update_readme, android, ios]
+    needs: [update_files, android, ios]
     runs-on: ubuntu-latest
 
     steps:

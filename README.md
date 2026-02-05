@@ -8,7 +8,7 @@
   Gemaakt voor studenten van scholen die myx gebruiken hun rooster.
   <br><br>
   Alle ondersteunde scholen zijn te vinden in
-<a href="#ondersteunde-scholen">Ondersteunde scholen</a>
+  <a href="#ondersteunde-scholen">Ondersteunde scholen</a>
   <br><br>
 
   <a href="https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster">
@@ -21,17 +21,16 @@
   <br>
   <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.phoebesoftware.xrooster%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FPhoebeSoftware%2Fxrooster%22%2C%22author%22%3A%22Phoebe%20Software%22%2C%22name%22%3A%22xrooster%22%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D">
     <img
-    src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png?raw=true"
-    height="60">
+      src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png?raw=true"
+      height="60"
+      alt="Get it via Obtainium"
+    >
   </a>
 </p>
-
 
 [![GitHub Release](https://img.shields.io/github/v/release/phoebesoftware/xrooster?label=GitHub&style=for-the-badge)](https://github.com/phoebesoftware/xrooster/releases/latest)
 
 [![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.phoebesoftware.xrooster&label=IzzyOnDroid&style=for-the-badge)](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
-
-[![RB Status](https://shields.rbtlog.dev/simple/com.phoebesoftware.xrooster?label=RB%20Status&style=for-the-badge)](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
 
 ## Ondersteunde scholen
 
@@ -50,30 +49,18 @@ Staat jouw school er niet tussen? Maak dan een <a href="https://github.com/Phoeb
 
 ## Installatie
 
-### Optie 1: Download van IzzyOnDroid (aanbevolen)
-Voeg de [IzzyOnDroid](https://apt.izzysoft.de/fdroid/) repo toe aan je f-droid app en installeer [xrooster](https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster)
+### Optie 1: Installeren via IzzyOnDroid (aanbevolen)
+1. Installeer de [Droid-ify](https://droidify.app) app.
+2. Zoek naar **xrooster** en installeer de app.
 
-### Optie 2: Download de laatste release
-Download de nieuwste versie van de app via de [releases pagina](https://github.com/PhoebeSoftware/xrooster/releases/latest).
+### Optie 2: Installeren via Obtainium
+1. Installeer de [Obtanium](https://obtainium.imranr.dev/) app.
+2. Open deze link op je telefoon:  
+   [xrooster via Obtainium](https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.phoebesoftware.xrooster%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FPhoebeSoftware%2Fxrooster%22%2C%22author%22%3A%22Phoebe%20Software%22%2C%22name%22%3A%22xrooster%22%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D)
+3. Dit voegt de app automatisch toe en installeert deze.
 
-### Optie 3: Zelf bouwen
-
-```bash
-git clone https://github.com/PhoebeSoftware/xrooster.git
-cd xrooster
-flutter pub get
-flutter build apk --release
-```
-
-De APK bevindt zich dan in `./build/app/outputs/flutter-apk/app-release.apk`
-
-### Optie 3: Debug mode
-```bash
-git clone https://github.com/PhoebeSoftware/xrooster.git
-cd xrooster
-flutter pub get
-flutter run
-```
+### Optie 3: Handmatig via GitHub releases
+1. Download [dit apk bestand](https://github.com/PhoebeSoftware/xrooster/releases/download/v1.0.8/app-release.apk) en installeer deze.
 
 # Screenshots
 ## Rooster

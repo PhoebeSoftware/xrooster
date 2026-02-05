@@ -9,12 +9,47 @@
       "id": 2,
       "code": "asmith",
       "login": "asmith@school.nl"
+    },
+    {
+      "id": 3,
+      "code": "bwhite",
+      "login": "bwhite@school.nl"
+    },
+    {
+      "id": 4,
+      "code": "cgreen",
+      "login": "cgreen@school.nl"
+    },
+    {
+      "id": 5,
+      "code": "dblack",
+      "login": "dblack@school.nl"
     }
   ],
   "groups": [
     {
       "id": 101,
+      "code": "23SD"
+    },
+    {
+      "id": 102,
       "code": "24SD"
+    },
+    {
+      "id": 103,
+      "code": "25SD"
+    },
+    {
+      "id": 104,
+      "code": "23SI"
+    },
+    {
+      "id": 105,
+      "code": "24SI"
+    },
+    {
+      "id": 106,
+      "code": "25SI"
     }
   ],
   "locations": [
