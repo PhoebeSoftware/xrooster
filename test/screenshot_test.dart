@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_screenshot/golden_screenshot.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:yaml/yaml.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
@@ -18,6 +22,16 @@ void main() {
 
   setUpAll(() async {
     await loadAppFonts();
+
+    final version = loadYaml(File('pubspec.yaml').readAsStringSync())['version'].toString().split('+').first;
+
+    PackageInfo.setMockInitialValues(
+      appName: 'xrooster',
+      packageName: 'nl.phoebesoftware.xrooster',
+      version: version,
+      buildNumber: '0',
+      buildSignature: 'abc123',
+    );
 
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.withData({
