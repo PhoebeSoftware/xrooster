@@ -41,7 +41,7 @@ De lijst hieronder wordt automatisch gegenereerd vanuit
 | School | URL |
 | --- | --- |
 | Talland College | [talland.myx.nl](https://talland.myx.nl) |
-| Konign Willem 1 College | [kw1college.myx.nl](https://kw1college.myx.nl) |
+| Koning Willem 1 College | [kw1college.myx.nl](https://kw1college.myx.nl) |
 | NHL Stenden | [nhlstenden.myx.nl](https://nhlstenden.myx.nl) |
 <!-- schools_end -->
 
