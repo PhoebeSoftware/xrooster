@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, HttpClient;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -33,11 +34,7 @@ Widget inAppWebViewApp({
 }
 
 class InAppWebViewPage extends StatefulWidget {
-  const InAppWebViewPage({
-    super.key,
-    required this.onToken,
-    required this.baseWebUrl,
-  });
+  const InAppWebViewPage({super.key, required this.onToken, required this.baseWebUrl});
 
   final FutureOr<void> Function(String token) onToken;
   final String baseWebUrl;
@@ -83,23 +80,43 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
               child: InAppWebView(
                 key: webViewKey,
                 initialUrlRequest: URLRequest(url: WebUri(baseWebUrl)),
-                onReceivedServerTrustAuthRequest:
-                    (controller, challenge) async {
-                      return ServerTrustAuthResponse(
-                        action: ServerTrustAuthResponseAction.PROCEED,
-                      );
-                    },
+                onReceivedServerTrustAuthRequest: (controller, challenge) async {
+                  return ServerTrustAuthResponse(
+                    action: ServerTrustAuthResponseAction.PROCEED,
+                  );
+                },
                 initialSettings: InAppWebViewSettings(
                   allowsBackForwardNavigationGestures: true,
                 ),
                 onWebViewCreated: (controller) {
                   webViewController = controller;
                 },
+                shouldInterceptRequest: (_, request) async {
+                  if (request.url.toString().endsWith('.js')) {
+                    final client = HttpClient();
+                    try {
+                      final new_request = await client.getUrl(request.url);
+                      var response = await new_request.close();
+                      final stringData = await response.transform(utf8.decoder).join();
+
+                      final userId = RegExp(
+                        r'"userId":"([^"]+)"',
+                      ).firstMatch(stringData)?.group(1);
+                      debugPrint(request.url);
+                      debugPrint('user: $userId');
+                    } catch (e) {
+                      debugPrint(e.toString());
+                    } finally {
+                      client.close();
+                    }
+                  }
+                  return null;
+                },
                 onLoadStop: (controller, url) async {
-                    if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
-                      final urlStr = url.toString();
-                      var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
-                      token = token.replaceAll('&ngsw-bypass=true', '');
+                  if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
+                    final urlStr = url.toString();
+                    var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
+                    token = token.replaceAll('&ngsw-bypass=true', '');
                     // notify caller and allow them to replace the app
                     try {
                       setToken(token);
