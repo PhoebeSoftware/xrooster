@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/appointment.dart';
@@ -43,6 +45,8 @@ class TimetableView extends StatefulWidget {
 
 class TimetableState extends State<TimetableView> {
   Map<String, List<ScheduleEntry>> itemsCache = {};
+  Map<int, String> _nicknames = {};
+  Set<int> _pinned = {};
 
   final Set<String> loadingDates = {};
 
@@ -56,6 +60,8 @@ class TimetableState extends State<TimetableView> {
   @override
   void initState() {
     super.initState();
+    _loadNicknames();
+    _loadPinned();
     _loadCurrentDate();
   }
 
@@ -64,6 +70,247 @@ class TimetableState extends State<TimetableView> {
     pageController.dispose();
     pageIndexNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNicknames() async {
+    final nicknames = _decodeNicknames(await widget.api.prefs.getString('nicknames'));
+  
+    setState(() => _nicknames = nicknames);
+  }
+  
+  Map<int, String> _decodeNicknames(String? raw) {
+    if (raw == null || raw.isEmpty) return {};
+
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return decoded.map(
+      (key, value) => MapEntry(int.parse(key), value as String),
+    );
+  }
+
+  Future<void> _saveNicknames() async {
+    final encoded = jsonEncode(
+      _nicknames.map((key, value) => MapEntry(key.toString(), value)),
+    );
+    await widget.api.prefs.setString('nicknames', encoded);
+  }
+
+
+  Future<void> _loadPinned() async {
+    final ids = await widget.api.prefs.getStringList('pinned_attendees') ?? [];
+    setState(() {
+      _pinned = ids.map(int.parse).toSet();
+    });
+  }
+
+  Future<void> _savePinned() async {
+    await widget.api.prefs.setStringList(
+      'pinned_attendees',
+      _pinned.map((e) => e.toString()).toList(),
+    );
+  }
+
+  Future<void> _togglePin(int attendeeId) async {
+    setState(() {
+      _pinned.remove(attendeeId) || _pinned.add(attendeeId);
+    });
+    await _savePinned();
+  }
+
+  String _name(int id, String fallback) {
+    return (_nicknames[id]?.trim().isNotEmpty == true)
+        ? _nicknames[id]!.trim()
+        : fallback;
+  }
+
+  String _teacherName(TeacherAttendee teacher) {
+    final displayName = _name(teacher.id, teacher.code);
+    return displayName;
+  }
+
+  String _groupName(GroupAttendee group) {
+    final displayName = _name(group.id, group.code);
+    return displayName;
+  }
+
+  void _openSchedule(
+    BuildContext context, {
+    required int attendeeId,
+    required String title,
+    required DateTime date,
+  }) {
+    final key = GlobalKey<TimetableState>();
+    final dateString = apiFormat.format(date);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: Text(title)),
+          body: SchedulePage(
+            timetableKey: key,
+            api: widget.api,
+            attendeeIdOverride: attendeeId,
+            initialDate: dateString,
+            useModernScheduleLayout: widget.useModernLayout,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditNicknameMenu(
+    BuildContext context, {
+    required int attendeeId,
+    required String fallbackName,
+  }) async {
+    final controller = TextEditingController(
+      text: _nicknames[attendeeId] ?? '',
+    );
+    final newValue = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set nickname'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: 'Nickname',
+            hintText: fallbackName,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || newValue == null) return;
+
+    final trimmed = newValue.trim();
+    setState(() {
+      if (trimmed.isEmpty) {
+        _nicknames.remove(attendeeId);
+      } else {
+        _nicknames[attendeeId] = trimmed;
+      }
+    });
+    await _saveNicknames();
+  }
+
+
+  void _showInfoMenu(
+    BuildContext context, {
+    required int attendeeId,
+    required String originalName,
+    required String displayName,
+    required DateTime date,
+    String? email,
+  }) {
+    final nickname = _nicknames[attendeeId];
+    final pinned = _pinned.contains(attendeeId);
+    final theme = Theme.of(context);
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Expanded(child: Text(displayName)),
+            IconButton(
+              icon: Icon(
+                pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                color: pinned ? theme.colorScheme.primary : null,
+              ),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _togglePin(attendeeId);
+                if (!context.mounted) return;
+                _showInfoMenu(
+                  context,
+                  attendeeId: attendeeId,
+                  originalName: originalName,
+                  displayName: _name(attendeeId, originalName),
+                  email: email,
+                  date: date,
+                );
+              },
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text('Saved name: ${nickname ?? 'Not set'}')),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _showEditNicknameMenu(
+                      context,
+                      attendeeId: attendeeId,
+                      fallbackName: originalName,
+                    );
+                    if (!context.mounted) return;
+                    _showInfoMenu(
+                      context,
+                      attendeeId: attendeeId,
+                      originalName: originalName,
+                      displayName: _name(attendeeId, originalName),
+                      email: email,
+                      date: date,
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Original name: $originalName'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: Text('Email: $email')),
+                IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: email!));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Email copied')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _openSchedule(
+                context,
+                attendeeId: attendeeId,
+                title: displayName,
+                date: date,
+              );
+            },
+            child: const Text('View schedule'),
+          ),
+        ],
+      ),
+    );
   }
 
   // 1000 = date center point for infinite scrolling
@@ -659,28 +906,21 @@ class TimetableState extends State<TimetableView> {
                               alignment: Alignment.centerLeft,
                             ),
                             onPressed: () async {
-                              final key = GlobalKey<TimetableState>();
-                              final dateString = apiFormat.format(item.appointment.start);
+                              final displayName = _name(
+                                item.teacher!.id,
+                                item.teacher!.code,
+                              );
 
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => Scaffold(
-                                    appBar: AppBar(
-                                      title: Text(item.teacher!.code),
-                                    ),
-                                    body: SchedulePage(
-                                      timetableKey: key,
-                                      api: widget.api,
-                                      attendeeIdOverride: item.teacher!.id,
-                                      initialDate: dateString,
-                                      useModernScheduleLayout:
-                                          widget.useModernLayout,
-                                    ),
-                                  ),
-                                ),
+                              _showInfoMenu(
+                                context,
+                                attendeeId: item.teacher!.id,
+                                originalName: item.teacher!.code,
+                                displayName: displayName,
+                                email: item.teacher!.login,
+                                date: item.appointment.start,
                               );
                             },
-                            child: Text('${item.teacher!.code} (${item.teacher!.login})'),
+                            child: Text(_teacherName(item.teacher!)),
                           )
                         : const Text('No teacher found'),
                   ),
@@ -701,28 +941,20 @@ class TimetableState extends State<TimetableView> {
                               alignment: Alignment.centerLeft,
                             ),
                             onPressed: () {
-                              final key = GlobalKey<TimetableState>();
-                              final dateString = apiFormat.format(item.appointment.start);
+                              final displayName = _name(
+                                item.group!.id,
+                                item.group!.code,
+                              );
 
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => Scaffold(
-                                    appBar: AppBar(
-                                      title: Text(item.group!.code),
-                                    ),
-                                    body: SchedulePage(
-                                      timetableKey: key,
-                                      api: widget.api,
-                                      attendeeIdOverride: item.group!.id,
-                                      initialDate: dateString,
-                                      useModernScheduleLayout:
-                                          widget.useModernLayout,
-                                    ),
-                                  ),
-                                ),
+                              _showInfoMenu(
+                                context,
+                                attendeeId: item.group!.id,
+                                originalName: item.group!.code,
+                                displayName: displayName,
+                                date: item.appointment.start,
                               );
                             },
-                            child: Text(item.group!.code),
+                            child: Text(_groupName(item.group!)),
                           )
                         : const Text('No class found'),
                   ),
