@@ -275,20 +275,21 @@ class TimetableState extends State<TimetableView> {
             const SizedBox(height: 8),
             Text('Original name: $originalName'),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: Text('Email: $email')),
-                IconButton(
-                  icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: email!));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Email copied')),
-                    );
-                  },
-                ),
-              ],
-            ),
+            if (email != null)
+              Row(
+                children: [
+                  Expanded(child: Text('Email: $email')),
+                  IconButton(
+                    icon: const Icon(Icons.copy),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: email));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Email copied')),
+                      );
+                    },
+                  ),
+                ],
+              ),
           ],
         ),
         actions: [
