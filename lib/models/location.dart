@@ -5,15 +5,15 @@ part 'location.g.dart';
 @JsonSerializable()
 class Location {
   final int id;
-  final String location;
-  final String code;
-  final String role;
+  final String? location;
+  final String? code;
+  final String? role;
 
   Location({
     required this.id,
-    required this.location,
-    required this.code,
-    required this.role,
+    this.location,
+    this.code,
+    this.role,
   });
 
   factory Location.fromJson(dynamic json) => _$LocationFromJson(json);
