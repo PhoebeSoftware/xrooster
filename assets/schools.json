@@ -1,14 +1,17 @@
 [
     {
         "name": "Talland College",
-        "url": "https://talland.myx.nl"
+        "url": "https://talland.myx.nl",
+        "attendeeSource": "attendees"
     },
     {
         "name": "Koning Willem 1 College",
-        "url": "https://kw1college.myx.nl"
+        "url": "https://kw1college.myx.nl",
+        "attendeeSource": "settingsFeed"
     },
     {
         "name": "NHL Stenden",
-        "url": "https://nhlstenden.myx.nl"
+        "url": "https://nhlstenden.myx.nl",
+        "attendeeSource": "attendees"
     }
 ]
