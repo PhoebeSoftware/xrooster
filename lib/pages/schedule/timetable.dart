@@ -132,6 +132,18 @@ class TimetableState extends State<TimetableView> {
     return displayName;
   }
 
+  String _classroomCode(Location? location) {
+    final code = location?.code?.trim();
+    if (code == null || code.isEmpty) return 'No classroom found';
+    return code;
+  }
+
+  String _classroomName(Location? location) {
+    final name = location?.location?.trim();
+    if (name == null || name.isEmpty) return '';
+    return name;
+  }
+
   void _openSchedule(
     BuildContext context, {
     required int attendeeId,
@@ -391,7 +403,7 @@ class TimetableState extends State<TimetableView> {
               ? Icon(Icons.info, color: theme.colorScheme.primary)
               : null,
           title: Text(
-            "${item.appointment.name}${item.location?.code != null ? ' - ${item.location!.code}' : ''}",
+            "${item.appointment.name} - ${_classroomCode(item.location)}",
           ),
           subtitle: Text(item.appointment.summary),
           trailing: Text(
@@ -523,7 +535,7 @@ class TimetableState extends State<TimetableView> {
       final endOffset = clampOffset(item.appointment.end) - verticalMargin;
       final eventHeight = max(endOffset - startOffset, 50.0);
       final timeRange = '${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}';
-      final locationCode = item.location?.code;
+      final locationCode = _classroomCode(item.location);
       final hasComment = item.appointment.comment?.isNotEmpty == true;
 
       return Positioned(
@@ -588,16 +600,15 @@ class TimetableState extends State<TimetableView> {
                                 color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
                               ),
                             ),
-                            if (locationCode != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  locationCode,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
-                                  ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                locationCode,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
                                 ),
                               ),
+                            ),
                           ],
                         ),
                       ],
@@ -885,9 +896,9 @@ class TimetableState extends State<TimetableView> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.location?.code ?? 'No classroom found'),
-                      if (item.location?.location != null)
-                        Text(item.location!.location),
+                      Text(_classroomCode(item.location)),
+                      if (_classroomName(item.location).isNotEmpty)
+                        Text(_classroomName(item.location)),
                     ],
                   ),
                 ],

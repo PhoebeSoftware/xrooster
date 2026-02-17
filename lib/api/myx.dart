@@ -34,6 +34,7 @@ class MyxApi extends ChangeNotifier {
   final String baseUrl;
   final bool demoMode;
   Map<String, dynamic>? _demoDataCache;
+  static List<Map<String, dynamic>>? _schoolsConfigCache;
 
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
@@ -99,6 +100,21 @@ class MyxApi extends ChangeNotifier {
 
   Future<Map<String, dynamic>> _loadDemoData() async =>
       _demoDataCache ??= jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
+
+  Future<String> _resolveAttendeeSource() async {
+    final selectedSchool = await prefs.getString('selectedSchool');
+    if (selectedSchool == null || selectedSchool.isEmpty) return 'attendees';
+
+    _schoolsConfigCache ??= (jsonDecode(await rootBundle.loadString('assets/schools.json')) as List<dynamic>)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+    
+    final matchingSchool = _schoolsConfigCache!.cast<Map<String, dynamic>?>().firstWhere(
+      (school) => (school?['url'] as String?) == selectedSchool,
+      orElse: () => null,
+    );
+    return (matchingSchool?['attendeeSource'] as String?) ?? 'attendees';
+  }
 
   Future<List<T>> _getDemoList<T>(String key, T Function(Map<String, dynamic>) fromJson) async {
     final list = (await _loadDemoData())[key] as List;
@@ -274,6 +290,27 @@ class MyxApi extends ChangeNotifier {
     return GroupAttendee.fromJson(groupJson);
   }
 
+  Future<int?> getAttendeeFromFeed() async {
+    if (demoMode) return null;
+
+    final source = await _resolveAttendeeSource();
+    if (source != 'settingsFeed') return null;
+
+    final response = await _dio.get('Settings');
+    final feeds = (response.data['result']?['feeds'] as Map<String, dynamic>?) ?? {};
+
+    for (final feed in feeds.values.whereType<Map<String, dynamic>>()) {
+      final ids = feed['ids'] as List?;
+      if (ids?.isNotEmpty ?? false) {
+        final first = ids!.first;
+        if (first is num) return first.toInt();
+        if (first is String) return int.tryParse(first);
+      }
+    }
+
+    return null;
+  }
+
   Future<Map<String, List<Appointment>>> getAppointmentsForAttendee(
     String startDate,
     String endDate, {
@@ -283,7 +320,15 @@ class MyxApi extends ChangeNotifier {
       return await _getDemoAppointments();
     }
 
-    final usedAttendeeId = attendeeId ?? await prefs.getInt("selectedAttendee");
+    var usedAttendeeId = attendeeId ?? await prefs.getInt("selectedAttendee");
+    if (usedAttendeeId == null) {
+      final fallbackAttendeeId = await getAttendeeFromFeed();
+      if (fallbackAttendeeId != null) {
+        usedAttendeeId = fallbackAttendeeId;
+        await prefs.setInt('selectedAttendee', fallbackAttendeeId);
+      }
+    }
+
     if (usedAttendeeId == null) {
       scaffoldKey.currentState?.showSnackBar(
         SnackBar(
