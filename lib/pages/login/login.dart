@@ -11,7 +11,7 @@ import 'package:xrooster/pages/login/linux.dart';
 // onToken will be called with the token when the page navigates to
 Widget inAppWebViewApp({
   required String baseWebUrl,
-  required FutureOr<void> Function(String token) onToken,
+  required FutureOr<void> Function(String? token) onToken,
 }) {
   return MaterialApp(
     theme: ThemeData(
@@ -32,14 +32,23 @@ Widget inAppWebViewApp({
   );
 }
 
-class InAppWebViewPage extends StatefulWidget {
-  const InAppWebViewPage({
-    super.key,
-    required this.onToken,
-    required this.baseWebUrl,
-  });
+AppBar loginAppbar(void Function() onPressed) {
+  return AppBar(
+    title: const Text('MyX Login'),
+    actions: <Widget>[
+      IconButton(
+        icon: const Icon(Icons.exit_to_app),
+        tooltip: 'Exit',
+        onPressed: onPressed,
+      ),
+    ],
+  );
+}
 
-  final FutureOr<void> Function(String token) onToken;
+class InAppWebViewPage extends StatefulWidget {
+  const InAppWebViewPage({super.key, required this.onToken, required this.baseWebUrl});
+
+  final FutureOr<void> Function(String? token) onToken;
   final String baseWebUrl;
 
   @override
@@ -77,18 +86,20 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
         }
       },
       child: Scaffold(
+        appBar: loginAppbar(() {
+          widget.onToken(null);
+        }),
         body: Column(
           children: <Widget>[
             Expanded(
               child: InAppWebView(
                 key: webViewKey,
                 initialUrlRequest: URLRequest(url: WebUri(baseWebUrl)),
-                onReceivedServerTrustAuthRequest:
-                    (controller, challenge) async {
-                      return ServerTrustAuthResponse(
-                        action: ServerTrustAuthResponseAction.PROCEED,
-                      );
-                    },
+                onReceivedServerTrustAuthRequest: (controller, challenge) async {
+                  return ServerTrustAuthResponse(
+                    action: ServerTrustAuthResponseAction.PROCEED,
+                  );
+                },
                 initialSettings: InAppWebViewSettings(
                   allowsBackForwardNavigationGestures: true,
                 ),
@@ -96,10 +107,10 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   webViewController = controller;
                 },
                 onLoadStop: (controller, url) async {
-                    if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
-                      final urlStr = url.toString();
-                      var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
-                      token = token.replaceAll('&ngsw-bypass=true', '');
+                  if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
+                    final urlStr = url.toString();
+                    var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
+                    token = token.replaceAll('&ngsw-bypass=true', '');
                     // notify caller and allow them to replace the app
                     try {
                       setToken(token);

@@ -74,17 +74,15 @@ class TimetableState extends State<TimetableView> {
 
   Future<void> _loadNicknames() async {
     final nicknames = _decodeNicknames(await widget.api.prefs.getString('nicknames'));
-  
+
     setState(() => _nicknames = nicknames);
   }
-  
+
   Map<int, String> _decodeNicknames(String? raw) {
     if (raw == null || raw.isEmpty) return {};
 
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return decoded.map(
-      (key, value) => MapEntry(int.parse(key), value as String),
-    );
+    return decoded.map((key, value) => MapEntry(int.parse(key), value as String));
   }
 
   Future<void> _saveNicknames() async {
@@ -93,7 +91,6 @@ class TimetableState extends State<TimetableView> {
     );
     await widget.api.prefs.setString('nicknames', encoded);
   }
-
 
   Future<void> _loadPinned() async {
     final ids = await widget.api.prefs.getStringList('pinned_attendees') ?? [];
@@ -162,9 +159,7 @@ class TimetableState extends State<TimetableView> {
     required int attendeeId,
     required String fallbackName,
   }) async {
-    final controller = TextEditingController(
-      text: _nicknames[attendeeId] ?? '',
-    );
+    final controller = TextEditingController(text: _nicknames[attendeeId] ?? '');
     final newValue = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -172,10 +167,7 @@ class TimetableState extends State<TimetableView> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: InputDecoration(
-            labelText: 'Nickname',
-            hintText: fallbackName,
-          ),
+          decoration: InputDecoration(labelText: 'Nickname', hintText: fallbackName),
         ),
         actions: [
           TextButton(
@@ -202,7 +194,6 @@ class TimetableState extends State<TimetableView> {
     });
     await _saveNicknames();
   }
-
 
   void _showInfoMenu(
     BuildContext context, {
@@ -283,9 +274,9 @@ class TimetableState extends State<TimetableView> {
                     icon: const Icon(Icons.copy),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: email));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Email copied')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text('Email copied')));
                     },
                   ),
                 ],
@@ -387,9 +378,7 @@ class TimetableState extends State<TimetableView> {
         final hasComment = item.appointment.comment?.isNotEmpty == true;
 
         return ListTile(
-          leading: hasComment
-              ? Icon(Icons.info, color: theme.colorScheme.primary)
-              : null,
+          leading: hasComment ? Icon(Icons.info, color: theme.colorScheme.primary) : null,
           title: Text(
             "${item.appointment.name}${item.location?.code != null ? ' - ${item.location!.code}' : ''}",
           ),
@@ -398,9 +387,7 @@ class TimetableState extends State<TimetableView> {
             "${DateFormat("HH:mm").format(item.appointment.start)}\n${DateFormat("HH:mm").format(item.appointment.end)}",
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
           tileColor: theme.hoverColor,
           onTap: () => _showAppointmentBottomSheet(context, item),
         );
@@ -450,38 +437,28 @@ class TimetableState extends State<TimetableView> {
       );
     });
 
-    final hourLines = List<Widget>.generate(
-      max(totalHours - 1, 0),
-      (index) {
-        final top = (index + 1) * hourHeight;
-        return Positioned(
-          top: top,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 1,
-            color: applyOpacity(theme.dividerColor, 0.4),
-          ),
-        );
-      },
-    );
+    final hourLines = List<Widget>.generate(max(totalHours - 1, 0), (index) {
+      final top = (index + 1) * hourHeight;
+      return Positioned(
+        top: top,
+        left: 0,
+        right: 0,
+        child: Container(height: 1, color: applyOpacity(theme.dividerColor, 0.4)),
+      );
+    });
 
     const linesPerHour = 2;
-    final halfHourLines = List<Widget>.generate(
-      max(totalHours * linesPerHour - 1, 0),
-      (index) {
-        final top = (index + 1) * (hourHeight / linesPerHour);
-        return Positioned(
-          top: top,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 1,
-            color: applyOpacity(theme.dividerColor, 0.4),
-          ),
-        );
-      },
-    );
+    final halfHourLines = List<Widget>.generate(max(totalHours * linesPerHour - 1, 0), (
+      index,
+    ) {
+      final top = (index + 1) * (hourHeight / linesPerHour);
+      return Positioned(
+        top: top,
+        left: 0,
+        right: 0,
+        child: Container(height: 1, color: applyOpacity(theme.dividerColor, 0.4)),
+      );
+    });
 
     final nowDate = DateTime.now();
     final isToday = dateKey == apiFormat.format(nowDate);
@@ -506,9 +483,7 @@ class TimetableState extends State<TimetableView> {
                 Expanded(
                   child: Container(
                     height: 2,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                    ),
+                    decoration: BoxDecoration(color: theme.colorScheme.primary),
                   ),
                 ),
               ],
@@ -522,7 +497,8 @@ class TimetableState extends State<TimetableView> {
       final startOffset = clampOffset(item.appointment.start) + verticalMargin;
       final endOffset = clampOffset(item.appointment.end) - verticalMargin;
       final eventHeight = max(endOffset - startOffset, 50.0);
-      final timeRange = '${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}';
+      final timeRange =
+          '${DateFormat("HH:mm").format(item.appointment.start)} - ${DateFormat("HH:mm").format(item.appointment.end)}';
       final locationCode = item.location?.code;
       final hasComment = item.appointment.comment?.isNotEmpty == true;
 
@@ -585,7 +561,10 @@ class TimetableState extends State<TimetableView> {
                             Text(
                               timeRange,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                                color: applyOpacity(
+                                  theme.colorScheme.onPrimaryContainer,
+                                  0.85,
+                                ),
                               ),
                             ),
                             if (locationCode != null)
@@ -594,7 +573,10 @@ class TimetableState extends State<TimetableView> {
                                 child: Text(
                                   locationCode,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: applyOpacity(theme.colorScheme.onPrimaryContainer, 0.85),
+                                    color: applyOpacity(
+                                      theme.colorScheme.onPrimaryContainer,
+                                      0.85,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -689,11 +671,13 @@ class TimetableState extends State<TimetableView> {
 
     Map<String, List<Appointment>> appointments;
     try {
-      appointments = await widget.api.getAppointmentsForAttendee(
-        apiFormat.format(firstDayOfWeek),
-        apiFormat.format(lastDayOfWeek),
-        attendeeId: widget.attendeeIdOverride,
-      );
+      appointments =
+          await widget.api.getAppointmentsForAttendee(
+            apiFormat.format(firstDayOfWeek),
+            apiFormat.format(lastDayOfWeek),
+            attendeeId: widget.attendeeIdOverride,
+          ) ??
+          {};
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -709,7 +693,7 @@ class TimetableState extends State<TimetableView> {
       return;
     }
 
-    Future<T?> safeGet<T>(Future<T> future) async {
+    Future<T?> safeGet<T>(Future<T?> future) async {
       try {
         return await future;
       } on DioException catch (e) {
@@ -840,11 +824,7 @@ class TimetableState extends State<TimetableView> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.info,
-                        size: 20,
-                        color: theme.colorScheme.primary,
-                      ),
+                      Icon(Icons.info, size: 20, color: theme.colorScheme.primary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -886,8 +866,7 @@ class TimetableState extends State<TimetableView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.location?.code ?? 'No classroom found'),
-                      if (item.location?.location != null)
-                        Text(item.location!.location),
+                      if (item.location?.location != null) Text(item.location!.location),
                     ],
                   ),
                 ],
@@ -942,10 +921,7 @@ class TimetableState extends State<TimetableView> {
                               alignment: Alignment.centerLeft,
                             ),
                             onPressed: () {
-                              final displayName = _name(
-                                item.group!.id,
-                                item.group!.code,
-                              );
+                              final displayName = _name(item.group!.id, item.group!.code);
 
                               _showInfoMenu(
                                 context,
@@ -970,10 +946,7 @@ class TimetableState extends State<TimetableView> {
 }
 
 class _DayTimeline extends StatefulWidget {
-  const _DayTimeline({
-    required this.scrollTarget,
-    required this.child,
-  });
+  const _DayTimeline({required this.scrollTarget, required this.child});
 
   final double scrollTarget;
   final Widget child;

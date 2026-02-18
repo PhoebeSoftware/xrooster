@@ -45,9 +45,7 @@ class AttendeeState extends State<AttendeePage> {
     if (raw == null || raw.isEmpty) return {};
 
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return decoded.map(
-      (key, value) => MapEntry(int.parse(key), value as String),
-    );
+    return decoded.map((key, value) => MapEntry(int.parse(key), value as String));
   }
 
   Future<void> _saveNicknames() async {
@@ -103,10 +101,7 @@ class AttendeeState extends State<AttendeePage> {
   @override
   void initState() {
     super.initState();
-    Future.wait([
-      _loadPinned(),
-      _loadNicknames(),
-    ]).then((_) => _loadAttendees());
+    Future.wait([_loadPinned(), _loadNicknames()]).then((_) => _loadAttendees());
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -120,7 +115,7 @@ class AttendeeState extends State<AttendeePage> {
       if (!mounted) return;
 
       setState(() {
-        _allItems = [...results[0], ...results[1]];
+        _allItems = [...?results[0], ...?results[1]];
         _filteredItems = _allItems;
         _loading = false;
       });
@@ -166,9 +161,7 @@ class AttendeeState extends State<AttendeePage> {
   }
 
   String _name(BaseAttendee item) =>
-      _nicknames[item.id]?.trim().isEmpty ?? true
-          ? item.code
-          : _nicknames[item.id]!;
+      _nicknames[item.id]?.trim().isEmpty ?? true ? item.code : _nicknames[item.id]!;
 
   Future<void> _editNickname(BaseAttendee item) async {
     final controller = TextEditingController(text: _nicknames[item.id] ?? '');
@@ -179,16 +172,10 @@ class AttendeeState extends State<AttendeePage> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: InputDecoration(
-            labelText: 'Nickname',
-            hintText: item.code,
-          ),
+          decoration: InputDecoration(labelText: 'Nickname', hintText: item.code),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('Cancel')),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
             child: Text('Save'),
@@ -200,7 +187,9 @@ class AttendeeState extends State<AttendeePage> {
     if (!mounted || newNickname == null) return;
 
     setState(() {
-      newNickname.isEmpty ? _nicknames.remove(item.id) : _nicknames[item.id] = newNickname;
+      newNickname.isEmpty
+          ? _nicknames.remove(item.id)
+          : _nicknames[item.id] = newNickname;
     });
     await _saveNicknames();
   }
@@ -269,12 +258,8 @@ class AttendeeState extends State<AttendeePage> {
                               ),
                               IconButton(
                                 icon: Icon(
-                                  pinned
-                                      ? Icons.push_pin
-                                      : Icons.push_pin_outlined,
-                                  color: pinned
-                                      ? theme.colorScheme.primary
-                                      : null,
+                                  pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                                  color: pinned ? theme.colorScheme.primary : null,
                                 ),
                                 onPressed: () => _togglePin(item),
                               ),
@@ -284,9 +269,7 @@ class AttendeeState extends State<AttendeePage> {
                                   widget.prefs.setInt("selectedAttendee", item.id);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        '${item.role} $name selected',
-                                      ),
+                                      content: Text('${item.role} $name selected'),
                                       duration: Duration(seconds: 3),
                                     ),
                                   );
@@ -295,9 +278,7 @@ class AttendeeState extends State<AttendeePage> {
                               ),
                             ],
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 15.0,
-                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 15.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
@@ -326,10 +307,7 @@ class SearchTextField extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Search',
-        ),
+        decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Search'),
       ),
     );
   }

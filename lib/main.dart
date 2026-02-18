@@ -18,6 +18,8 @@ import 'package:dynamic_color/dynamic_color.dart';
 String apiBaseUrl = '';
 String selectedSchoolUrl = '';
 
+bool useCache = false;
+
 // Global connectivity state that can be shared across the app
 final ValueNotifier<bool?> isOnlineNotifier = ValueNotifier<bool?>(null);
 
@@ -58,14 +60,10 @@ Future<void> main() async {
   });
 
   // initialize state
-  isOnlineNotifier.value = _isDeviceOnline(
-    await Connectivity().checkConnectivity(),
-  );
+  isOnlineNotifier.value = _isDeviceOnline(await Connectivity().checkConnectivity());
 
   // listen to connection changes
-  Connectivity().onConnectivityChanged.listen((
-    List<ConnectivityResult> results,
-  ) {
+  Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
     final newOnlineStatus = _isDeviceOnline(results);
     if (isOnlineNotifier.value != newOnlineStatus) {
       isOnlineNotifier.value = newOnlineStatus;
@@ -86,7 +84,7 @@ Future<void> main() async {
   }
 
   // creates the main app with an token for the api
-  void startAppFlow(String token) async {
+  void startAppFlow(String? token) async {
     if ((await prefs.getString('selectedSchool') ?? '').isEmpty &&
         selectedSchoolUrl.isNotEmpty) {
       await prefs.setString('selectedSchool', selectedSchoolUrl);
@@ -96,7 +94,10 @@ Future<void> main() async {
     // immediately. Without this the `XApp` instance created below will
     // still try to read the token from prefs and may remain in the
     // login flow requiring a second token entry on some platforms.
-    await prefs.setString('token', token);
+    if (token != null) await prefs.setString('token', token);
+
+    debugPrint((token == null).toString());
+
     var api = MyxApi(
       baseUrl: apiBaseUrl,
       cache: cache,
@@ -105,6 +106,7 @@ Future<void> main() async {
       scaffoldKey: scaffoldKey,
       isOnlineNotifier: isOnlineNotifier,
       demoMode: isDemoMode,
+      cacheOnly: token == null,
     );
 
     // Load saved theme preference
@@ -122,9 +124,8 @@ Future<void> main() async {
 
   // creates the login page and redirects to main flow after login
   void startLoginFlow() async {
-    runApp(
-      inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow),
-    );
+    debugPrint("nigga link");
+    runApp(inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow));
   }
 
   void startSchoolSelectedFlow(String selectedSchool) async {
@@ -261,11 +262,8 @@ class XAppState extends State<XApp> {
 
   Future<MyxApi?> _buildApiFuture() async {
     final token = await _prefs.getString("token");
-    if (token == null) {
-      return null;
-    }
 
-    _api.updateToken(token);
+    if (token != null) _api.updateToken(token);
     return _api;
   }
 
@@ -341,9 +339,7 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          ); // api not ready
+          return const Center(child: CircularProgressIndicator()); // api not ready
         }
 
         final api = snapshot.data;
@@ -358,10 +354,12 @@ class XAppState extends State<XApp> {
                 await _prefs.setString('selectedSchool', selectedSchoolUrl);
               }
 
-              await _prefs.setString("token", t);
+              if (t != null) await _prefs.setString("token", t);
+
               // refresh cached future and trigger a single rebuild
-              _apiFuture = _buildApiFuture();
-              setState(() {});
+              setState(() {
+                _apiFuture = _buildApiFuture();
+              });
             },
           );
         }
@@ -382,9 +380,8 @@ class XAppState extends State<XApp> {
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             final usingMaterialYou = _themeMode == 'material_you';
-            final usingCustomSeed = _themeMode == 'system' ||
-                _themeMode == 'light' ||
-                _themeMode == 'dark';
+            final usingCustomSeed =
+                _themeMode == 'system' || _themeMode == 'light' || _themeMode == 'dark';
             final seedColor = usingCustomSeed ? _seedColor : Colors.blue;
 
             final lightScheme = (usingMaterialYou && lightDynamic != null)
@@ -393,10 +390,7 @@ class XAppState extends State<XApp> {
 
             final darkScheme = (usingMaterialYou && darkDynamic != null)
                 ? darkDynamic
-                : ColorScheme.fromSeed(
-                    seedColor: seedColor,
-                    brightness: Brightness.dark,
-                  );
+                : ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.dark);
 
             return MaterialApp(
               title: XApp.title,
@@ -417,10 +411,7 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.school),
-                      label: 'Attendees',
-                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',

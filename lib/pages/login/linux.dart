@@ -2,13 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/pages/login/login.dart';
 
-Widget linuxFallback({required FutureOr<void> Function(String token) onToken}) {
+Widget linuxFallback({required FutureOr<void> Function(String? token) onToken}) {
   return MaterialApp(
     darkTheme: ThemeData.dark(),
     themeMode: ThemeMode.system,
     home: Scaffold(
-      appBar: AppBar(title: const Text('XRooster Login')),
+      appBar: loginAppbar(() {
+        onToken(null);
+      }),
       body: FutureBuilder<String?>(
         future: SharedPreferencesAsync().getString('token'),
         builder: (context, snapshot) {
