@@ -46,19 +46,22 @@ class _SettingsPageState extends State<SettingsPage> {
     final userName = await prefs.getString('userName');
     final tokenExp = await prefs.getInt('tokenExp');
 
-    final expTime = DateTime.fromMillisecondsSinceEpoch(tokenExp! * 1000, isUtc:true).toLocal();
+    String timeLeft = '1h 45m';
+    String expiryTime = '21:48';
+    if (tokenExp != null) {
+      final expTime = DateTime.fromMillisecondsSinceEpoch(tokenExp * 1000, isUtc: true).toLocal();
+      final duration = expTime.difference(DateTime.now());
 
-    final duration = expTime.difference(DateTime.now());
-
-    final timeLeft = '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
-    final expiryTime = DateFormat('HH:mm').format(expTime);
+      timeLeft = '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
+      expiryTime = DateFormat('HH:mm').format(expTime);
+    }
 
     setState(() {
       _themeMode = theme ?? 'system';
       _language = language ?? 'system';
       _useModernScheduleLayout = scheduleLayout ?? true;
       _seedColor = Color(seedColor ?? Colors.blue.toARGB32());
-      _userName = userName ?? 'Unknown';
+      _userName = userName ?? 'John Doe';
       _timeLeft = timeLeft;
       _expiryTime = expiryTime;
       _loading = false;
