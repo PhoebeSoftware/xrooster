@@ -133,6 +133,12 @@ class MyxApi extends ChangeNotifier {
         : GroupAttendee.fromJson(data..['role'] = 'group'),
   );
 
+  Settings _getDemoSettings() => Settings(
+    feeds: {
+      "guid": Feed(name: "ExampleFeed", ids: [69, 67]),
+    },
+  );
+
   Future<Location> _getDemoLocation(int id) =>
       _getDemoById('locations', id, Location.fromJson);
 
@@ -202,11 +208,7 @@ class MyxApi extends ChangeNotifier {
 
   Future<Settings> getSettings() async {
     if (demoMode) {
-      return Settings(
-        feeds: {
-          "guid": Feed(name: "ExampleFeed", ids: [69, 67]),
-        },
-      );
+      return _getDemoSettings();
     }
 
     final response = await _dio.get('Settings');
