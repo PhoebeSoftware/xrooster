@@ -26,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _useModernScheduleLayout = true;
   bool _loading = true;
   Color _seedColor = Colors.blue;
+  String _userName = '';
 
   @override
   void initState() {
@@ -39,11 +40,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final language = await prefs.getString('language');
     final scheduleLayout = await prefs.getBool('use_better_schedule');
     final seedColor = await prefs.getInt('theme_seed_color');
+    final userName = await prefs.getString('userName');
     setState(() {
       _themeMode = theme ?? 'system';
       _language = language ?? 'system';
       _useModernScheduleLayout = scheduleLayout ?? true;
       _seedColor = Color(seedColor ?? Colors.blue.toARGB32());
+      _userName = userName ?? 'Unknown';
       _loading = false;
     });
   }
@@ -123,6 +126,9 @@ class _SettingsPageState extends State<SettingsPage> {
           Expanded(
             child: ListView(
               children: [
+                ListTile(
+                  title: Text('Logged in as $_userName'),
+                ),
                 Divider(),
                 ListTile(
                   title: const Text('Color Theme'),
