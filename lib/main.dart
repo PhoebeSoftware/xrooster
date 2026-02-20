@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:xrooster/models/payload.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
@@ -97,6 +99,15 @@ Future<void> main() async {
     // still try to read the token from prefs and may remain in the
     // login flow requiring a second token entry on some platforms.
     await prefs.setString('token', token);
+
+    final jwtPayload = Payload.fromMap(JWT.decode(token).payload);
+    await prefs.setString('userId', jwtPayload.user);
+    await prefs.setString('userName', jwtPayload.name);
+
+    if (jwtPayload.attendeeId != null) {
+      await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
+    }
+
     var api = MyxApi(
       baseUrl: apiBaseUrl,
       cache: cache,
@@ -259,7 +270,6 @@ class XAppState extends State<XApp> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -409,7 +419,8 @@ class XAppState extends State<XApp> {
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             final usingMaterialYou = _themeMode == 'material_you';
-            final usingCustomSeed = _themeMode == 'system' ||
+            final usingCustomSeed =
+                _themeMode == 'system' ||
                 _themeMode == 'light' ||
                 _themeMode == 'dark';
             final seedColor = usingCustomSeed ? _seedColor : Colors.blue;

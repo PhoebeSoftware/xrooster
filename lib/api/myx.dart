@@ -52,7 +52,8 @@ class MyxApi extends ChangeNotifier {
       BaseOptions(
         baseUrl: baseUrl,
         headers: {"Authorization": "Bearer $usedToken"},
-        validateStatus: (status) => status != null && status >= 200 && status < 300,
+        validateStatus: (status) =>
+            status != null && status >= 200 && status < 300,
       ),
     );
 
@@ -92,58 +93,82 @@ class MyxApi extends ChangeNotifier {
     // Certificate fix for self-signed certificates
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
-          true;
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
       return client;
     };
   }
 
-  Future<Map<String, dynamic>> _loadDemoData() async =>
-      _demoDataCache ??= jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
+  Future<Map<String, dynamic>> _loadDemoData() async => _demoDataCache ??=
+      jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
 
   Future<String> _resolveAttendeeSource() async {
     final selectedSchool = await prefs.getString('selectedSchool');
     if (selectedSchool == null || selectedSchool.isEmpty) return 'attendees';
 
-    _schoolsConfigCache ??= (jsonDecode(await rootBundle.loadString('assets/schools.json')) as List<dynamic>)
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
-    
-    final matchingSchool = _schoolsConfigCache!.cast<Map<String, dynamic>?>().firstWhere(
-      (school) => (school?['url'] as String?) == selectedSchool,
-      orElse: () => null,
-    );
+    _schoolsConfigCache ??=
+        (jsonDecode(await rootBundle.loadString('assets/schools.json'))
+                as List<dynamic>)
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList();
+
+    final matchingSchool = _schoolsConfigCache!
+        .cast<Map<String, dynamic>?>()
+        .firstWhere(
+          (school) => (school?['url'] as String?) == selectedSchool,
+          orElse: () => null,
+        );
     return (matchingSchool?['attendeeSource'] as String?) ?? 'attendees';
   }
 
-  Future<List<T>> _getDemoList<T>(String key, T Function(Map<String, dynamic>) fromJson) async {
+  Future<List<T>> _getDemoList<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
     final list = (await _loadDemoData())[key] as List;
 
-    return list
-        .map((item) => fromJson(Map.from(item as Map)))
-        .toList();
+    return list.map((item) => fromJson(Map.from(item as Map))).toList();
   }
 
-  Future<T> _getDemoById<T>(String key, int id, T Function(Map<String, dynamic>) fromJson) async {
-    final rawList = await _getDemoList<Map<String, dynamic>>(key, (rawItem) => rawItem);
-    final matchingItem = rawList.firstWhere((item) => item['id'] == id, orElse: () => rawList.first);
+  Future<T> _getDemoById<T>(
+    String key,
+    int id,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
+    final rawList = await _getDemoList<Map<String, dynamic>>(
+      key,
+      (rawItem) => rawItem,
+    );
+    final matchingItem = rawList.firstWhere(
+      (item) => item['id'] == id,
+      orElse: () => rawList.first,
+    );
 
     return fromJson(matchingItem);
   }
 
   Future<List<BaseAttendee>> _getDemoAttendees(AttendeeType type) =>
-    _getDemoList(
-      type == AttendeeType.teacher ? 'teachers' : 'groups',
-      (data) => type == AttendeeType.teacher
-        ? TeacherAttendee.fromJson(data..['role'] = 'teacher')
-        : GroupAttendee.fromJson(data..['role'] = 'group'),
-    );
+      _getDemoList(
+        type == AttendeeType.teacher ? 'teachers' : 'groups',
+        (data) => type == AttendeeType.teacher
+            ? TeacherAttendee.fromJson(data..['role'] = 'teacher')
+            : GroupAttendee.fromJson(data..['role'] = 'group'),
+      );
 
-  Future<Location> _getDemoLocation(int id) => _getDemoById('locations', id, Location.fromJson);
+  Future<Location> _getDemoLocation(int id) =>
+      _getDemoById('locations', id, Location.fromJson);
 
-  Future<TeacherAttendee> _getDemoTeacher(int id) => _getDemoById('teachers', id, (data) => TeacherAttendee.fromJson(data..['role'] = 'teacher'));
+  Future<TeacherAttendee> _getDemoTeacher(int id) => _getDemoById(
+    'teachers',
+    id,
+    (data) => TeacherAttendee.fromJson(data..['role'] = 'teacher'),
+  );
 
-  Future<GroupAttendee> _getDemoGroup(int id) => _getDemoById('groups', id, (data) => GroupAttendee.fromJson(data..['role'] = 'group'));
+  Future<GroupAttendee> _getDemoGroup(int id) => _getDemoById(
+    'groups',
+    id,
+    (data) => GroupAttendee.fromJson(data..['role'] = 'group'),
+  );
 
   Future<Map<String, List<Appointment>>> _getDemoAppointments() async {
     final now = DateTime.now();
@@ -153,8 +178,20 @@ class MyxApi extends ChangeNotifier {
 
     final appointments = rawAppointments.map((rawItem) {
       final data = Map<String, dynamic>.from(rawItem);
-      final start = dayStart.add(Duration(days: data['dayOffset'], hours: data['startHour'], minutes: data['startMinute']));
-      final end = dayStart.add(Duration(days: data['dayOffset'], hours: data['endHour'], minutes: data['endMinute']));
+      final start = dayStart.add(
+        Duration(
+          days: data['dayOffset'],
+          hours: data['startHour'],
+          minutes: data['startMinute'],
+        ),
+      );
+      final end = dayStart.add(
+        Duration(
+          days: data['dayOffset'],
+          hours: data['endHour'],
+          minutes: data['endMinute'],
+        ),
+      );
 
       return Appointment.fromJson({
         ...data,
@@ -176,7 +213,10 @@ class MyxApi extends ChangeNotifier {
     _dio.options.headers["Authorization"] = "Bearer $newToken";
   }
 
-  BaseAttendee _createAttendeeFromJson(AttendeeType type, Map<String, dynamic> json) {
+  BaseAttendee _createAttendeeFromJson(
+    AttendeeType type,
+    Map<String, dynamic> json,
+  ) {
     switch (type) {
       case AttendeeType.teacher:
         return TeacherAttendee.fromJson(json);
@@ -196,7 +236,9 @@ class MyxApi extends ChangeNotifier {
       try {
         final List<dynamic> decoded = jsonDecode(cachedJson) as List<dynamic>;
         return decoded
-            .map((a) => _createAttendeeFromJson(type, a as Map<String, dynamic>))
+            .map(
+              (a) => _createAttendeeFromJson(type, a as Map<String, dynamic>),
+            )
             .toList();
       } catch (e) {
         debugPrint('Error parsing cached attendees for type $type: $e');
@@ -224,9 +266,13 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
-        return Location.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return Location.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
-        debugPrint('Error parsing cached location with locationId $locationId: $e');
+        debugPrint(
+          'Error parsing cached location with locationId $locationId: $e',
+        );
         debugPrint('Invalidating cached location and re-fetching.');
 
         cache.remove(cacheKey);
@@ -249,9 +295,13 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
-        return TeacherAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return TeacherAttendee.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
-        debugPrint('Error parsing cached teacher with teacherId $teacherId: $e');
+        debugPrint(
+          'Error parsing cached teacher with teacherId $teacherId: $e',
+        );
         debugPrint('Invalidating cached teacher and re-fetching.');
 
         cache.remove(cacheKey);
@@ -274,9 +324,13 @@ class MyxApi extends ChangeNotifier {
     var cachedJson = cache.getString(cacheKey);
     if (isOnlineNotifier.value != true && cachedJson != null) {
       try {
-        return GroupAttendee.fromJson(jsonDecode(cachedJson) as Map<String, dynamic>);
+        return GroupAttendee.fromJson(
+          jsonDecode(cachedJson) as Map<String, dynamic>,
+        );
       } catch (e) {
-        debugPrint('Error parsing cached groupAttendee with groupid $groupId: $e');
+        debugPrint(
+          'Error parsing cached groupAttendee with groupid $groupId: $e',
+        );
         debugPrint('Invalidating cached groupAttendee and re-fetching.');
 
         cache.remove(cacheKey);
@@ -290,27 +344,6 @@ class MyxApi extends ChangeNotifier {
     return GroupAttendee.fromJson(groupJson);
   }
 
-  Future<int?> getAttendeeFromFeed() async {
-    if (demoMode) return null;
-
-    final source = await _resolveAttendeeSource();
-    if (source != 'settingsFeed') return null;
-
-    final response = await _dio.get('Settings');
-    final feeds = (response.data['result']?['feeds'] as Map<String, dynamic>?) ?? {};
-
-    for (final feed in feeds.values.whereType<Map<String, dynamic>>()) {
-      final ids = feed['ids'] as List?;
-      if (ids?.isNotEmpty ?? false) {
-        final first = ids!.first;
-        if (first is num) return first.toInt();
-        if (first is String) return int.tryParse(first);
-      }
-    }
-
-    return null;
-  }
-
   Future<Map<String, List<Appointment>>> getAppointmentsForAttendee(
     String startDate,
     String endDate, {
@@ -321,14 +354,6 @@ class MyxApi extends ChangeNotifier {
     }
 
     var usedAttendeeId = attendeeId ?? await prefs.getInt("selectedAttendee");
-    if (usedAttendeeId == null) {
-      final fallbackAttendeeId = await getAttendeeFromFeed();
-      if (fallbackAttendeeId != null) {
-        usedAttendeeId = fallbackAttendeeId;
-        await prefs.setInt('selectedAttendee', fallbackAttendeeId);
-      }
-    }
-
     if (usedAttendeeId == null) {
       scaffoldKey.currentState?.showSnackBar(
         SnackBar(
