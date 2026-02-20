@@ -89,23 +89,25 @@ Future<void> main() async {
 
   // creates the main app with an token for the api
   void startAppFlow(String token) async {
-    if ((await prefs.getString('selectedSchool') ?? '').isEmpty &&
-        selectedSchoolUrl.isNotEmpty) {
-      await prefs.setString('selectedSchool', selectedSchoolUrl);
-    }
+    if (!isDemoMode) { // DOn't store anything in demo mode.
+      if ((await prefs.getString('selectedSchool') ?? '').isEmpty &&
+          selectedSchoolUrl.isNotEmpty) {
+        await prefs.setString('selectedSchool', selectedSchoolUrl);
+      }
 
-    // Persist the token so the app's cached future builder can pick it up
-    // immediately. Without this the `XApp` instance created below will
-    // still try to read the token from prefs and may remain in the
-    // login flow requiring a second token entry on some platforms.
-    await prefs.setString('token', token);
+      // Persist the token so the app's cached future builder can pick it up
+      // immediately. Without this the `XApp` instance created below will
+      // still try to read the token from prefs and may remain in the
+      // login flow requiring a second token entry on some platforms.
+      await prefs.setString('token', token);
 
-    final jwtPayload = Payload.fromMap(JWT.decode(token).payload);
-    await prefs.setString('userId', jwtPayload.user);
-    await prefs.setString('userName', jwtPayload.name);
+      final jwtPayload = Payload.fromMap(JWT.decode(token).payload);
+      await prefs.setString('userId', jwtPayload.user);
+      await prefs.setString('userName', jwtPayload.name);
 
-    if (jwtPayload.attendeeId != null) {
-      await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
+      if (jwtPayload.attendeeId != null) {
+        await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
+      }
     }
 
     var api = MyxApi(
