@@ -11,8 +11,10 @@ import 'package:collection/collection.dart';
 
 import 'package:xrooster/models/appointment.dart';
 import 'package:xrooster/models/base_attendee.dart';
+import 'package:xrooster/models/feed.dart';
 import 'package:xrooster/models/group_attendee.dart';
 import 'package:xrooster/models/location.dart';
+import 'package:xrooster/models/settings.dart';
 import 'package:xrooster/models/teacher_attendee.dart';
 
 var token = "";
@@ -196,6 +198,19 @@ class MyxApi extends ChangeNotifier {
       case AttendeeType.group:
         return GroupAttendee.fromJson(json);
     }
+  }
+
+  Future<Settings> getSettings() async {
+    if (demoMode) {
+      return Settings(
+        feeds: {
+          "guid": Feed(name: "ExampleFeed", ids: [69, 67]),
+        },
+      );
+    }
+
+    final response = await _dio.get('Settings');
+    return Settings.fromJson(response.data['result']);
   }
 
   Future<List<BaseAttendee>> getAllAttendees(AttendeeType type) async {
