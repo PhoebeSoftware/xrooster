@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:gif/gif.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -26,6 +27,9 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _useModernScheduleLayout = true;
   bool _loading = true;
   Color _seedColor = Colors.blue;
+  String _userName = '';
+  String _timeLeft = '';
+  String _expiryTime = '';
 
   @override
   void initState() {
@@ -39,11 +43,27 @@ class _SettingsPageState extends State<SettingsPage> {
     final language = await prefs.getString('language');
     final scheduleLayout = await prefs.getBool('use_better_schedule');
     final seedColor = await prefs.getInt('theme_seed_color');
+    final userName = await prefs.getString('userName');
+    final tokenExp = await prefs.getInt('tokenExp');
+
+    String timeLeft = '1h 45m';
+    String expiryTime = '21:48';
+    if (tokenExp != null) {
+      final expTime = DateTime.fromMillisecondsSinceEpoch(tokenExp * 1000, isUtc: true).toLocal();
+      final duration = expTime.difference(DateTime.now());
+
+      timeLeft = '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
+      expiryTime = DateFormat('HH:mm').format(expTime);
+    }
+
     setState(() {
       _themeMode = theme ?? 'system';
       _language = language ?? 'system';
       _useModernScheduleLayout = scheduleLayout ?? true;
       _seedColor = Color(seedColor ?? Colors.blue.toARGB32());
+      _userName = userName ?? 'John Doe';
+      _timeLeft = timeLeft;
+      _expiryTime = expiryTime;
       _loading = false;
     });
   }
@@ -123,6 +143,12 @@ class _SettingsPageState extends State<SettingsPage> {
           Expanded(
             child: ListView(
               children: [
+                ListTile(
+                  title: Text('Account'),
+                  subtitle: Text(
+                    'Logged in as $_userName\nLogin token expires in $_timeLeft at $_expiryTime',
+                  ),
+                ),
                 Divider(),
                 ListTile(
                   title: const Text('Color Theme'),
