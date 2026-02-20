@@ -275,6 +275,10 @@ class XAppState extends State<XApp> {
   }
 
   Future<MyxApi?> _buildApiFuture() async {
+    if (_api.demoMode) {
+      return _api;
+    }
+
     final token = await _prefs.getString("token");
     if (token == null) {
       return null;
