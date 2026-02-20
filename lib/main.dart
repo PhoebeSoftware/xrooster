@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:xrooster/models/payload.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/login/login.dart';
@@ -87,16 +89,29 @@ Future<void> main() async {
 
   // creates the main app with an token for the api
   void startAppFlow(String token) async {
-    if ((await prefs.getString('selectedSchool') ?? '').isEmpty &&
-        selectedSchoolUrl.isNotEmpty) {
-      await prefs.setString('selectedSchool', selectedSchoolUrl);
+    if (!isDemoMode) { // DOn't store anything in demo mode.
+      if ((await prefs.getString('selectedSchool') ?? '').isEmpty &&
+          selectedSchoolUrl.isNotEmpty) {
+        await prefs.setString('selectedSchool', selectedSchoolUrl);
+      }
+
+      // Persist the token so the app's cached future builder can pick it up
+      // immediately. Without this the `XApp` instance created below will
+      // still try to read the token from prefs and may remain in the
+      // login flow requiring a second token entry on some platforms.
+      await prefs.setString('token', token);
+
+      final decodedToken = JWT.decode(token);
+      final jwtPayload = Payload.fromMap(decodedToken.payload);
+      await prefs.setString('userId', jwtPayload.user);
+      await prefs.setString('userName', jwtPayload.name);
+      await prefs.setInt('tokenExp', jwtPayload.tokenExpiry);
+
+      if (jwtPayload.attendeeId != null) {
+        await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
+      }
     }
 
-    // Persist the token so the app's cached future builder can pick it up
-    // immediately. Without this the `XApp` instance created below will
-    // still try to read the token from prefs and may remain in the
-    // login flow requiring a second token entry on some platforms.
-    await prefs.setString('token', token);
     var api = MyxApi(
       baseUrl: apiBaseUrl,
       cache: cache,
@@ -222,43 +237,6 @@ class XAppState extends State<XApp> {
 
   // ensure we only check selectedAttendee once to avoid setState loops
   bool _checkedSelectedAttendee = false;
-  bool _resolvingSelectedAttendee = false;
-
-  Future<void> _checkSelectedAttendee() async {
-    if (_resolvingSelectedAttendee) return;
-
-    _resolvingSelectedAttendee = true;
-    try {
-      final attendeeId = await _api.prefs.getInt('selectedAttendee');
-      if (attendeeId != null) {
-        if (mounted && _currentIndex != 0) {
-          setState(() => _currentIndex = 0);
-        }
-        return;
-      }
-
-      final fallbackAttendeeId = await _api.getAttendeeFromFeed();
-      if (fallbackAttendeeId != null) {
-        await _api.prefs.setInt('selectedAttendee', fallbackAttendeeId);
-        if (mounted) {
-          setState(() => _currentIndex = 0);
-        }
-        return;
-      }
-
-      if (mounted && _currentIndex != 1) {
-        setState(() => _currentIndex = 1);
-      }
-    } catch (e) {
-      debugPrint('Failed to resolve selected attendee: $e');
-      if (mounted && _currentIndex != 1) {
-        setState(() => _currentIndex = 1);
-      }
-    } finally {
-      _resolvingSelectedAttendee = false;
-    }
-  }
-
 
   @override
   void initState() {
@@ -275,7 +253,12 @@ class XAppState extends State<XApp> {
     // initialize cached future
     _apiFuture = _buildApiFuture();
 
-    _checkSelectedAttendee();
+    // If no attendee is selected, navigate to the Attendees page
+    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
+      if (attendeeId == null) {
+        setState(() => _currentIndex = 1);
+      }
+    });
   }
 
   @override
@@ -292,6 +275,10 @@ class XAppState extends State<XApp> {
   }
 
   Future<MyxApi?> _buildApiFuture() async {
+    if (_api.demoMode) {
+      return _api;
+    }
+
     final token = await _prefs.getString("token");
     if (token == null) {
       return null;
@@ -403,13 +390,19 @@ class XAppState extends State<XApp> {
         // Only check selectedAttendee once to avoid triggering repeated rebuilds
         if (!_checkedSelectedAttendee) {
           _checkedSelectedAttendee = true;
-          _checkSelectedAttendee();
+          _api.prefs.getInt("selectedAttendee").then((attendeeId) {
+            if (!mounted) return;
+            if (attendeeId == null && _currentIndex != 1) {
+              setState(() => _currentIndex = 1);
+            }
+          });
         }
 
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             final usingMaterialYou = _themeMode == 'material_you';
-            final usingCustomSeed = _themeMode == 'system' ||
+            final usingCustomSeed =
+                _themeMode == 'system' ||
                 _themeMode == 'light' ||
                 _themeMode == 'dark';
             final seedColor = usingCustomSeed ? _seedColor : Colors.blue;
