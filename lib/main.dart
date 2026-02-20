@@ -101,9 +101,11 @@ Future<void> main() async {
       // login flow requiring a second token entry on some platforms.
       await prefs.setString('token', token);
 
-      final jwtPayload = Payload.fromMap(JWT.decode(token).payload);
+      final decodedToken = JWT.decode(token);
+      final jwtPayload = Payload.fromMap(decodedToken.payload);
       await prefs.setString('userId', jwtPayload.user);
       await prefs.setString('userName', jwtPayload.name);
+      await prefs.setInt('tokenExp', jwtPayload.tokenExpiry);
 
       if (jwtPayload.attendeeId != null) {
         await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
