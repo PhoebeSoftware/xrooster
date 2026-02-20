@@ -233,42 +233,6 @@ class XAppState extends State<XApp> {
 
   // ensure we only check selectedAttendee once to avoid setState loops
   bool _checkedSelectedAttendee = false;
-  bool _resolvingSelectedAttendee = false;
-
-  Future<void> _checkSelectedAttendee() async {
-    if (_resolvingSelectedAttendee) return;
-
-    _resolvingSelectedAttendee = true;
-    try {
-      final attendeeId = await _api.prefs.getInt('selectedAttendee');
-      if (attendeeId != null) {
-        if (mounted && _currentIndex != 0) {
-          setState(() => _currentIndex = 0);
-        }
-        return;
-      }
-
-      final fallbackAttendeeId = await _api.getAttendeeFromFeed();
-      if (fallbackAttendeeId != null) {
-        await _api.prefs.setInt('selectedAttendee', fallbackAttendeeId);
-        if (mounted) {
-          setState(() => _currentIndex = 0);
-        }
-        return;
-      }
-
-      if (mounted && _currentIndex != 1) {
-        setState(() => _currentIndex = 1);
-      }
-    } catch (e) {
-      debugPrint('Failed to resolve selected attendee: $e');
-      if (mounted && _currentIndex != 1) {
-        setState(() => _currentIndex = 1);
-      }
-    } finally {
-      _resolvingSelectedAttendee = false;
-    }
-  }
 
   @override
   void initState() {
@@ -285,7 +249,12 @@ class XAppState extends State<XApp> {
     // initialize cached future
     _apiFuture = _buildApiFuture();
 
-    _checkSelectedAttendee();
+    // If no attendee is selected, navigate to the Attendees page
+    widget.api.prefs.getInt("selectedAttendee").then((attendeeId) {
+      if (attendeeId == null) {
+        setState(() => _currentIndex = 1);
+      }
+    });
   }
 
   @override
@@ -413,7 +382,12 @@ class XAppState extends State<XApp> {
         // Only check selectedAttendee once to avoid triggering repeated rebuilds
         if (!_checkedSelectedAttendee) {
           _checkedSelectedAttendee = true;
-          _checkSelectedAttendee();
+          _api.prefs.getInt("selectedAttendee").then((attendeeId) {
+            if (!mounted) return;
+            if (attendeeId == null && _currentIndex != 1) {
+              setState(() => _currentIndex = 1);
+            }
+          });
         }
 
         return DynamicColorBuilder(

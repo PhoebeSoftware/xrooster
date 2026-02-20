@@ -34,7 +34,6 @@ class MyxApi extends ChangeNotifier {
   final String baseUrl;
   final bool demoMode;
   Map<String, dynamic>? _demoDataCache;
-  static List<Map<String, dynamic>>? _schoolsConfigCache;
 
   /// Create a MyxApi instance. If [tokenOverride] is provided it will be
   /// used instead of the global `token` variable.
@@ -102,24 +101,6 @@ class MyxApi extends ChangeNotifier {
   Future<Map<String, dynamic>> _loadDemoData() async => _demoDataCache ??=
       jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
 
-  Future<String> _resolveAttendeeSource() async {
-    final selectedSchool = await prefs.getString('selectedSchool');
-    if (selectedSchool == null || selectedSchool.isEmpty) return 'attendees';
-
-    _schoolsConfigCache ??=
-        (jsonDecode(await rootBundle.loadString('assets/schools.json'))
-                as List<dynamic>)
-            .map((item) => Map<String, dynamic>.from(item as Map))
-            .toList();
-
-    final matchingSchool = _schoolsConfigCache!
-        .cast<Map<String, dynamic>?>()
-        .firstWhere(
-          (school) => (school?['url'] as String?) == selectedSchool,
-          orElse: () => null,
-        );
-    return (matchingSchool?['attendeeSource'] as String?) ?? 'attendees';
-  }
 
   Future<List<T>> _getDemoList<T>(
     String key,
