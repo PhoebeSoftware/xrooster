@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/pages/feeds/feeds.dart';
 import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/login/offline.dart';
 import 'package:xrooster/pages/login/school_selector.dart';
@@ -58,14 +59,10 @@ Future<void> main() async {
   });
 
   // initialize state
-  isOnlineNotifier.value = _isDeviceOnline(
-    await Connectivity().checkConnectivity(),
-  );
+  isOnlineNotifier.value = _isDeviceOnline(await Connectivity().checkConnectivity());
 
   // listen to connection changes
-  Connectivity().onConnectivityChanged.listen((
-    List<ConnectivityResult> results,
-  ) {
+  Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
     final newOnlineStatus = _isDeviceOnline(results);
     if (isOnlineNotifier.value != newOnlineStatus) {
       isOnlineNotifier.value = newOnlineStatus;
@@ -122,9 +119,7 @@ Future<void> main() async {
 
   // creates the login page and redirects to main flow after login
   void startLoginFlow() async {
-    runApp(
-      inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow),
-    );
+    runApp(inAppWebViewApp(baseWebUrl: selectedSchoolUrl, onToken: startAppFlow));
   }
 
   void startSchoolSelectedFlow(String selectedSchool) async {
@@ -237,15 +232,6 @@ class XAppState extends State<XApp> {
         return;
       }
 
-      final fallbackAttendeeId = await _api.getAttendeeFromFeed();
-      if (fallbackAttendeeId != null) {
-        await _api.prefs.setInt('selectedAttendee', fallbackAttendeeId);
-        if (mounted) {
-          setState(() => _currentIndex = 0);
-        }
-        return;
-      }
-
       if (mounted && _currentIndex != 1) {
         setState(() => _currentIndex = 1);
       }
@@ -258,7 +244,6 @@ class XAppState extends State<XApp> {
       _resolvingSelectedAttendee = false;
     }
   }
-
 
   @override
   void initState() {
@@ -357,6 +342,11 @@ class XAppState extends State<XApp> {
           useModernScheduleLayout: _useModernScheduleLayout,
         );
       case 2:
+        return FeedsPage(
+          api: _api,
+          onFeedSelected: () => setState(() => _currentIndex = 0), // go to Schedule page
+        );
+      case 3:
         return SettingsPage(
           onThemeChanged: _updateTheme,
           onSeedColorChanged: _updateSeedColor,
@@ -373,9 +363,7 @@ class XAppState extends State<XApp> {
       future: _apiFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          ); // api not ready
+          return const Center(child: CircularProgressIndicator()); // api not ready
         }
 
         final api = snapshot.data;
@@ -409,9 +397,8 @@ class XAppState extends State<XApp> {
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             final usingMaterialYou = _themeMode == 'material_you';
-            final usingCustomSeed = _themeMode == 'system' ||
-                _themeMode == 'light' ||
-                _themeMode == 'dark';
+            final usingCustomSeed =
+                _themeMode == 'system' || _themeMode == 'light' || _themeMode == 'dark';
             final seedColor = usingCustomSeed ? _seedColor : Colors.blue;
 
             final lightScheme = (usingMaterialYou && lightDynamic != null)
@@ -420,10 +407,7 @@ class XAppState extends State<XApp> {
 
             final darkScheme = (usingMaterialYou && darkDynamic != null)
                 ? darkDynamic
-                : ColorScheme.fromSeed(
-                    seedColor: seedColor,
-                    brightness: Brightness.dark,
-                  );
+                : ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.dark);
 
             return MaterialApp(
               title: XApp.title,
@@ -444,10 +428,8 @@ class XAppState extends State<XApp> {
                       icon: Icon(Icons.calendar_today),
                       label: 'Schedule',
                     ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.school),
-                      label: 'Attendees',
-                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Attendees'),
+                    BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Feeds'),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.settings),
                       label: 'Settings',

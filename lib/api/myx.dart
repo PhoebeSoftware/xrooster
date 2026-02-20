@@ -98,17 +98,19 @@ class MyxApi extends ChangeNotifier {
     };
   }
 
-  Future<Map<String, dynamic>> _loadDemoData() async =>
-      _demoDataCache ??= jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
+  Future<Map<String, dynamic>> _loadDemoData() async => _demoDataCache ??= jsonDecode(
+    await rootBundle.loadString('assets/demo_schedule.json'),
+  );
 
   Future<String> _resolveAttendeeSource() async {
     final selectedSchool = await prefs.getString('selectedSchool');
     if (selectedSchool == null || selectedSchool.isEmpty) return 'attendees';
 
-    _schoolsConfigCache ??= (jsonDecode(await rootBundle.loadString('assets/schools.json')) as List<dynamic>)
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
-    
+    _schoolsConfigCache ??=
+        (jsonDecode(await rootBundle.loadString('assets/schools.json')) as List<dynamic>)
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList();
+
     final matchingSchool = _schoolsConfigCache!.cast<Map<String, dynamic>?>().firstWhere(
       (school) => (school?['url'] as String?) == selectedSchool,
       orElse: () => null,
@@ -116,34 +118,50 @@ class MyxApi extends ChangeNotifier {
     return (matchingSchool?['attendeeSource'] as String?) ?? 'attendees';
   }
 
-  Future<List<T>> _getDemoList<T>(String key, T Function(Map<String, dynamic>) fromJson) async {
+  Future<List<T>> _getDemoList<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
     final list = (await _loadDemoData())[key] as List;
 
-    return list
-        .map((item) => fromJson(Map.from(item as Map)))
-        .toList();
+    return list.map((item) => fromJson(Map.from(item as Map))).toList();
   }
 
-  Future<T> _getDemoById<T>(String key, int id, T Function(Map<String, dynamic>) fromJson) async {
+  Future<T> _getDemoById<T>(
+    String key,
+    int id,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
     final rawList = await _getDemoList<Map<String, dynamic>>(key, (rawItem) => rawItem);
-    final matchingItem = rawList.firstWhere((item) => item['id'] == id, orElse: () => rawList.first);
+    final matchingItem = rawList.firstWhere(
+      (item) => item['id'] == id,
+      orElse: () => rawList.first,
+    );
 
     return fromJson(matchingItem);
   }
 
-  Future<List<BaseAttendee>> _getDemoAttendees(AttendeeType type) =>
-    _getDemoList(
-      type == AttendeeType.teacher ? 'teachers' : 'groups',
-      (data) => type == AttendeeType.teacher
+  Future<List<BaseAttendee>> _getDemoAttendees(AttendeeType type) => _getDemoList(
+    type == AttendeeType.teacher ? 'teachers' : 'groups',
+    (data) => type == AttendeeType.teacher
         ? TeacherAttendee.fromJson(data..['role'] = 'teacher')
         : GroupAttendee.fromJson(data..['role'] = 'group'),
-    );
+  );
 
-  Future<Location> _getDemoLocation(int id) => _getDemoById('locations', id, Location.fromJson);
+  Future<Location> _getDemoLocation(int id) =>
+      _getDemoById('locations', id, Location.fromJson);
 
-  Future<TeacherAttendee> _getDemoTeacher(int id) => _getDemoById('teachers', id, (data) => TeacherAttendee.fromJson(data..['role'] = 'teacher'));
+  Future<TeacherAttendee> _getDemoTeacher(int id) => _getDemoById(
+    'teachers',
+    id,
+    (data) => TeacherAttendee.fromJson(data..['role'] = 'teacher'),
+  );
 
-  Future<GroupAttendee> _getDemoGroup(int id) => _getDemoById('groups', id, (data) => GroupAttendee.fromJson(data..['role'] = 'group'));
+  Future<GroupAttendee> _getDemoGroup(int id) => _getDemoById(
+    'groups',
+    id,
+    (data) => GroupAttendee.fromJson(data..['role'] = 'group'),
+  );
 
   Future<Map<String, List<Appointment>>> _getDemoAppointments() async {
     final now = DateTime.now();
@@ -153,8 +171,20 @@ class MyxApi extends ChangeNotifier {
 
     final appointments = rawAppointments.map((rawItem) {
       final data = Map<String, dynamic>.from(rawItem);
-      final start = dayStart.add(Duration(days: data['dayOffset'], hours: data['startHour'], minutes: data['startMinute']));
-      final end = dayStart.add(Duration(days: data['dayOffset'], hours: data['endHour'], minutes: data['endMinute']));
+      final start = dayStart.add(
+        Duration(
+          days: data['dayOffset'],
+          hours: data['startHour'],
+          minutes: data['startMinute'],
+        ),
+      );
+      final end = dayStart.add(
+        Duration(
+          days: data['dayOffset'],
+          hours: data['endHour'],
+          minutes: data['endMinute'],
+        ),
+      );
 
       return Appointment.fromJson({
         ...data,
@@ -367,8 +397,7 @@ class MyxApi extends ChangeNotifier {
     );
 
     // map week appointments to type
-    final weekAppointments = (response.data['result']['appointments'] as Map)
-        .values
+    final weekAppointments = (response.data['result']['appointments'] as Map).values
         .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
         .toList();
 
