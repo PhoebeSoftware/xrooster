@@ -143,6 +143,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Expanded(
             child: ListView(
               children: [
+                Divider(),
                 ListTile(
                   title: Text('Account'),
                   subtitle: Text(
