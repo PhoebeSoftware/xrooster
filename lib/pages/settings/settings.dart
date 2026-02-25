@@ -30,6 +30,8 @@ class _SettingsPageState extends State<SettingsPage> {
   String _userName = '';
   String _timeLeft = '';
   String _expiryTime = '';
+  String timeLeft = '1h 45m';
+  String expiryTime = '21:48';
 
   @override
   void initState() {
@@ -46,8 +48,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final userName = await prefs.getString('userName');
     final tokenExp = await prefs.getInt('tokenExp');
 
-    String timeLeft = '1h 45m';
-    String expiryTime = '21:48';
     if (tokenExp != null) {
       final expTime = DateTime.fromMillisecondsSinceEpoch(tokenExp * 1000, isUtc: true).toLocal();
       final duration = expTime.difference(DateTime.now());
