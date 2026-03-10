@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/models/base_attendee.dart';
+import 'package:xrooster/models/teacher_attendee.dart';
 import 'package:xrooster/pages/schedule/schedule.dart';
 import 'package:xrooster/pages/schedule/timetable.dart';
 
@@ -155,12 +156,22 @@ class AttendeeState extends State<AttendeePage> {
 
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
+  
     setState(() {
       _filteredItems = _allItems.where((item) {
         final nickname = _nicknames[item.id]?.toLowerCase() ?? '';
-        return item.code.toLowerCase().contains(query) ||
-            item.role.name.toLowerCase().contains(query) ||
-            nickname.contains(query);
+        final code = item.code.toLowerCase();
+        final role = item.role.name.toLowerCase();
+  
+        String email = '';
+        if (item is TeacherAttendee) {
+          email = item.login?.toLowerCase() ?? '';
+        }
+
+        return code.contains(query) ||
+            role.contains(query) ||
+            nickname.contains(query) ||
+            email.contains(query);
       }).toList();
     });
   }
@@ -251,10 +262,16 @@ class AttendeeState extends State<AttendeePage> {
                         final item = displayList[index];
                         final pinned = _pinned.contains(item.id);
                         final name = _name(item);
-                        final nickname = _nicknames[item.id];
-                        final subtitleText = nickname == null || nickname.trim().isEmpty
-                            ? item.role.name
-                            : '${item.role.name} - ${item.code}';
+                        String subtitleText;
+
+                        if (item is TeacherAttendee) {
+                          final login = item.login;
+                          subtitleText = (login == null || login.isEmpty)
+                              ? item.role.name
+                              : '${item.role.name} - $login';
+                        } else {
+                          subtitleText = item.role.name;
+                        }
 
                         return ListTile(
                           title: Text(name),
