@@ -48,7 +48,7 @@ Future<void> main() async {
         if (isOnlineNotifier.value == false) {
           scaffoldKey.currentState?.showMaterialBanner(
             const MaterialBanner(
-              content: Text('No internet connection'),
+              content: Text('Could not connect to the myx api, your schedule may be outdated'),
               leading: Icon(Icons.signal_wifi_connected_no_internet_4),
               backgroundColor: Colors.red,
               actions: <Widget>[SizedBox()],
@@ -95,20 +95,22 @@ Future<void> main() async {
         await prefs.setString('selectedSchool', selectedSchoolUrl);
       }
 
-      // Persist the token so the app's cached future builder can pick it up
-      // immediately. Without this the `XApp` instance created below will
-      // still try to read the token from prefs and may remain in the
-      // login flow requiring a second token entry on some platforms.
-      await prefs.setString('token', token);
+      if (token.isNotEmpty) {
+        // Persist the token so the app's cached future builder can pick it up
+        // immediately. Without this the `XApp` instance created below will
+        // still try to read the token from prefs and may remain in the
+        // login flow requiring a second token entry on some platforms.
+        await prefs.setString('token', token);
 
-      final decodedToken = JWT.decode(token);
-      final jwtPayload = Payload.fromMap(decodedToken.payload);
-      await prefs.setString('userId', jwtPayload.user);
-      await prefs.setString('userName', jwtPayload.name);
-      await prefs.setInt('tokenExp', jwtPayload.tokenExpiry);
+        final decodedToken = JWT.decode(token);
+        final jwtPayload = Payload.fromMap(decodedToken.payload);
+        await prefs.setString('userId', jwtPayload.user);
+        await prefs.setString('userName', jwtPayload.name);
+        await prefs.setInt('tokenExp', jwtPayload.tokenExpiry);
 
-      if (jwtPayload.attendeeId != null) {
-        await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
+        if (jwtPayload.attendeeId != null) {
+          await prefs.setInt('selectedAttendee', jwtPayload.attendeeId as int);
+        }
       }
     }
 
@@ -166,8 +168,45 @@ Future<void> main() async {
         runApp(offlinePage());
       }
     } else {
-      // device is online, start regular old flow
-      startLoginFlow();
+      final storedToken = await prefs.getString('token');
+
+      if (storedToken == null) {
+        startLoginFlow();
+        return;
+      }
+
+      final api = MyxApi(
+        baseUrl: apiBaseUrl,
+        cache: cache,
+        prefs: prefs,
+        tokenOverride: storedToken,
+        scaffoldKey: scaffoldKey,
+        isOnlineNotifier: isOnlineNotifier,
+        demoMode: isDemoMode,
+      );
+
+      if (await api.validateToken()) {
+        startAppFlow(storedToken);
+        return;
+      }
+
+      runApp(
+        MaterialApp(
+          theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue), useMaterial3: true),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+            useMaterial3: true,
+          ),
+          themeMode: ThemeMode.system,
+          home: _TokenExpiredPage(
+            onReLogin: () => startLoginFlow(),
+            onViewCached: () {
+              isOnlineNotifier.value = false;
+              startAppFlow('');
+            },
+          ),
+        ),
+      );
     }
   }
 
@@ -281,7 +320,7 @@ class XAppState extends State<XApp> {
 
     final token = await _prefs.getString("token");
     if (token == null) {
-      return null;
+      return _api;
     }
 
     _api.updateToken(token);
@@ -453,6 +492,59 @@ class XAppState extends State<XApp> {
           },
         );
       },
+    );
+  }
+}
+
+// The page that shows when the token is expired.
+class _TokenExpiredPage extends StatelessWidget {
+  final VoidCallback onReLogin;
+  final VoidCallback onViewCached;
+
+  const _TokenExpiredPage({
+    required this.onReLogin,
+    required this.onViewCached,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lock_clock,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Token expired',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Your login token is no longer valid.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+            SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: onViewCached,
+              icon: Icon(Icons.history),
+              label: Text('View Cached Schedule'),
+            ),
+            SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onReLogin,
+              icon: Icon(Icons.login),
+              label: Text('Login'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

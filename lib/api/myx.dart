@@ -79,8 +79,6 @@ class MyxApi extends ChangeNotifier {
           if (statusCode == 401) {
             debugPrint("Interceptor: MyX Token invalid!");
 
-            // invalidate token & re-render app
-            await prefs.remove("token");
             notifyListeners();
           }
 
@@ -100,7 +98,6 @@ class MyxApi extends ChangeNotifier {
 
   Future<Map<String, dynamic>> _loadDemoData() async => _demoDataCache ??=
       jsonDecode(await rootBundle.loadString('assets/demo_schedule.json'));
-
 
   Future<List<T>> _getDemoList<T>(
     String key,
@@ -192,6 +189,21 @@ class MyxApi extends ChangeNotifier {
   void updateToken(String newToken) {
     debugPrint("MyxApi: Updating token");
     _dio.options.headers["Authorization"] = "Bearer $newToken";
+  }
+
+  // Check if the stored token is valid.
+  Future<bool> validateToken() async {
+    if (demoMode) {
+      return true;
+    }
+    try {
+      final response = await _dio.get(
+        'Authorization',
+      ); // This endpoint doesnt really matter but this one makes the most sense and is probably one of the fastest.
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 
   BaseAttendee _createAttendeeFromJson(
