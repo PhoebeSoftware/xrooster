@@ -30,6 +30,9 @@ environment:
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
+dependency_overrides:
+    shared_preferences_android: 2.4.20 # 2.4.22 and 2.4.21 give errors.
+
 dependencies:
     flutter:
         sdk: flutter
@@ -45,11 +48,11 @@ dependencies:
     collection: ^1.19.1
     connectivity_plus: ^7.0.0
     flutter_colorpicker: ^1.1.0
-    dart_jsonwebtoken: ^3.3.2
+    dart_jsonwebtoken: ^3.4.0
 
 dev_dependencies:
-    build_runner: ^2.13.0
-    json_serializable: ^6.13.0
+    build_runner: ^2.13.1
+    json_serializable: ^6.13.1
     flutter_launcher_icons: ^0.14.4
     flutter_test:
         sdk: flutter
@@ -60,7 +63,7 @@ dev_dependencies:
     # package. See that file for information about deactivating specific lint
     # rules and activating additional ones.
     flutter_lints: ^6.0.0
-    golden_screenshot: ^10.0.0
+    golden_screenshot: ^11.0.1
     shared_preferences_platform_interface: ^2.4.1
     yaml: ^3.1.3
 
