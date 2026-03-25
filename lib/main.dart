@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xrooster/models/payload.dart';
 import 'package:xrooster/pages/attendees/attendees.dart';
 import 'package:xrooster/api/myx.dart';
+import 'package:xrooster/pages/login/token_expired.dart';
 import 'package:xrooster/pages/login/login.dart';
 import 'package:xrooster/pages/login/offline.dart';
 import 'package:xrooster/pages/login/school_selector.dart';
@@ -192,13 +193,19 @@ Future<void> main() async {
 
       runApp(
         MaterialApp(
-          theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue), useMaterial3: true),
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            useMaterial3: true,
+          ),
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            ),
             useMaterial3: true,
           ),
           themeMode: ThemeMode.system,
-          home: _TokenExpiredPage(
+          home: TokenExpiredPage(
             onReLogin: () => startLoginFlow(),
             onViewCached: () {
               isOnlineNotifier.value = false;
@@ -492,59 +499,6 @@ class XAppState extends State<XApp> {
           },
         );
       },
-    );
-  }
-}
-
-// The page that shows when the token is expired.
-class _TokenExpiredPage extends StatelessWidget {
-  final VoidCallback onReLogin;
-  final VoidCallback onViewCached;
-
-  const _TokenExpiredPage({
-    required this.onReLogin,
-    required this.onViewCached,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lock_clock,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Token expired',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Your login token is no longer valid.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-            SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: onViewCached,
-              icon: Icon(Icons.history),
-              label: Text('View Cached Schedule'),
-            ),
-            SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: onReLogin,
-              icon: Icon(Icons.login),
-              label: Text('Login'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
