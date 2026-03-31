@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:xrooster/api/myx.dart';
-import 'package:xrooster/pages/login/linux.dart';
 
 // Returns a ready-to-run MaterialApp containing the InAppWebView page.
 // onToken will be called with the token when the page navigates to
@@ -26,9 +25,7 @@ Widget inAppWebViewApp({
       useMaterial3: true,
     ),
     themeMode: ThemeMode.system,
-    home: Platform.isLinux
-        ? linuxFallback(onToken: onToken)
-        : InAppWebViewPage(onToken: onToken, baseWebUrl: baseWebUrl),
+    home: InAppWebViewPage(onToken: onToken, baseWebUrl: baseWebUrl),
   );
 }
 
