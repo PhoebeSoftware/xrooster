@@ -171,6 +171,9 @@ Future<void> main() async {
     } else {
       final storedToken = await prefs.getString('token');
 
+      String themeMode = await prefs.getString('theme') ?? 'system';
+      final storedSeedColor = await prefs.getInt('theme_seed_color');
+
       if (storedToken == null) {
         startLoginFlow();
         return;
@@ -192,26 +195,35 @@ Future<void> main() async {
       }
 
       runApp(
-        MaterialApp(
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
-          themeMode: ThemeMode.system,
-          home: TokenExpiredPage(
-            onReLogin: () => startLoginFlow(),
-            onViewCached: () {
-              isOnlineNotifier.value = false;
-              startAppFlow('');
-            },
-          ),
+        DynamicColorBuilder(
+          builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+            final usingMaterialYou = themeMode == 'material_you';
+            final seedColor = Color(storedSeedColor ?? Colors.blue.toARGB32());
+
+            final lightScheme = (usingMaterialYou && lightDynamic != null)
+                ? lightDynamic
+                : ColorScheme.fromSeed(seedColor: seedColor);
+
+            final darkScheme = (usingMaterialYou && darkDynamic != null)
+                ? darkDynamic
+                : ColorScheme.fromSeed(
+                    seedColor: seedColor,
+                    brightness: Brightness.dark,
+                  );
+
+            return MaterialApp(
+              theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
+              darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
+              themeMode: ThemeMode.system,
+              home: TokenExpiredPage(
+                onReLogin: () => startLoginFlow(),
+                onViewCached: () {
+                  isOnlineNotifier.value = false;
+                  startAppFlow('');
+                },
+              ),
+            );
+          },
         ),
       );
     }
