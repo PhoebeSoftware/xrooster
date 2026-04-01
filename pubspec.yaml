@@ -40,13 +40,13 @@ dependencies:
     shared_preferences: ^2.5.5
     dynamic_color: ^1.8.1
     flutter_inappwebview: ^6.1.5
-    package_info_plus: ^9.0.0
+    package_info_plus: ^9.0.1
     gif: ^2.3.0
     collection: ^1.19.1
-    connectivity_plus: ^7.0.0
+    connectivity_plus: ^7.1.0
     flutter_colorpicker: ^1.1.0
     dart_jsonwebtoken: ^3.4.0
-    restart_app: ^1.7.0
+    restart_app: ^1.7.3
 
 dev_dependencies:
     build_runner: ^2.13.1
