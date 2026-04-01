@@ -60,11 +60,17 @@ void main() {
   Future<void> takeScreenshot(
     WidgetTester tester,
     Widget page,
-    String name,
-  ) async {
+    String name, {
+    int initialIndex = 0,
+  }) async {
     for (final target in _screenshotTargets()) {
       final device = target.device;
-      await _pumpScreenshotApp(tester, device, page);
+      await _pumpScreenshotApp(
+        tester,
+        device,
+        page,
+        initialIndex: initialIndex,
+      );
       await tester.expectScreenshot(device, name);
     }
   }
@@ -97,7 +103,12 @@ void main() {
         ),
       );
 
-      await _pumpScreenshotApp(tester, _screenshotTargets().first.device, page);
+      await _pumpScreenshotApp(
+        tester,
+        _screenshotTargets().first.device,
+        page,
+        initialIndex: 0,
+      );
 
       final finder = find.text('NED');
       await tester.tap(finder.first);
@@ -119,11 +130,12 @@ void main() {
           ),
         ),
         '3',
+        initialIndex: 1,
       );
     });
 
     testGoldens('Settings', (tester) async {
-      await takeScreenshot(tester, const SettingsPage(), '4');
+      await takeScreenshot(tester, const SettingsPage(), '4', initialIndex: 2);
     });
   });
 }
@@ -147,7 +159,12 @@ List<_ScreenshotTarget> _screenshotTargets() => const [
   ),
 ];
 
-Future<void> _pumpScreenshotApp(WidgetTester tester, ScreenshotDevice device, Widget home) async {
+Future<void> _pumpScreenshotApp(
+  WidgetTester tester,
+  ScreenshotDevice device,
+  Widget home, {
+  int initialIndex = 0,
+}) async {
   await tester.pumpWidget(
     ScreenshotApp(
       device: device,
@@ -158,7 +175,28 @@ Future<void> _pumpScreenshotApp(WidgetTester tester, ScreenshotDevice device, Wi
         ),
       ),
       themeMode: ThemeMode.dark,
-      home: home,
+      home: Scaffold(
+        appBar: AppBar(toolbarHeight: 0),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: initialIndex,
+          onTap: (index) {},
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'Schedule',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school),
+              label: 'Attendees',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+        ),
+        body: home,
+      ),
     ),
   );
 
