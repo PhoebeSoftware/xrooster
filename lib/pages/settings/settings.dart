@@ -24,7 +24,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   String _themeMode = 'system';
-  String _language = 'system';
   bool _useModernScheduleLayout = true;
   bool _loading = true;
   bool _isTokenExpired = false;
@@ -44,7 +43,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     var prefs = SharedPreferencesAsync();
     final theme = await prefs.getString('theme');
-    final language = await prefs.getString('language');
     final scheduleLayout = await prefs.getBool('use_better_schedule');
     final seedColor = await prefs.getInt('theme_seed_color');
     final userName = await prefs.getString('userName');
@@ -67,7 +65,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     setState(() {
       _themeMode = theme ?? 'system';
-      _language = language ?? 'system';
       _useModernScheduleLayout = scheduleLayout ?? true;
       _seedColor = Color(seedColor ?? Colors.blue.toARGB32());
       _userName = userName ?? 'John Doe';
@@ -82,11 +79,6 @@ class _SettingsPageState extends State<SettingsPage> {
     var prefs = SharedPreferencesAsync();
     await prefs.setString('theme', value);
     widget.onThemeChanged?.call(value);
-  }
-
-  Future<void> _saveLanguage(String value) async {
-    var prefs = SharedPreferencesAsync();
-    await prefs.setString('language', value);
   }
 
   Future<void> _saveScheduleLayout(bool value) async {
@@ -233,27 +225,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     onTap: _showSeedColorPicker,
                   ),
-                Divider(),
-                ListTile(
-                  title: const Text('Language'),
-                  trailing: DropdownButton<String>(
-                    value: _language,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'system',
-                        child: Text('System Default'),
-                      ),
-                      DropdownMenuItem(value: 'en', child: Text('English')),
-                      DropdownMenuItem(value: 'nl', child: Text('Nederlands')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _language = value);
-                        _saveLanguage(value);
-                      }
-                    },
-                  ),
-                ),
                 Divider(),
                 SwitchListTile(
                   title: const Text('Modern schedule'),
