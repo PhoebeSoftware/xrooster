@@ -77,41 +77,37 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
         }
       },
       child: Scaffold(
-        body: Column(
-          children: <Widget>[
-            Expanded(
-              child: InAppWebView(
-                key: webViewKey,
-                initialUrlRequest: URLRequest(url: WebUri(baseWebUrl)),
-                onReceivedServerTrustAuthRequest:
-                    (controller, challenge) async {
-                      return ServerTrustAuthResponse(
-                        action: ServerTrustAuthResponseAction.PROCEED,
-                      );
-                    },
-                initialSettings: InAppWebViewSettings(
-                  allowsBackForwardNavigationGestures: true,
-                ),
-                onWebViewCreated: (controller) {
-                  webViewController = controller;
-                },
-                onLoadStop: (controller, url) async {
-                    if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
-                      final urlStr = url.toString();
-                      var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
-                      token = token.replaceAll('&ngsw-bypass=true', '');
-                    // notify caller and allow them to replace the app
-                    try {
-                      setToken(token);
-                      widget.onToken(token);
-                    } catch (e) {
-                      debugPrint('[InAppWebView][onToken] callback error: $e');
-                    }
-                  }
-                },
-              ),
+        body: SafeArea(
+          bottom: false,
+          child: InAppWebView(
+            key: webViewKey,
+            initialUrlRequest: URLRequest(url: WebUri(baseWebUrl)),
+            onReceivedServerTrustAuthRequest: (controller, challenge) async {
+              return ServerTrustAuthResponse(
+                action: ServerTrustAuthResponseAction.PROCEED,
+              );
+            },
+            initialSettings: InAppWebViewSettings(
+              allowsBackForwardNavigationGestures: true,
             ),
-          ],
+            onWebViewCreated: (controller) {
+              webViewController = controller;
+            },
+            onLoadStop: (controller, url) async {
+              if (url?.toString().startsWith('$baseWebUrl/?token=') ?? false) {
+                final urlStr = url.toString();
+                var token = urlStr.replaceFirst('$baseWebUrl/?token=', '');
+                token = token.replaceAll('&ngsw-bypass=true', '');
+                // notify caller and allow them to replace the app
+                try {
+                  setToken(token);
+                  widget.onToken(token);
+                } catch (e) {
+                  debugPrint('[InAppWebView][onToken] callback error: $e');
+                }
+              }
+            },
+          ),
         ),
       ),
     );
