@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:gif/gif.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:restart_app/restart_app.dart';
 
 class SettingsPage extends StatefulWidget {
   final void Function(String theme)? onThemeChanged;
@@ -26,6 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _language = 'system';
   bool _useModernScheduleLayout = true;
   bool _loading = true;
+  bool _isTokenExpired = false;
   Color _seedColor = Colors.blue;
   String _userName = '';
   String _timeLeft = '';
@@ -52,8 +54,15 @@ class _SettingsPageState extends State<SettingsPage> {
       final expTime = DateTime.fromMillisecondsSinceEpoch(tokenExp * 1000, isUtc: true).toLocal();
       final duration = expTime.difference(DateTime.now());
 
-      timeLeft = '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
-      expiryTime = DateFormat('HH:mm').format(expTime);
+      if (duration.isNegative) {
+        _isTokenExpired = true;
+        timeLeft = 'Expired';
+        expiryTime = DateFormat('HH:mm').format(expTime);
+      } else {
+        _isTokenExpired = false;
+        timeLeft = '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
+        expiryTime = DateFormat('HH:mm').format(expTime);
+      }
     }
 
     setState(() {
@@ -62,6 +71,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _useModernScheduleLayout = scheduleLayout ?? true;
       _seedColor = Color(seedColor ?? Colors.blue.toARGB32());
       _userName = userName ?? 'John Doe';
+      _isTokenExpired = _isTokenExpired;
       _timeLeft = timeLeft;
       _expiryTime = expiryTime;
       _loading = false;
@@ -89,6 +99,33 @@ class _SettingsPageState extends State<SettingsPage> {
     var prefs = SharedPreferencesAsync();
     await prefs.setInt('theme_seed_color', value.toARGB32());
     widget.onSeedColorChanged?.call(value);
+  }
+
+  Future<void> _logout() async {
+    var prefs = SharedPreferencesAsync();
+
+    await prefs.remove('tokenExp');
+    await prefs.remove('userName');
+    await prefs.remove('userId');
+    await prefs.remove('token');
+    await prefs.remove('selectedSchool');
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Logged out')));
+    }
+    await Restart.restartApp();
+  }
+
+  Future<void> _login() async {
+    var prefs = SharedPreferencesAsync();
+
+    await prefs.remove('tokenExp');
+    await prefs.remove('userName');
+    await prefs.remove('userId');
+    await prefs.remove('token');
+
+    await Restart.restartApp();
   }
 
   void _showSeedColorPicker() {
@@ -147,8 +184,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 ListTile(
                   title: Text('Account'),
                   subtitle: Text(
-                    'Logged in as $_userName\nLogin token expires in $_timeLeft at $_expiryTime',
+                    _isTokenExpired
+                        ? 'Token expired at $_expiryTime'
+                        : 'Logged in as $_userName\nLogin token expires in $_timeLeft at $_expiryTime',
                   ),
+                ),
+                ListTile(
+                  title: Text(_isTokenExpired ? 'Login' : 'Logout'),
+                  leading: Icon(_isTokenExpired ? Icons.login : Icons.logout),
+                  onTap: _isTokenExpired ? _login : _logout,
                 ),
                 Divider(),
                 ListTile(

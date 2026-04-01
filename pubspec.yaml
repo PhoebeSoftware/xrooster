@@ -46,6 +46,7 @@ dependencies:
     connectivity_plus: ^7.0.0
     flutter_colorpicker: ^1.1.0
     dart_jsonwebtoken: ^3.4.0
+    restart_app: ^1.7.0
 
 dev_dependencies:
     build_runner: ^2.13.1
