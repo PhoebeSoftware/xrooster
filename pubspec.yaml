@@ -22,7 +22,7 @@ version: 1.1.7+27
 
 
 environment:
-    sdk: ^3.11.4
+    sdk: ^3.11.5
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -40,10 +40,10 @@ dependencies:
     shared_preferences: ^2.5.5
     dynamic_color: ^1.8.1
     flutter_inappwebview: ^6.1.5
-    package_info_plus: ^9.0.1
+    package_info_plus: ^10.0.0
     gif: ^2.3.0
     collection: ^1.19.1
-    connectivity_plus: 7.0.0
+    connectivity_plus: ^7.1.1
     flutter_colorpicker: ^1.1.0
     dart_jsonwebtoken: ^3.4.0
     restart_app: ^1.7.3

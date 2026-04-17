@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  flutter-version: "3.41.6"
+  flutter-version: "3.41.7"
 
 jobs:
   update_files:
@@ -149,7 +149,7 @@ jobs:
         uses: actions/download-artifact@v8
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ env.APP_VERSION }}
           name: v${{ env.APP_VERSION }}
