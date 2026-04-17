@@ -18,11 +18,11 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 ######## major.minor.patch+build ########
 ######## Always increse the build number ########
-version: 1.1.7+27
+version: 1.1.8+28
 
 
 environment:
-    sdk: ^3.11.4
+    sdk: ^3.12.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -35,22 +35,22 @@ dependencies:
         sdk: flutter
 
     dio: ^5.9.2
-    json_annotation: ^4.11.0
+    json_annotation: ^4.12.0
     intl: ^0.20.2
     shared_preferences: ^2.5.5
     dynamic_color: ^1.8.1
     flutter_inappwebview: ^6.1.5
-    package_info_plus: ^9.0.1
+    package_info_plus: ^10.1.0
     gif: ^2.3.0
     collection: ^1.19.1
-    connectivity_plus: 7.0.0
+    connectivity_plus: ^7.1.1
     flutter_colorpicker: ^1.1.0
-    dart_jsonwebtoken: ^3.4.0
-    restart_app: ^1.7.3
+    dart_jsonwebtoken: ^3.4.1
+    restart_app: ^1.8.3
 
 dev_dependencies:
-    build_runner: ^2.13.1
-    json_serializable: ^6.13.1
+    build_runner: ^2.15.0
+    json_serializable: ^6.14.0
     flutter_launcher_icons: ^0.14.4
     flutter_test:
         sdk: flutter
