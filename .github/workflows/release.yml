@@ -42,8 +42,7 @@ jobs:
         run: |
           git config user.name "Epic Bot"
           git add -A
-          git commit -m "Release v${{ env.APP_VERSION }}"
-          git push
+          git diff --staged --quiet || (git commit -m "Release v${{ env.APP_VERSION }}" && git push)
 
   android:
     name: Build Flutter APK
