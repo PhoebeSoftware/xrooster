@@ -27,6 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _useModernScheduleLayout = true;
   bool _loading = true;
   bool _isTokenExpired = false;
+  int _clickCount = 0;
   Color _seedColor = Colors.blue;
   String _userName = '';
   String _timeLeft = '';
@@ -248,62 +249,26 @@ class _SettingsPageState extends State<SettingsPage> {
                 final version = snapshot.hasData
                     ? snapshot.data!.version
                     : '...';
-                return InkWell(
+                return ListTile(
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('xrooster'),
-                        // epic easter egg
-                        content: Builder(
-                          builder: (context) {
-                            int clickCount = 0;
-                            return GestureDetector(
-                              onTap: () {
-                                clickCount++;
-                                if (clickCount == 7) {
-                                  clickCount = 0;
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => _SecretDialog(),
-                                  );
-                                }
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Version $version'),
-                                  Text('Developed by Phoebe Software'),
-                                  const SizedBox(height: 12),
-                                  const Text('Contributors:'),
-                                  const Text('   • AlexJonker'),
-                                  const Text('   • kietelmuis'),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
+                    _clickCount++;
+                    if (_clickCount == 7) {
+                      _clickCount = 0;
+                      showDialog(
+                        context: context,
+                        builder: (context) => _SecretDialog(),
+                      );
+                    }
                   },
-                  child: ListTile(
-                    title: const Text('About'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Version $version'),
-                        Text('Developed by Phoebe Software'),
-                      ],
-                    ),
-                    isThreeLine: true,
+                  title: const Text('About'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Version $version'),
+                      Text('Developed by Phoebe Software'),
+                    ],
                   ),
+                  isThreeLine: true,
                 );
               },
             ),
