@@ -44,6 +44,7 @@ De lijst hieronder wordt automatisch gegenereerd vanuit
 | Koning Willem 1 College | [kw1college.myx.nl](https://kw1college.myx.nl) |
 | NHL Stenden | [nhlstenden.myx.nl](https://nhlstenden.myx.nl) |
 | Saxion | [saxion.myx.nl](https://saxion.myx.nl) |
+| Fontys | [fontys.myx.nl](https://fontys.myx.nl) |
 <!-- schools_end -->
 
 Staat jouw school er niet tussen? Maak dan een <a href="https://github.com/PhoebeSoftware/xrooster/issues">issue</a> of een <a href="https://github.com/PhoebeSoftware/xrooster/pulls">pull request</a> aan.
