@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  flutter-version: "3.44.0"
+  flutter-version: "3.44.2"
 
 jobs:
   update_files:
