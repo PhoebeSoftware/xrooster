@@ -1,1 +1,1 @@
-Schedule app for myx
+Schedule app for myx/xedule
