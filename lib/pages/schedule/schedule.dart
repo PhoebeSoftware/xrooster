@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:xrooster/api/myx.dart';
 import 'package:xrooster/pages/schedule/day_selector.dart';
 import 'package:xrooster/pages/schedule/timetable.dart';
