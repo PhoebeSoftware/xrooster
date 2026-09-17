@@ -35,6 +35,9 @@ jobs:
           flutter-version: ${{ env.flutter-version }}
           cache: true
 
+      - name: Delete old screenshots
+        run: rm ./fastlane/metadata/android/en-US/images/phoneScreenshots/*
+
       - name: Generate screenshots
         run: flutter test --update-goldens
 
