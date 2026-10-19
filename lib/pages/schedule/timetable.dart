@@ -15,13 +15,13 @@ class ScheduleEntry {
   final Appointment appointment;
   final Location? location;
   final TeacherAttendee? teacher;
-  final GroupAttendee? group;
+  final List<GroupAttendee> groups;
 
   ScheduleEntry({
     required this.appointment,
     required this.location,
     required this.teacher,
-    required this.group,
+    required this.groups,
   });
 }
 
@@ -758,9 +758,11 @@ class TimetableState extends State<TimetableView> {
                   teacher: a.attendeeIds.teacher.isNotEmpty
                       ? await widget.api.getTeacherById(a.attendeeIds.teacher.first)
                       : null,
-                  group: a.attendeeIds.group.isNotEmpty
-                      ? await widget.api.getGroupById(a.attendeeIds.group.first)
-                      : null,
+                  groups: await Future.wait(
+                    a.attendeeIds.group.map(
+                      (groupId) => widget.api.getGroupById(groupId),
+                    ),
+                  ),
                 ),
               ),
             );
@@ -940,35 +942,43 @@ class TimetableState extends State<TimetableView> {
               ),
               const SizedBox(height: 14),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.people, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: item.group != null
-                        ? TextButton(
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              alignment: Alignment.centerLeft,
-                            ),
-                            onPressed: () {
-                              final displayName = _name(
-                                item.group!.id,
-                                item.group!.code,
-                              );
+                    child: item.groups.isEmpty
+                        ? const Text('No class found')
+                        : Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: item.groups.map((group) {
+                              return TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  alignment: Alignment.centerLeft,
+                                ),
+                                onPressed: () {
+                                  final displayName = _name(
+                                    group.id,
+                                    group.code,
+                                  );
 
-                              _showInfoMenu(
-                                context,
-                                attendeeId: item.group!.id,
-                                originalName: item.group!.code,
-                                displayName: displayName,
-                                date: item.appointment.start,
+                                  _showInfoMenu(
+                                    context,
+                                    attendeeId: group.id,
+                                    originalName: group.code,
+                                    displayName: displayName,
+                                    date: item.appointment.start,
+                                  );
+                                },
+                                child: Text(_groupName(group)),
                               );
-                            },
-                            child: Text(_groupName(item.group!)),
-                          )
-                        : const Text('No class found'),
+                            }).toList(),
+                          ),
                   ),
                 ],
               ),
