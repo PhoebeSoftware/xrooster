@@ -86,6 +86,13 @@ jobs:
           keyAlias=upload
           EOF
 
+      - name: Get dependencies
+        run: |
+          flutter pub get
+
+          # Fix for IzzySoft
+          sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE}/hosted/*/jni-*/src/CMakeLists.txt
+
       - name: Build split APKs
         run: flutter build apk --release --split-per-abi
 
