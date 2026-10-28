@@ -13,7 +13,7 @@
 
   <a href="https://apt.izzysoft.de/packages/com.phoebesoftware.xrooster">
     <img
-      src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png"
+      src="https://codeberg.org/IzzyOnDroid/repo/raw/branch/master/assets/IzzyOnDroidButtonGreyBorder_nofont.svg"
       height="60"
       alt="Get it at IzzyOnDroid"
     />
